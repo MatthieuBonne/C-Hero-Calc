@@ -392,8 +392,6 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         skillTypes[i] = NOTHING; // disable dead hero's ability
       } else {
           remainingHealths[i] += turnData.healing;
-        if (i == frontliner)
-          remainingHealths[i] += turnData.leech;
         if (remainingHealths[i] > maxHealths[i]) { // Avoid overhealing
           remainingHealths[i] = maxHealths[i];
         }
@@ -416,6 +414,9 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         // remainingHealths[monstersLost] = castCeil((double) remainingHealths[monstersLost] * skillAmounts[monstersLost]);
         remainingHealths[monstersLost] = round((double) remainingHealths[monstersLost] * skillAmounts[monstersLost]);
     }
+
+    frontliner = monstersLost; //For Sanqueen's leech ability, as a check whether she's been killed by a "delayed" ability, like reflect.
+
     // Moved reflect functions to the end, reflect is now delayed till after healing and wither occur.
     if (opposing.counter && counter_eligible && monstersLost < armySize){
         // Finding Guy's target
@@ -433,6 +434,13 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                 }
                 skillTypes[i] = NOTHING; // disable dead hero's ability
             }
+        }
+    }
+    // Moved Sanqueen's ability (leech) to the end, to replicate delayed behavior and the fact that she heals the unit behind her in case she dies.
+    if(turnData.leech && remainingHealths[frontliner] >= 0){
+        remainingHealths[frontliner] += round(turnData.leech);
+        if (remainingHealths[frontliner] > maxHealths[frontliner]) { // Avoid overhealing
+            remainingHealths[frontliner] = maxHealths[frontliner];
         }
     }
 
