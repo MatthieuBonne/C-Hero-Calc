@@ -355,33 +355,6 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
       // std::cout << "LUX DID NOT HIT FRONTLINER" << std::endl;
     }
 
-    if(opposing.guyActive)
-        opposing.counter_target = findMaxHP();
-
-    // Add opposing.counter_target to handle fawkes not targetting the frontliner
-    if (opposing.counter && counter_eligible) {
-      // std::cout << "COUNTER " << static_cast<int64_t>(ceil(turnData.baseDamage * opposing.counter)) << " damage " << " to " << frontliner + opposing.counter_target << std::endl;
-      // Game has been updated to remove units once dead but remainingHealths still has all units
-      // So, if the counter target is not the frontliner, find the real one
-      // So, counter_target has to skip over dead units
-      if(opposing.counter_target <= 0){
-        // std::cout << "COUNTER " << static_cast<int64_t>(ceil(turnData.baseDamage * opposing.counter)) << " damage " << " to " << frontliner << std::endl;
-        if(remainingHealths[frontliner] <= 0){
-            //Checking if the unit died after the initial attack, which redirects reflect to the next target
-            for(int i = frontliner + 1; i < ARMY_MAX_SIZE; i++) {
-                if(remainingHealths[i] > 0) {
-                    counter_target_after_death = i;
-                    break;
-                }
-            }
-        }
-        remainingHealths[counter_target_after_death] -= static_cast<int64_t>(ceil(turnData.baseDamage * opposing.counter));
-      } else {
-        remainingHealths[monstersLost + opposing.counter_target] -= static_cast<int64_t>(ceil(turnData.baseDamage * opposing.counter));
-      }
-
-    }
-
     if (opposing.trampleTriggered && armySize > frontliner + 1) {
         // std::cout << "TRAMPLE" << std::endl;
         remainingHealths[frontliner + 1] -= opposing.valkyrieDamage;
@@ -443,6 +416,26 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         // remainingHealths[monstersLost] = castCeil((double) remainingHealths[monstersLost] * skillAmounts[monstersLost]);
         remainingHealths[monstersLost] = round((double) remainingHealths[monstersLost] * skillAmounts[monstersLost]);
     }
+    // Moved reflect functions to the end, reflect is now delayed till after healing and wither occur.
+    if (opposing.counter && counter_eligible && monstersLost < armySize){
+        // Finding Guy's target
+        if(opposing.guyActive)
+            opposing.counter_target = findMaxHP();
+        // Add opposing.counter_target to handle fawkes not targetting the frontliner
+        remainingHealths[monstersLost + opposing.counter_target] -= static_cast<int64_t>(ceil(turnData.baseDamage * opposing.counter));
+        //If reflect killed a frontliner, find next frontliner. Same procedure as when applying aoe.
+        for (int i = monstersLost; i < armySize; i++){
+            if (remainingHealths[i] <= 0 && !worldboss) {
+                if (i == monstersLost) {
+                    monstersLost++;
+                    berserkProcs = 0;
+                    evolveTotal = 0;
+                }
+                skillTypes[i] = NOTHING; // disable dead hero's ability
+            }
+        }
+    }
+
 }
 
 inline int ArmyCondition::findMaxHP() {
