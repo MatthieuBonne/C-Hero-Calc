@@ -417,23 +417,21 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         remainingHealths[monstersLost] = round((double) remainingHealths[monstersLost] * skillAmounts[monstersLost]);
     }
     // Moved reflect functions to the end, reflect is now delayed till after healing and wither occur.
-    if (monstersLost < armySize){
+    if (opposing.counter && counter_eligible && monstersLost < armySize){
         // Finding Guy's target
         if(opposing.guyActive)
             opposing.counter_target = findMaxHP();
         // Add opposing.counter_target to handle fawkes not targetting the frontliner
-        if (opposing.counter && counter_eligible) {
-            remainingHealths[monstersLost + opposing.counter_target] -= static_cast<int64_t>(ceil(turnData.baseDamage * opposing.counter));
-            //If reflect killed a frontliner, find next frontliner. Same procedure as when applying aoe.
-            for (int i = monstersLost; i < armySize; i++){
-                if (remainingHealths[i] <= 0 && !worldboss) {
-                    if (i == monstersLost) {
-                        monstersLost++;
-                        berserkProcs = 0;
-                        evolveTotal = 0;
-                    }
-                    skillTypes[i] = NOTHING; // disable dead hero's ability
+        remainingHealths[monstersLost + opposing.counter_target] -= static_cast<int64_t>(ceil(turnData.baseDamage * opposing.counter));
+        //If reflect killed a frontliner, find next frontliner. Same procedure as when applying aoe.
+        for (int i = monstersLost; i < armySize; i++){
+            if (remainingHealths[i] <= 0 && !worldboss) {
+                if (i == monstersLost) {
+                    monstersLost++;
+                    berserkProcs = 0;
+                    evolveTotal = 0;
                 }
+                skillTypes[i] = NOTHING; // disable dead hero's ability
             }
         }
     }
