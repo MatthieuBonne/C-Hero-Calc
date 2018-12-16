@@ -18,6 +18,10 @@ struct TurnData {
     int aoeDamage = 0;
     int healing = 0;
     double dampFactor = 1;
+    double resistance = 0;
+    double aoeReflect = 0;
+    int hpPierce = 0;
+    int sacHeal = 0;
 
     double counter = 0;
     double valkyrieMult = 0;
@@ -137,6 +141,8 @@ inline void ArmyCondition::startNewTurn() {
     turnData.dampFactor = 1;
     turnData.absorbMult = 0;
     turnData.absorbDamage = 0;
+    turnData.resistance = 0;
+    turnData.sacHeal = 0;
 
     if( skillTypes[monstersLost] == DODGE )
     {
@@ -146,6 +152,9 @@ inline void ArmyCondition::startNewTurn() {
     {
         turnData.immunity5K = false ;
     }
+
+    if( skillTypes[monstersLost] == RESISTANCE )
+        turnData.resistance = skillAmounts[monstersLost];//Needs to be here to be affected by Neil's absorb
 
     // Gather all skills that trigger globally
     for (i = monstersLost; i < armySize; i++) {
@@ -172,6 +181,10 @@ inline void ArmyCondition::startNewTurn() {
                             break;
             case ABSORB:    if (i != monstersLost) turnData.absorbMult += skillAmounts[i];
                             break;
+            case SACRIFICE: turnData.sacHeal += (int) skillAmounts[i] * 2 / 3;
+                            turnData.aoeDamage += (int) skillAmounts[i];
+                            remainingHealths[i] -= (int) skillAmounts[i];
+                            break;
         }
     }
 }
@@ -188,6 +201,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     const double opposingAbsorbMult = opposingCondition.turnData.absorbMult;
     const bool opposingImmunityDamage = opposingCondition.turnData.immunity5K;
     const double opposingDamage = opposingCondition.lineup[opposingCondition.monstersLost]->damage;
+    const double opposingResistance = opposingCondition.turnData.resistance;
 
     // Handle Monsters with skills that only activate on attack.
     turnData.trampleTriggered = false;
@@ -202,6 +216,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.leech = 0;
     turnData.execute = 0;
     turnData.guyActive = false;
+    turnData.aoeReflect = 0;
+    turnData.hpPierce = 0;
 
     double friendsDamage = 0;
 
@@ -252,6 +268,11 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case EXECUTE:   turnData.execute = skillAmounts[monstersLost];
                         break;
+        case AOEREFLECT: turnData.aoeReflect = skillAmounts[monstersLost];
+                        break;
+        case HPPIERCE:  if (!opposingCondition.worldboss)
+                        turnData.hpPierce = round((double)opposingCondition.maxHealths[opposingCondition.monstersLost] * skillAmounts[monstersLost]);
+                        break;
         default:        break;
 
     }
@@ -281,6 +302,12 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.valkyrieDamage *= turnData.critMult;
     }
 
+    if (turnData.hpPierce)
+        turnData.valkyrieDamage *= turnData.hpPierce;//Need to check if it goes before or after resistance
+
+    if (opposingResistance)
+        turnData.valkyrieDamage *= 1 - opposingResistance;
+
     //absorb damage, damage rounded up later
     if (opposingAbsorbMult != 0) {
         turnData.absorbDamage = turnData.valkyrieDamage * opposingAbsorbMult;
@@ -290,7 +317,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     if (turnData.leech != 0)
         turnData.leech *= turnData.valkyrieDamage;
     //Check execute before resolve damage for reflect ability, neil absorbs damage before the execute, according to replays.
-    if (turnData.execute && !worldboss && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage)) / opposingCondition.maxHealths[opposingCondition.monstersLost] <= turnData.execute)) {
+    if (turnData.execute && !opposingCondition.worldboss && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage)) / opposingCondition.maxHealths[opposingCondition.monstersLost] <= turnData.execute)) {
         turnData.valkyrieDamage = opposingCondition.remainingHealths[opposingCondition.monstersLost] + 1;
     }
     // for compiling heavyDamage version
@@ -309,6 +336,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.explodeDamage = round((double) turnData.explodeDamage * opposingDampFactor);
         turnData.aoeDamage = round((double) turnData.aoeDamage * opposingDampFactor);
         turnData.healing = round((double) turnData.healing * opposingDampFactor);
+        turnData.sacHeal = round((double) turnData.sacHeal * opposingDampFactor);//Have to check if Bubbles affects it
+        turnData.aoeReflect *= opposingDampFactor;//Have to check if Bubbles affects it
     }
 
     if( opposingImmunityDamage && (turnData.valkyrieDamage >= 5000 || turnData.baseDamage >= 5000 ) ) {
@@ -365,6 +394,9 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         opposing.aoeDamage += opposing.explodeDamage;
     }
 
+    if (opposing.aoeReflect)
+        opposing.aoeDamage += static_cast<int64_t>(ceil(turnData.baseDamage * opposing.aoeReflect));
+
     // Handle aoe Damage for all combatants
     for (int i = frontliner; i < armySize; i++) {
       int aliveAtBeginning = 0;
@@ -392,6 +424,8 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         skillTypes[i] = NOTHING; // disable dead hero's ability
       } else {
           remainingHealths[i] += turnData.healing;
+          if (skillTypes[i] != SACRIFICE)
+            remainingHealths[i] += turnData.sacHeal;//Prevent sacrifice from working on the unit that sacrifices their health
         if (remainingHealths[i] > maxHealths[i]) { // Avoid overhealing
           remainingHealths[i] = maxHealths[i];
         }
@@ -661,12 +695,12 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
             rightCondition.turnData.baseDamage += rightCondition.skillAmounts[rightCondition.monstersLost];
         }
 
-        left.lastFightData.leftAoeDamage += rightCondition.turnData.aoeDamage;
-        left.lastFightData.rightAoeDamage += leftCondition.turnData.aoeDamage;
-
         // Check if anything died as a result
         leftCondition.resolveDamage(rightCondition.turnData);
         rightCondition.resolveDamage(leftCondition.turnData);
+
+        left.lastFightData.leftAoeDamage += rightCondition.turnData.aoeDamage;
+        left.lastFightData.rightAoeDamage += leftCondition.turnData.aoeDamage;
 
         turncounter++;
 

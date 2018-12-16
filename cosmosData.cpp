@@ -67,6 +67,18 @@ Monster::Monster(const Monster & baseHero, int aLevel) :
     } else if (baseHero.skill.skillType == EXPLODE_L) {
         this->skill.skillType = EXPLODE;
         this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
+    } else if (baseHero.skill.skillType == RESISTANCE_L) {
+        this->skill.skillType = RESISTANCE;
+        this->skill.amount = (double) aLevel * baseHero.skill.amount;
+    } else if (baseHero.skill.skillType == AOEREFLECT_L) {
+        this->skill.skillType = AOEREFLECT;
+        this->skill.amount = (double) aLevel * baseHero.skill.amount;
+    } else if (baseHero.skill.skillType == HPPIERCE_L) {
+        this->skill.skillType = HPPIERCE;
+        this->skill.amount = (double) aLevel * baseHero.skill.amount;
+    } else if (baseHero.skill.skillType == SACRIFICE_L) {
+        this->skill.skillType = SACRIFICE;
+        this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
     }
 }
 
@@ -78,7 +90,8 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
 {
     this->hasAsymmetricAoe = (aType == VALKYRIE || aType == TRAMPLE);
     this->hasHeal = (aType == HEAL || aType == HEAL_L ||
-                     aType == LIFESTEAL || aType == LIFESTEAL_L);
+                     aType == LIFESTEAL || aType == LIFESTEAL_L ||
+                     aType == SACRIFICE || aType == SACRIFICE_L);
     // hasAoe should include all things affected by dampen
     this->hasAoe = (aType == AOE || aType == AOE_L ||
                     aType == REVENGE ||
@@ -92,7 +105,8 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                                   aType == HEAL || aType == HEAL_L ||
                                   aType == LIFESTEAL || aType == LIFESTEAL_L ||
                                   aType == BEER || aType == AOEZERO_L ||
-                                  aType == AOEZERO || aType == ABSORB);
+                                  aType == AOEZERO || aType == ABSORB ||
+                                  aType == SACRIFICE || aType == SACRIFICE_L );
 }
 
 // JSON Functions to provide results in an easily readable output format. Used my Latas for example
@@ -255,6 +269,14 @@ std::map<std::string, int> stringToEnum = {
     {"EVOLVE", EVOLVE},
     {"COUNTER_MAX_HP", COUNTER_MAX_HP},
     {"EXECUTE", EXECUTE},
+    {"RESISTANCE", RESISTANCE},
+    {"AOEREFLECT", AOEREFLECT},
+    {"HPPIERCE", HPPIERCE},
+    {"SACRIFICE", SACRIFICE},
+    {"RESISTANCE_L", RESISTANCE_L},
+    {"AOEREFLECT_L", AOEREFLECT_L},
+    {"HPPIERCE_L", HPPIERCE_L},
+    {"SACRIFICE_L", SACRIFICE_L},
 
     {"EARTH", EARTH},
     {"AIR", AIR},
