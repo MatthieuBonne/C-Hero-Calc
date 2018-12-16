@@ -69,13 +69,13 @@ Monster::Monster(const Monster & baseHero, int aLevel) :
         this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
     } else if (baseHero.skill.skillType == RESISTANCE_L) {
         this->skill.skillType = RESISTANCE;
-        this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
+        this->skill.amount = (double) aLevel * baseHero.skill.amount;
     } else if (baseHero.skill.skillType == AOEREFLECT_L) {
         this->skill.skillType = AOEREFLECT;
-        this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
+        this->skill.amount = (double) aLevel * baseHero.skill.amount;
     } else if (baseHero.skill.skillType == HPPIERCE_L) {
         this->skill.skillType = HPPIERCE;
-        this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
+        this->skill.amount = (double) aLevel * baseHero.skill.amount;
     } else if (baseHero.skill.skillType == SACRIFICE_L) {
         this->skill.skillType = SACRIFICE;
         this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
