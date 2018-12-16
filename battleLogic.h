@@ -154,7 +154,7 @@ inline void ArmyCondition::startNewTurn() {
     }
 
     if( skillTypes[monstersLost] == RESISTANCE )
-        turnData.resistance = skillAmounts[monstersLost];//Needs to be here to be affected by Neil's absorb
+        turnData.resistance = skillAmounts[monstersLost];//Needs to be here so it happens before Neil's absorb.
 
     // Gather all skills that trigger globally
     for (i = monstersLost; i < armySize; i++) {
@@ -303,7 +303,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     }
 
     if (turnData.hpPierce)
-        turnData.valkyrieDamage *= turnData.hpPierce;//Need to check if it goes before or after resistance
+        turnData.valkyrieDamage += turnData.hpPierce;//Need to check if it goes before or after resistance
 
     if (opposingResistance)
         turnData.valkyrieDamage *= 1 - opposingResistance;
