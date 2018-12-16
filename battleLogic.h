@@ -270,7 +270,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case AOEREFLECT: turnData.aoeReflect = skillAmounts[monstersLost];
                         break;
-        case HPPIERCE:  turnData.hpPierce = round((double)opposingCondition.maxHealths[opposingCondition.monstersLost] * skillAmounts[monstersLost]);
+        case HPPIERCE:  if (!opposingCondition.worldboss)
+                        turnData.hpPierce = round((double)opposingCondition.maxHealths[opposingCondition.monstersLost] * skillAmounts[monstersLost]);
                         break;
         default:        break;
 
@@ -316,7 +317,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     if (turnData.leech != 0)
         turnData.leech *= turnData.valkyrieDamage;
     //Check execute before resolve damage for reflect ability, neil absorbs damage before the execute, according to replays.
-    if (turnData.execute && !worldboss && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage)) / opposingCondition.maxHealths[opposingCondition.monstersLost] <= turnData.execute)) {
+    if (turnData.execute && !opposingCondition.worldboss && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage)) / opposingCondition.maxHealths[opposingCondition.monstersLost] <= turnData.execute)) {
         turnData.valkyrieDamage = opposingCondition.remainingHealths[opposingCondition.monstersLost] + 1;
     }
     // for compiling heavyDamage version
