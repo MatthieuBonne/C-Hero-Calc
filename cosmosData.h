@@ -14,7 +14,7 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "3.2.2.0f";
+const std::string VERSION = "3.3.0.0a";
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
@@ -91,7 +91,17 @@ enum SkillType {
 
     COUNTER_MAX_HP,// Reflects damage to the enemy with most HP
 
-    EXECUTE        // After they hit an enemy, if the enemy is below X% HP, the enemy will die.
+    EXECUTE,        // After they hit an enemy, if the enemy is below X% HP, the enemy will die.
+
+    RESISTANCE,   //Takes X% less direct damage
+    AOEREFLECT,   //AoE & Reflect - X% direct damage, dealt to all enemies
+    HPPIERCE,     //Attacks deal an additional X% of enemies HP
+    SACRIFICE,    //X damage to self and as AOE to enemies & (2/3)X Healing AOE per turn
+
+    RESISTANCE_L,   //Scaling versions of Christmas skills
+    AOEREFLECT_L,
+    HPPIERCE_L,
+    SACRIFICE_L
 };
 
 enum Element {
