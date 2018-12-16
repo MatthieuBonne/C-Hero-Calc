@@ -695,12 +695,12 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
             rightCondition.turnData.baseDamage += rightCondition.skillAmounts[rightCondition.monstersLost];
         }
 
-        left.lastFightData.leftAoeDamage += rightCondition.turnData.aoeDamage;
-        left.lastFightData.rightAoeDamage += leftCondition.turnData.aoeDamage;
-
         // Check if anything died as a result
         leftCondition.resolveDamage(rightCondition.turnData);
         rightCondition.resolveDamage(leftCondition.turnData);
+
+        left.lastFightData.leftAoeDamage += rightCondition.turnData.aoeDamage;
+        left.lastFightData.rightAoeDamage += leftCondition.turnData.aoeDamage;
 
         turncounter++;
 
