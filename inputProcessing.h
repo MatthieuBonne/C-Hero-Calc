@@ -157,7 +157,7 @@ std::string makeJSONFromInstance(Instance instance, bool valid);
 Army makeArmyFromStrings(std::vector<std::string> stringMonsters);
 
 // Parse hero input from a string into its name and level
-std::pair<Monster, int> parseHeroString(std::string heroString);
+std::tuple<Monster, int, int> parseHeroString(std::string heroString);
 
 // Functions for making a valid ingame replay string
 std::string makeBattleReplay(Army friendly, Army hostile);

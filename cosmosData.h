@@ -28,6 +28,7 @@ using FollowerCount = uint32_t;
 const size_t ARMY_MAX_SIZE = 6;
 const size_t ARMY_MAX_BRUTEFORCEABLE_SIZE = 4;
 const std::string HEROLEVEL_SEPARATOR = ":";
+const std::string HEROPROMO_SEPARATOR = ".";
 
 // Needed for BattleReplays
 const size_t TOURNAMENT_LINES = 5;
@@ -344,7 +345,7 @@ inline bool isCheaper(const Monster & a, const Monster & b) {
 }
 
 // Add a leveled hero to the database and return its corresponding index
-MonsterIndex addLeveledHero(Monster & hero, int level);
+MonsterIndex addLeveledHero(Monster & hero, int level, int promo);
 
 // Returns the index of a quest if the lineup is the same. Returns -1 if not a quest
 int isQuest(Army & army);
