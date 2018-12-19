@@ -24,7 +24,7 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
             int hpBonus = 0;
             int atkBonus = 0;
             int skillBonus = 0;
-            int points = 0;
+            int points = this->rarity;
             switch (promo){
                 case 5:
                     this->skill.amount += promoFive;
@@ -34,16 +34,16 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
                 case 3:
                     switch(rarity){
                         case COMMON:
-                            points = this->rarity + 1;
+                            points += 1;
                             break;
                         case RARE:
-                            points = this->rarity + 2;
+                            points += 2;
                             break;
                         case LEGENDARY:
-                            points = this->rarity + 3;
+                            points += 3;
                             break;
                         case ASCENDED:
-                            points = this->rarity + 4;
+                            points += 4;
                             break;
                         default:
                             break;
