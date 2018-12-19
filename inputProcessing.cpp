@@ -262,7 +262,7 @@ bool IOManager::askYesNoQuestion(string questionMessage, OutputLevel urgency, st
 vector<MonsterIndex> IOManager::takeHerolevelInput() {
     vector<MonsterIndex> heroes {};
     vector<string> input;
-    pair<Monster, int> heroData;
+    tuple<Monster, int, int> heroData;
 
     interface.outputMessage("\nEnter your Heroes with levels. Press enter after every Hero.", QUERY_OUTPUT);
     interface.outputMessage("Press enter twice or type " + TOKENS.HEROES_FINISHED + " to proceed without inputting additional Heroes.", QUERY_OUTPUT);
@@ -415,7 +415,7 @@ tuple<Monster, int, int> parseHeroString(string heroString) {
     }
     else {
         try {
-            level = (int) parseInt(heroString.substr(heroString.find(HEROLEVEL_SEPARATOR)+1, heroString.substr(heroString.find(HEROPROMO_SEPARATOR)));
+            level = (int) parseInt(heroString.substr(heroString.find(HEROLEVEL_SEPARATOR)+1, heroString.find(HEROPROMO_SEPARATOR)));
         } catch (const exception & e) {
             throw HERO_PARSE;
         }
@@ -434,7 +434,7 @@ tuple<Monster, int, int> parseHeroString(string heroString) {
     Monster hero;
     for (size_t i = 0; i < baseHeroes.size(); i++) {
         if (baseHeroes[i].baseName == name) {
-            return pair<Monster, int, int>(baseHeroes[i], level, promo);
+            return tuple<Monster, int, int>(baseHeroes[i], level, promo);
         }
     }
     throw HERO_PARSE;

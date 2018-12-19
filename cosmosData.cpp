@@ -13,10 +13,10 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
     level(aLevel),
     promo(aPromo),
     name(aName),
-    hpBoost(promoOne),
-    atkBoost(promoTwo),
-    hpatkBoost(promoFour),
-    skillBoost(promoFour),
+    promoOne(promoOne),
+    promoTwo(promoTwo),
+    promoFour(promoFour),
+    promoFive(promoFive)
 {
     if (this->rarity != NO_HERO) {
         this->name = this->baseName + HEROLEVEL_SEPARATOR + std::to_string(this->level);
@@ -24,36 +24,38 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
             int hpBonus = 0;
             int atkBonus = 0;
             int skillBonus = 0;
+            int points = 0;
             switch (promo){
                 case 5:
-                    this->skill.amount += skillBoost;
+                    this->skill.amount += promoFive;
                 case 4:
-                    hpBonus = hpBoost;
-                    atkBonus = atkBoost;
+                    hpBonus = promoFour;
+                    atkBonus = promoFour;
                 case 3:
                     switch(rarity){
                         case COMMON:
-                            this->rarity += 1;
+                            points = this->rarity + 1;
                             break;
                         case RARE:
-                            this->rarity += 2;
+                            points = this->rarity + 2;
                             break;
                         case LEGENDARY:
-                            this->rarity += 3;
+                            points = this->rarity + 3;
                             break;
                         case ASCENDED:
-                            this->rarity += 4;
+                            points = this->rarity + 4;
                             break;
                         default:
                             break;
                     }
                 case 2:
-                    atkBonus += atkBoost;
+                    atkBonus += promoTwo;
                 case 1:
-                    hpBonus += hpBoost;
+                    hpBonus += promoOne;
                 default:
+                    break;
             }
-            int points = this->rarity * (this->level-1);
+            points *= (this->level-1);
             int value = this->hp + this->damage;
 
             int mult = (aSkill.skillType == GROW) ? aSkill.amount : 1;
@@ -557,7 +559,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster(190, 38, "atr0n1x",            FIRE,  ASCENDED,  {VALKYRIE,      ALL, FIRE, 0.75f}, 383, 56, 25, 0.05));
     baseHeroes.push_back(Monster(222,  8, "ageum",              EARTH, ASCENDED,  {BERSERK,       SELF, EARTH, 2}, 348, 35, 16, 0.2));
     baseHeroes.push_back(Monster(116,116, "ageror",             AIR,   ASCENDED,  {FRIENDS,       SELF, AIR, 1.3f}, 173, 22, 153, 0.13));
-    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 112, "lordofchaos", FIRE, WORLDBOSS, {AOE,      ALL, FIRE, 50}, 20, 20, 30, 0.1));
+    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 113, "lordofchaos", FIRE, WORLDBOSS, {AOE,      ALL, FIRE, 50}, 20, 20, 30, 0.1));
     baseHeroes.push_back(Monster( 38, 24, "christmaself",       WATER, COMMON,    {HEAL_L,        ALL, WATER, 0.1112f}, 28, 34, 22, 0.01112));
     baseHeroes.push_back(Monster( 54, 36, "reindeer",           AIR,   RARE,      {AOE_L,         ALL, AIR, 0.1112f}, 53, 18, 33, 0.01112));
     baseHeroes.push_back(Monster( 72, 48, "santaclaus",         FIRE,  LEGENDARY, {LIFESTEAL_L,   ALL, FIRE, 0.1112f}, 107, 96, 48, 0.01112));
@@ -572,7 +574,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 78, 40, "rua",                FIRE,  LEGENDARY, {TRAMPLE,       ALL, FIRE, 2}, 108, 44, 37, 0.05));
     baseHeroes.push_back(Monster( 82, 44, "dorth",              WATER, LEGENDARY, {TRAMPLE,       ALL, WATER, 2}, 90, 38, 17, 0.05));
     baseHeroes.push_back(Monster(141, 99, "arigr",              EARTH, ASCENDED,  {ADAPT,         EARTH, EARTH, 3}, 138, 121, 93, 0.3));
-    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 190, "motherofallkodamas", EARTH, WORLDBOSS, {DAMPEN,        ALL, EARTH, 0.5}, 20, 20, 30, 0.1));
+    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 191, "motherofallkodamas", EARTH, WORLDBOSS, {DAMPEN,        ALL, EARTH, 0.5}, 20, 20, 30, 0.1));
     baseHeroes.push_back(Monster( 42, 50, "hosokawa",           AIR,   LEGENDARY, {BUFF_L,        AIR, AIR, 0.1112f}, 108, 115, 74, 0.01112));
     baseHeroes.push_back(Monster( 32, 66, "takeda",             EARTH, LEGENDARY, {BUFF_L,        EARTH, EARTH, 0.1112f}, 83, 82, 32, 0.01112));
     baseHeroes.push_back(Monster( 38, 56, "hirate",             FIRE,  LEGENDARY, {BUFF_L,        FIRE, FIRE, 0.1112f}, 53, 133, 44, 0.01112));
@@ -611,7 +613,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 82, 164, "atakeda",           EARTH, ASCENDED,  {BUFF_L,        EARTH, EARTH, 0.1819f}, 252, 425, 66, 0.01819));
     baseHeroes.push_back(Monster( 96, 144, "ahirate",           FIRE,  ASCENDED,  {BUFF_L,        FIRE, FIRE, 0.1819f}, 139, 23, 27, 0.01819));
     baseHeroes.push_back(Monster( 114,126, "ahattori",          WATER, ASCENDED,  {BUFF_L,        WATER, WATER, 0.1819f}, 218, 116, 117, 0.01819));
-    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 170, "doyenne", WATER, WORLDBOSS, {DODGE,      ALL, ALL, 15000}, 20, 20, 30, 0.1));
+    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 171, "doyenne", WATER, WORLDBOSS, {DODGE,      ALL, ALL, 15000}, 20, 20, 30, 0.1));
     baseHeroes.push_back(Monster( 30, 40, "billy",              EARTH, COMMON,    {DEATHSTRIKE,   ALL, EARTH, 100}, 43, 30, 24, 100));
     baseHeroes.push_back(Monster( 88, 22, "sanqueen",           WATER, RARE,      {LEECH,         SELF, WATER, 0.8}, 71, 8, 16, 0.08));
     baseHeroes.push_back(Monster(150, 60, "cliodhna",           AIR,   LEGENDARY, {EVOLVE,        SELF, AIR, 1}, 193, 240, 78, 0.1));
@@ -982,8 +984,8 @@ void pruneAvailableMonsters(const FollowerCount maximumArmyCost, std::vector<Mon
 }
 
 // Add a leveled hero to the database and return its corresponding index
-MonsterIndex addLeveledHero(Monster & hero, int level) {
-    Monster m(hero, level);
+MonsterIndex addLeveledHero(Monster & hero, int level, int promo) {
+    Monster m(hero, level, promo);
     monsterReference.emplace_back(m);
 
     return (MonsterIndex) (monsterReference.size() - 1);

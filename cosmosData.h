@@ -144,7 +144,7 @@ const HeroSkill NO_SKILL = HeroSkill({NOTHING, AIR, AIR, 1}); // base skill used
 // Defines a Monster or Hero
 class Monster {
     private:
-        Monster(int hp, int damage, FollowerCount cost, std::string name, Element element, HeroRarity rarity, HeroSkill skill, int level);
+        Monster(int hp, int damage, FollowerCount cost, std::string name, Element element, HeroRarity rarity, HeroSkill skill, int promoOne, int promoTwo, int promoFour, double promoFive, int level, int promo);
 
     public :
         int hp;
@@ -157,13 +157,18 @@ class Monster {
         HeroRarity rarity;
         HeroSkill skill;
         int level;
+        int promo;
+        int promoOne;
+        int promoTwo;
+        int promoFour;
+        double promoFive;
         int index; // Index used by game, indices for monsters and heroes are assigned at initIndices()
 
         std::string name; // display name
 
         Monster(int hp, int damage, FollowerCount cost, std::string name, Element element);
-        Monster(int hp, int damage, std::string name, Element element, HeroRarity rarity, HeroSkill skill);
-        Monster(const Monster & baseHero, int level);
+        Monster(int hp, int damage, std::string name, Element element, HeroRarity rarity, HeroSkill skill, int promoOne, int promoTwo, int promoFour, double promoFive);
+        Monster(const Monster & baseHero, int level, int promo);
         Monster() {};
 
         std::string toJSON();

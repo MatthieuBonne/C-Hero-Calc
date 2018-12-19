@@ -163,6 +163,7 @@ std::tuple<Monster, int, int> parseHeroString(std::string heroString);
 std::string makeBattleReplay(Army friendly, Army hostile);
 std::string getReplaySetup(Army setup);
 std::string getReplayHeroes(Army setup);
+std::string getReplayPromo(Army setup);
 
 bool parseBool(std::string toParse);
 int64_t parseInt(std::string toParse);
