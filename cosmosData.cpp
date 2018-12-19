@@ -52,7 +52,9 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
                     atkBonus += promoTwo;
                 case 1:
                     hpBonus += promoOne;
+                    break;
                 default:
+                    this->promo = 0;
                     break;
             }
             points *= (this->level-1);
