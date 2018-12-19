@@ -69,16 +69,16 @@ Monster::Monster(const Monster & baseHero, int aLevel) :
         this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
     } else if (baseHero.skill.skillType == RESISTANCE_L) {
         this->skill.skillType = RESISTANCE;
-        this->skill.amount = (double) aLevel * baseHero.skill.amount;
+        this->skill.amount = aLevel / 9 * baseHero.skill.amount;
     } else if (baseHero.skill.skillType == AOEREFLECT_L) {
         this->skill.skillType = AOEREFLECT;
-        this->skill.amount = (double) aLevel * baseHero.skill.amount;
+        this->skill.amount = aLevel / 3 * baseHero.skill.amount;
     } else if (baseHero.skill.skillType == HPPIERCE_L) {
         this->skill.skillType = HPPIERCE;
-        this->skill.amount = (double) aLevel * baseHero.skill.amount;
+        this->skill.amount = aLevel / 9 * baseHero.skill.amount;
     } else if (baseHero.skill.skillType == SACRIFICE_L) {
         this->skill.skillType = SACRIFICE;
-        this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
+        this->skill.amount = aLevel / 9 * baseHero.skill.amount;
     }
 }
 
@@ -544,7 +544,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster(222,  8, "ageum",              EARTH, ASCENDED,  {BERSERK,       SELF, EARTH, 2}));
     baseHeroes.push_back(Monster(116,116, "ageror",             AIR,   ASCENDED,  {FRIENDS,       SELF, AIR, 1.3f}));
 
-    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 73, "lordofchaos", FIRE, WORLDBOSS, {AOE,      ALL, FIRE, 20}));
+    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 112, "lordofchaos", FIRE, WORLDBOSS, {AOE,      ALL, FIRE, 50}));
 
     baseHeroes.push_back(Monster( 38, 24, "christmaself",       WATER, COMMON,    {HEAL_L,        ALL, WATER, 0.1112f}));
     baseHeroes.push_back(Monster( 54, 36, "reindeer",           AIR,   RARE,      {AOE_L,         ALL, AIR, 0.1112f}));
@@ -566,7 +566,7 @@ void initBaseHeroes() {
 
     baseHeroes.push_back(Monster(141, 99, "arigr",              EARTH, ASCENDED,  {ADAPT,         EARTH, EARTH, 3}));
 
-    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 125, "motherofallkodamas", EARTH, WORLDBOSS, {DAMPEN,        ALL, EARTH, 0.5}));
+    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 190, "motherofallkodamas", EARTH, WORLDBOSS, {DAMPEN,        ALL, EARTH, 0.5}));
 
     baseHeroes.push_back(Monster( 42, 50, "hosokawa",           AIR,   LEGENDARY, {BUFF_L,        AIR, AIR, 0.1112f}));
     baseHeroes.push_back(Monster( 32, 66, "takeda",             EARTH, LEGENDARY, {BUFF_L,        EARTH, EARTH, 0.1112f}));
@@ -622,7 +622,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 96, 144, "ahirate",           FIRE,  ASCENDED,  {BUFF_L,        FIRE, FIRE, 0.1819f}));
     baseHeroes.push_back(Monster( 114,126, "ahattori",          WATER, ASCENDED,  {BUFF_L,        WATER, WATER, 0.1819f}));
 
-    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 110, "doyenne", WATER, WORLDBOSS, {DODGE,      ALL, ALL, 5000}));
+    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 170, "doyenne", WATER, WORLDBOSS, {DODGE,      ALL, ALL, 15000}));
 
     baseHeroes.push_back(Monster( 30, 40, "billy",              EARTH, COMMON,    {DEATHSTRIKE,   ALL, EARTH, 100}));
     baseHeroes.push_back(Monster( 88, 22, "sanqueen",           WATER, RARE,      {LEECH,         SELF, WATER, 0.8}));
@@ -635,6 +635,11 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 96, 30, "buccaneerbeatrice",  WATER, LEGENDARY, {EXECUTE,       WATER, WATER, 0.3}));
     baseHeroes.push_back(Monster(100, 32, "corsaircharles",     AIR,   LEGENDARY, {EXECUTE,       AIR, AIR, 0.35}));
     baseHeroes.push_back(Monster(105, 34, "maraudermagnus",     FIRE,  LEGENDARY, {EXECUTE,       FIRE, FIRE, 0.4}));
+
+    baseHeroes.push_back(Monster( 46, 52, "frosty",             WATER, RARE,      {RESISTANCE,    ALL, WATER, 0.03f}));
+    baseHeroes.push_back(Monster( 50, 18, "fir",                EARTH, COMMON,    {AOEREFLECT,    ALL, EARTH, 0.004f}));
+    baseHeroes.push_back(Monster( 78, 34, "5-12-6",             AIR,   RARE,      {HPPIERCE,      ALL, AIR, 0.03f}));
+    baseHeroes.push_back(Monster(170, 18, "kedari",             FIRE,  LEGENDARY, {SACRIFICE,     ALL, FIRE, 3}));
 }
 
 void initIndices() {
@@ -694,6 +699,13 @@ void initHeroAliases() {
     heroAliases["charles"] = "corsaircharles";
     heroAliases["magnus"] = "maraudermagnus";
     heroAliases["rose"] = "raiderrose";
+    heroAliases["elftwo"] = "5-12-6";
+    heroAliases["numbers"] = "5-12-6";
+    heroAliases["cipher"] = "5-12-6";
+    heroAliases["mechaelf"] = "5-12-6";
+    heroAliases["elfmech"] = "5-12-6";
+    heroAliases["roboelf"] = "5-12-6";
+    heroAliases["kraide"] = "kedari";
 
     heroAliases["loc"] = "lordofchaos";
     heroAliases["fboss"] = "lordofchaos";
