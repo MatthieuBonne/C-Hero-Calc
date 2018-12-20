@@ -313,6 +313,8 @@ cipher 5-12-6
 mechaelf 5-12-6
 elfmech 5-12-6
 roboelf 5-12-6
+melf 5-12-6
+mekelf 5-12-6
 kraide kedari
 loc lordofchaos
 fboss lordofchaos
