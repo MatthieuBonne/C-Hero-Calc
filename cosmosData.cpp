@@ -625,10 +625,10 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 96, 30, "buccaneerbeatrice",  WATER, LEGENDARY, {EXECUTE,       WATER, WATER, 0.3}, 66, 32, 66, 0.05));
     baseHeroes.push_back(Monster(100, 32, "corsaircharles",     AIR,   LEGENDARY, {EXECUTE,       AIR, AIR, 0.35}, 87, 21, 64, 0.05));
     baseHeroes.push_back(Monster(105, 34, "maraudermagnus",     FIRE,  LEGENDARY, {EXECUTE,       FIRE, FIRE, 0.4}, 175, 67, 71, 0.05));
-    baseHeroes.push_back(Monster( 46, 52, "frosty",             WATER, RARE,      {RESISTANCE,    ALL, WATER, 0.03f}, 51, 69, 16, 0.003));
-    baseHeroes.push_back(Monster( 50, 18, "fir",                EARTH, COMMON,    {AOEREFLECT,    ALL, EARTH, 0.004f}, 33, 5, 11, 0.0004));
-    baseHeroes.push_back(Monster( 78, 34, "5-12-6",             AIR,   RARE,      {HPPIERCE,      ALL, AIR, 0.03f}, 42, 37, 39, 0.003));
-    baseHeroes.push_back(Monster(170, 18, "kedari",             FIRE,  LEGENDARY, {SACRIFICE,     ALL, FIRE, 3}, 133, 19, 25, 0.3));
+    baseHeroes.push_back(Monster( 46, 52, "frosty",             WATER, RARE,      {RESISTANCE_L,    ALL, WATER, 0.03f}, 51, 69, 16, 0.003));
+    baseHeroes.push_back(Monster( 50, 18, "fir",                EARTH, COMMON,    {AOEREFLECT_L,    ALL, EARTH, 0.004f}, 33, 5, 11, 0.0004));
+    baseHeroes.push_back(Monster( 78, 34, "5-12-6",             AIR,   RARE,      {HPPIERCE_L,      ALL, AIR, 0.03f}, 42, 37, 39, 0.003));
+    baseHeroes.push_back(Monster(170, 18, "kedari",             FIRE,  LEGENDARY, {SACRIFICE_L,     ALL, FIRE, 3}, 133, 19, 25, 0.3));
 }
 
 void initIndices() {
