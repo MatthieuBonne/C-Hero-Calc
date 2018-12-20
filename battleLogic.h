@@ -63,6 +63,7 @@ class ArmyCondition {
         int64_t seed;
 
         int berserkProcs; // for berserk ability
+        int64_t lastBerserk;
         double evolveTotal; //for evolve ability
 
         int monstersLost;
@@ -99,6 +100,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
     armySize = army.monsterAmount;
     monstersLost = oldMonstersLost;
     berserkProcs = 0;
+    lastBerserk = 0;
     evolveTotal = 0;
 
     dice = -1;
@@ -244,7 +246,15 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case ADAPT:     if (opposingElement == skillTargets[monstersLost]) {
                             turnData.multiplier *= skillAmounts[monstersLost];
                         } break;
-        case BERSERK:   turnData.multiplier *= (double) pow(skillAmounts[monstersLost], berserkProcs); berserkProcs++;
+        case BERSERK:   if (lastBerserk)
+                            turnData.valkyrieDamage = round((double)lastBerserk * skillAmounts[monstersLost]);
+                        else
+                            turnData.valkyrieDamage = turnData.baseDamage;
+                        if (turnData.valkyrieDamage >= std::numeric_limits<int>::max())
+                            turnData.baseDamage = static_cast<DamageType>(ceil(turnData.valkyrieDamage));
+                        else
+                            turnData.baseDamage = round(turnData.valkyrieDamage);
+                        lastBerserk = turnData.baseDamage;
                         break;
         case VALKYRIE:  turnData.valkyrieMult = skillAmounts[monstersLost];
                         break;
@@ -425,6 +435,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         if (i == monstersLost) {
           monstersLost++;
           berserkProcs = 0;
+          lastBerserk = 0;
           evolveTotal = 0;
         }
         skillTypes[i] = NOTHING; // disable dead hero's ability
@@ -470,6 +481,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                 if (i == monstersLost) {
                     monstersLost++;
                     berserkProcs = 0;
+                    lastBerserk = 0;
                     evolveTotal = 0;
                 }
                 skillTypes[i] = NOTHING; // disable dead hero's ability
