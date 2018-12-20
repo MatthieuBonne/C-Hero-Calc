@@ -81,45 +81,45 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
 {
     this->index = baseHero.index;
 
-    if (baseHero.skill.skillType == BUFF_L) {
+    if (this->skill.skillType == BUFF_L) {
         this->skill.skillType = BUFF;
-        this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
-    } else if (baseHero.skill.skillType == PROTECT_L) {
+        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+    } else if (this->skill.skillType == PROTECT_L) {
         this->skill.skillType = PROTECT;
-        this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
-    } else if (baseHero.skill.skillType == CHAMPION_L) {
+        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+    } else if (this->skill.skillType == CHAMPION_L) {
         this->skill.skillType = CHAMPION;
-        this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
-    } else if (baseHero.skill.skillType == HEAL_L) {
+        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+    } else if (this->skill.skillType == HEAL_L) {
         this->skill.skillType = HEAL;
-        this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
-    } else if (baseHero.skill.skillType == AOE_L) {
+        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+    } else if (this->skill.skillType == AOE_L) {
         this->skill.skillType = AOE;
-        this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
-    } else if (baseHero.skill.skillType == LIFESTEAL_L) {
+        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+    } else if (this->skill.skillType == LIFESTEAL_L) {
         this->skill.skillType = LIFESTEAL;
-        this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
-    } else if (baseHero.skill.skillType == DAMPEN_L) {
+        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+    } else if (this->skill.skillType == DAMPEN_L) {
         this->skill.skillType = DAMPEN;
-        this->skill.amount = 1.0f - (double) aLevel * baseHero.skill.amount;
-    } else if (baseHero.skill.skillType == AOEZERO_L) {
+        this->skill.amount = 1.0f - (double) aLevel * this->skill.amount;
+    } else if (this->skill.skillType == AOEZERO_L) {
         this->skill.skillType = AOEZERO;
-        this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
-    } else if (baseHero.skill.skillType == EXPLODE_L) {
+        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+    } else if (this->skill.skillType == EXPLODE_L) {
         this->skill.skillType = EXPLODE;
-        this->skill.amount = (double) floor((double) aLevel * baseHero.skill.amount);
-    } else if (baseHero.skill.skillType == RESISTANCE_L) {
+        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+    } else if (this->skill.skillType == RESISTANCE_L) {
         this->skill.skillType = RESISTANCE;
-        this->skill.amount = aLevel / 9 * baseHero.skill.amount;
-    } else if (baseHero.skill.skillType == AOEREFLECT_L) {
+        this->skill.amount = aLevel / 9 * this->skill.amount;
+    } else if (this->skill.skillType == AOEREFLECT_L) {
         this->skill.skillType = AOEREFLECT;
-        this->skill.amount = aLevel / 3 * baseHero.skill.amount;
-    } else if (baseHero.skill.skillType == HPPIERCE_L) {
+        this->skill.amount = aLevel / 3 * this->skill.amount;
+    } else if (this->skill.skillType == HPPIERCE_L) {
         this->skill.skillType = HPPIERCE;
-        this->skill.amount = aLevel / 9 * baseHero.skill.amount;
-    } else if (baseHero.skill.skillType == SACRIFICE_L) {
+        this->skill.amount = aLevel / 9 * this->skill.amount;
+    } else if (this->skill.skillType == SACRIFICE_L) {
         this->skill.skillType = SACRIFICE;
-        this->skill.amount = aLevel / 9 * baseHero.skill.amount;
+        this->skill.amount = aLevel / 9 * this->skill.amount;
     }
 }
 
