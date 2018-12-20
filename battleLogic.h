@@ -400,9 +400,12 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
       // std::cout << "LUX DID NOT HIT FRONTLINER" << std::endl;
     }
 
-    if (opposing.trampleTriggered && armySize > frontliner + 1) {
-        // std::cout << "TRAMPLE" << std::endl;
-        remainingHealths[frontliner + 1] -= opposing.valkyrieDamage;
+    if (opposing.trampleTriggered) {
+        for (int i = frontliner + 1; i < armySize; i++)
+            if (remainingHealths[i] > 0){
+                remainingHealths[i] -= opposing.valkyrieDamage;
+                break;
+            }
     }
 
     if (opposing.explodeDamage != 0 && remainingHealths[frontliner] <= 0 && !worldboss) {
