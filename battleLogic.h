@@ -22,6 +22,7 @@ struct TurnData {
     double aoeReflect = 0;
     int hpPierce = 0;
     int sacHeal = 0;
+    int immunityValue = 0;
 
     double counter = 0;
     double valkyrieMult = 0;
@@ -56,6 +57,7 @@ class ArmyCondition {
 
         int dice;
         bool booze; // for leprechaun's ability
+        int boozeValue;//Adds an illusory amount of enemies to lep's perception amplifying his aoe
         int aoeZero; // for hawking's ability
 
         int64_t seed;
@@ -101,6 +103,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
 
     dice = -1;
     booze = false;
+    boozeValue = 0;
     worldboss = false;
     aoeZero = 0;
 
@@ -117,7 +120,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
 
         maxHealths[i] = lineup[i]->hp;
         if (skill->skillType == DICE) dice = i; //assumes only 1 unit per side can have dice ability, have to change to bool and loop at turn zero if this changes
-        if (skill->skillType == BEER) booze = true;
+        if (skill->skillType == BEER){ booze = true; boozeValue = skill->amount;}
         if (skill->skillType == AOEZERO) aoeZero += skill->amount;
 
         rainbowConditions[i] = tempRainbowCondition == VALID_RAINBOW_CONDITION;
@@ -143,10 +146,12 @@ inline void ArmyCondition::startNewTurn() {
     turnData.absorbDamage = 0;
     turnData.resistance = 0;
     turnData.sacHeal = 0;
+    turnData.immunityValue = 0;
 
     if( skillTypes[monstersLost] == DODGE )
     {
         turnData.immunity5K = true ;
+        turnData.immunityValue = skillAmounts[monstersLost];
     }
     else
     {
@@ -202,6 +207,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     const bool opposingImmunityDamage = opposingCondition.turnData.immunity5K;
     const double opposingDamage = opposingCondition.lineup[opposingCondition.monstersLost]->damage;
     const double opposingResistance = opposingCondition.turnData.resistance;
+    const int opposingImmunityValue = opposingCondition.turnData.immunityValue;
 
     // Handle Monsters with skills that only activate on attack.
     turnData.trampleTriggered = false;
@@ -340,7 +346,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.aoeReflect *= opposingDampFactor;//Have to check if Bubbles affects it
     }
 
-    if( opposingImmunityDamage && (turnData.valkyrieDamage >= 5000 || turnData.baseDamage >= 5000 ) ) {
+    if( opposingImmunityDamage && (turnData.valkyrieDamage >= opposingImmunityValue || turnData.baseDamage >= opposingImmunityValue ) ) {
         turnData.valkyrieDamage = 0 ;
         turnData.baseDamage = 0 ;
     }
@@ -446,7 +452,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     // Handle wither ability
     if (skillTypes[monstersLost] == WITHER && monstersLost == frontliner) {
         // remainingHealths[monstersLost] = castCeil((double) remainingHealths[monstersLost] * skillAmounts[monstersLost]);
-        remainingHealths[monstersLost] = round((double) remainingHealths[monstersLost] * skillAmounts[monstersLost]);
+        remainingHealths[monstersLost] = round((double) remainingHealths[monstersLost] * ( (double)1 -((double) 1 / skillAmounts[monstersLost]) ));//Updated for promotion values.
     }
 
     frontliner = monstersLost; //For Sanqueen's leech ability, as a check whether she's been killed by a "delayed" ability, like reflect.
@@ -633,14 +639,14 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         }
 
         // Apply Leprechaun's skill (Beer)
-        if (leftCondition.booze && leftCondition.armySize < rightCondition.armySize)
+        if (leftCondition.booze && leftCondition.armySize < (rightCondition.armySize + leftCondition.boozeValue))
             for (size_t i = 0; i < ARMY_MAX_SIZE; ++i) {
-                rightCondition.remainingHealths[i] = int(rightCondition.maxHealths[i] * leftCondition.armySize / rightCondition.armySize);
+                rightCondition.remainingHealths[i] = int(rightCondition.maxHealths[i] * leftCondition.armySize / (rightCondition.armySize + leftCondition.boozeValue));
             }
 
-        if (rightCondition.booze && rightCondition.armySize < leftCondition.armySize)
+        if (rightCondition.booze && rightCondition.armySize < (leftCondition.armySize + rightCondition.boozeValue))
             for (size_t i = 0; i < ARMY_MAX_SIZE; ++i) {
-                leftCondition.remainingHealths[i] = int(leftCondition.maxHealths[i] * rightCondition.armySize / leftCondition.armySize);
+                leftCondition.remainingHealths[i] = int(leftCondition.maxHealths[i] * rightCondition.armySize / (leftCondition.armySize + rightCondition.boozeValue));
             }
 
         // Reset Potential values in fightresults

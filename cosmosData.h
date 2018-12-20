@@ -14,7 +14,7 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.0.0.0a";
+const std::string VERSION = "4.0.0.1e_test_build";
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
@@ -28,6 +28,7 @@ using FollowerCount = uint32_t;
 const size_t ARMY_MAX_SIZE = 6;
 const size_t ARMY_MAX_BRUTEFORCEABLE_SIZE = 4;
 const std::string HEROLEVEL_SEPARATOR = ":";
+const std::string HEROPROMO_SEPARATOR = ".";
 
 // Needed for BattleReplays
 const size_t TOURNAMENT_LINES = 5;
@@ -143,7 +144,7 @@ const HeroSkill NO_SKILL = HeroSkill({NOTHING, AIR, AIR, 1}); // base skill used
 // Defines a Monster or Hero
 class Monster {
     private:
-        Monster(int hp, int damage, FollowerCount cost, std::string name, Element element, HeroRarity rarity, HeroSkill skill, int level);
+        Monster(int hp, int damage, FollowerCount cost, std::string name, Element element, HeroRarity rarity, HeroSkill skill, int promoOne, int promoTwo, int promoFour, double promoFive, int level, int promo);
 
     public :
         int hp;
@@ -156,13 +157,18 @@ class Monster {
         HeroRarity rarity;
         HeroSkill skill;
         int level;
+        int promo;
+        int promoOne;
+        int promoTwo;
+        int promoFour;
+        double promoFive;
         int index; // Index used by game, indices for monsters and heroes are assigned at initIndices()
 
         std::string name; // display name
 
         Monster(int hp, int damage, FollowerCount cost, std::string name, Element element);
-        Monster(int hp, int damage, std::string name, Element element, HeroRarity rarity, HeroSkill skill);
-        Monster(const Monster & baseHero, int level);
+        Monster(int hp, int damage, std::string name, Element element, HeroRarity rarity, HeroSkill skill, int promoOne, int promoTwo, int promoFour, double promoFive);
+        Monster(const Monster & baseHero, int level, int promo);
         Monster() {};
 
         std::string toJSON();
@@ -344,7 +350,7 @@ inline bool isCheaper(const Monster & a, const Monster & b) {
 }
 
 // Add a leveled hero to the database and return its corresponding index
-MonsterIndex addLeveledHero(Monster & hero, int level);
+MonsterIndex addLeveledHero(Monster & hero, int level, int promo);
 
 // Returns the index of a quest if the lineup is the same. Returns -1 if not a quest
 int isQuest(Army & army);

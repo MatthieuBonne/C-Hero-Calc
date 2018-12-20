@@ -262,7 +262,7 @@ bool IOManager::askYesNoQuestion(string questionMessage, OutputLevel urgency, st
 vector<MonsterIndex> IOManager::takeHerolevelInput() {
     vector<MonsterIndex> heroes {};
     vector<string> input;
-    pair<Monster, int> heroData;
+    tuple<Monster, int, int> heroData;
 
     interface.outputMessage("\nEnter your Heroes with levels. Press enter after every Hero.", QUERY_OUTPUT);
     interface.outputMessage("Press enter twice or type " + TOKENS.HEROES_FINISHED + " to proceed without inputting additional Heroes.", QUERY_OUTPUT);
@@ -278,12 +278,12 @@ vector<MonsterIndex> IOManager::takeHerolevelInput() {
                 heroData = parseHeroString(input[0]);
                 bool heroUsed = false;
                 for (size_t i = 0; i < heroes.size(); i++) {
-                    heroUsed |= (heroData.first.baseName == monsterReference[heroes[i]].baseName);
+                    heroUsed |= (std::get<0>(heroData).baseName == monsterReference[heroes[i]].baseName);
                 }
                 if (!heroUsed) {
-                    heroes.push_back(addLeveledHero(heroData.first, heroData.second));
+                    heroes.push_back(addLeveledHero(std::get<0>(heroData), std::get<1>(heroData), std::get<2>(heroData)));
                 } else {
-                    interface.outputMessage(heroData.first.baseName + " already used. Ignoring...", NOTIFICATION_OUTPUT);
+                    interface.outputMessage(std::get<0>(heroData).baseName + " already used. Ignoring...", NOTIFICATION_OUTPUT);
                 }
             } catch (InputException e) {
                 this->handleInputException(e);
@@ -383,12 +383,12 @@ Instance makeInstanceFromString(string instanceString) {
 // Parse string lineup input into actual monsters. If there are heroes in the input, a leveled hero is added to the database
 Army makeArmyFromStrings(vector<string> stringMonsters) {
     Army army;
-    pair<Monster, int> heroData;
+    tuple<Monster, int, int> heroData;
 
     for(size_t i = 0; i < stringMonsters.size(); i++) {
         if(stringMonsters[i].find(HEROLEVEL_SEPARATOR) != stringMonsters[i].npos) {
             heroData = parseHeroString(stringMonsters[i]);
-            army.add(addLeveledHero(heroData.first, heroData.second));
+            army.add(addLeveledHero(std::get<0>(heroData), std::get<1>(heroData), std::get<2>(heroData)));
         } else {
             try {
                 army.add(monsterMap.at(stringMonsters[i]));
@@ -401,13 +401,29 @@ Army makeArmyFromStrings(vector<string> stringMonsters) {
 }
 
 // Parse hero input from a string into its name and level
-pair<Monster, int> parseHeroString(string heroString) {
+tuple<Monster, int, int> parseHeroString(string heroString) {
     string name = heroString.substr(0, heroString.find(HEROLEVEL_SEPARATOR));
     int level;
-    try {
-        level = (int) parseInt(heroString.substr(heroString.find(HEROLEVEL_SEPARATOR)+1));
-    } catch (const exception & e) {
-        throw HERO_PARSE;
+    int promo;
+    if (heroString.find(HEROPROMO_SEPARATOR) == -1){
+        promo = 0;
+        try {
+            level = (int) parseInt(heroString.substr(heroString.find(HEROLEVEL_SEPARATOR)+1));
+        } catch (const exception & e) {
+            throw HERO_PARSE;
+        }
+    }
+    else {
+        try {
+            level = (int) parseInt(heroString.substr(heroString.find(HEROLEVEL_SEPARATOR)+1, heroString.find(HEROPROMO_SEPARATOR)));
+        } catch (const exception & e) {
+            throw HERO_PARSE;
+        }
+        try {
+            promo = (int) parseInt(heroString.substr(heroString.find(HEROPROMO_SEPARATOR)+1));
+        } catch (const exception & e) {
+            throw HERO_PARSE;
+        }
     }
 
     std::map<string, string>::iterator alias = heroAliases.find(name);
@@ -418,7 +434,7 @@ pair<Monster, int> parseHeroString(string heroString) {
     Monster hero;
     for (size_t i = 0; i < baseHeroes.size(); i++) {
         if (baseHeroes[i].baseName == name) {
-            return pair<Monster, int>(baseHeroes[i], level);
+            return tuple<Monster, int, int>(baseHeroes[i], level, promo);
         }
     }
     throw HERO_PARSE;
@@ -435,8 +451,10 @@ string makeBattleReplay(Army friendly, Army hostile) {
         replay << "\"title\""   << ":" << "\"Proposed Solution\"" << ",";
         replay << "\"setup\""   << ":" << getReplaySetup(friendly) << ",";
         replay << "\"shero\""   << ":" << getReplayHeroes(friendly) << ",";
+        replay << "\"spromo\""  << ":" << getReplayPromo(friendly) << ",";
         replay << "\"player\""  << ":" << getReplaySetup(hostile) << ",";
-        replay << "\"phero\""   << ":" << getReplayHeroes(hostile);
+        replay << "\"phero\""   << ":" << getReplayHeroes(hostile) << ",";
+        replay << "\"ppromo\""  << ":" << getReplayPromo(hostile);
     replay << "}";
     string unencoded = replay.str();
     return base64_encode((const unsigned char*) unencoded.c_str(), (int) unencoded.size());
@@ -477,6 +495,30 @@ string getReplayHeroes(Army setup) {
             }
         }
         heroes << level;
+        if (i < baseHeroes.size()-1) {
+            heroes << ",";
+        }
+    }
+    heroes << "]";
+    return heroes.str();
+}
+
+// Get list of relevant hero promotions in ingame format
+string getReplayPromo(Army setup) {
+    stringstream heroes;
+    Monster monster;
+    int promo;
+    heroes << "[";
+    for (size_t i = 0; i < baseHeroes.size(); i++) {
+        promo = 0;
+        for (int j = 0; j < setup.monsterAmount; j++) {
+            monster = monsterReference[setup.monsters[j]];
+            if (monster.rarity != NO_HERO && monster.baseName == baseHeroes[i].baseName) {
+                promo = monster.promo;
+                break;
+            }
+        }
+        heroes << promo;
         if (i < baseHeroes.size()-1) {
             heroes << ",";
         }
