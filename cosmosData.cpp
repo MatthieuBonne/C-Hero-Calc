@@ -19,7 +19,6 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
     promoFive(promoFive)
 {
     if (this->rarity != NO_HERO) {
-        this->name = this->baseName + HEROLEVEL_SEPARATOR + std::to_string(this->level);
         if (this->rarity != WORLDBOSS) {
             int hpBonus = 0;
             int atkBonus = 0;
@@ -64,6 +63,10 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
             this->hp = this->hp + (int) round((double) points * mult * (double) this->hp / (double) value) + hpBonus;
             this->damage = this->damage + (int) round((double) points * mult * (double) this->damage / (double) value) + atkBonus;
         }
+        if (this->promo)
+            this->name = this->baseName + HEROLEVEL_SEPARATOR + std::to_string(this->level) + HEROPROMO_SEPARATOR + std::to_string(this->promo);
+        else
+            this->name = this->baseName + HEROLEVEL_SEPARATOR + std::to_string(this->level);
     }
 }
 
