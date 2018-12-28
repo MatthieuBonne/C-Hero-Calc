@@ -14,7 +14,7 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.0.0.1j";
+const std::string VERSION = "4.0.1.0a";
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
@@ -102,7 +102,9 @@ enum SkillType {
     RESISTANCE_L,   //Scaling versions of Christmas skills
     AOEREFLECT_L,
     HPPIERCE_L,
-    SACRIFICE_L
+    SACRIFICE_L,
+
+    POSBONUS//+X attack +X health per unit behind
 };
 
 enum Element {

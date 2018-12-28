@@ -124,6 +124,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         if (skill->skillType == DICE) dice = i; //assumes only 1 unit per side can have dice ability, have to change to bool and loop at turn zero if this changes
         if (skill->skillType == BEER){ booze = true; boozeValue = skill->amount;}
         if (skill->skillType == AOEZERO) aoeZero += skill->amount;
+        if (skill->skillType == POSBONUS){ maxHealths[i] += skill->amount * (armySize - i - 1); remainingHealths[i] = maxHealths[i]; }
 
         rainbowConditions[i] = tempRainbowCondition == VALID_RAINBOW_CONDITION;
         //pureMonsters[i] = tempPureMonsters;
@@ -289,6 +290,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case HPPIERCE:  if (!opposingCondition.worldboss)
                         turnData.hpPierce = round((double)opposingCondition.maxHealths[opposingCondition.monstersLost] * skillAmounts[monstersLost]);
                         break;
+        case POSBONUS:  turnData.baseDamage += skillAmounts[monstersLost] * (armySize - monstersLost - 1);
+                        break;
         default:        break;
 
     }
@@ -353,7 +356,6 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.aoeDamage = round((double) turnData.aoeDamage * opposingDampFactor);
         turnData.healing = round((double) turnData.healing * opposingDampFactor);
         turnData.sacHeal = round((double) turnData.sacHeal * opposingDampFactor);//Have to check if Bubbles affects it
-        turnData.aoeReflect *= opposingDampFactor;//Have to check if Bubbles affects it
     }
 
     if( opposingImmunityDamage && (turnData.valkyrieDamage >= opposingImmunityValue || turnData.baseDamage >= opposingImmunityValue ) ) {
