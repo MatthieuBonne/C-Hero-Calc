@@ -22,6 +22,7 @@ struct TurnData {
     double aoeReflect = 0;
     int hpPierce = 0;
     int sacHeal = 0;
+    int deathstrikeDamage = 0;
     int immunityValue = 0;
 
     double counter = 0;
@@ -227,6 +228,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.guyActive = false;
     turnData.aoeReflect = 0;
     turnData.hpPierce = 0;
+    turnData.deathstrikeDamage = 0;
 
     double friendsDamage = 0;
 
@@ -297,11 +299,12 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     }
     turnData.valkyrieDamage = turnData.baseDamage;
     if (friendsDamage == 0) {
-        if (turnData.multiplier > 1) {
-            turnData.valkyrieDamage *= turnData.multiplier;
-        }
+        //Linear before multiplicative
         if (turnData.buffDamage != 0) {
             turnData.valkyrieDamage += turnData.buffDamage;
+        }
+        if (turnData.multiplier > 1) {
+            turnData.valkyrieDamage *= turnData.multiplier;
         }
     }
     else {
@@ -311,21 +314,22 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     if (counter[opposingElement] == lineup[monstersLost]->element) {
         turnData.valkyrieDamage *= elementalBoost + turnData.hate;
     }
-    if (turnData.valkyrieDamage > opposingProtection) { // Handle Protection, when this takes place currently varies based on the side the army is on according to game code
-        turnData.valkyrieDamage -= (double) opposingProtection;
-    } else {
-        turnData.valkyrieDamage = 0;
-    }
 
     if (turnData.critMult > 1) {
         turnData.valkyrieDamage *= turnData.critMult;
     }
 
     if (turnData.hpPierce)
-        turnData.valkyrieDamage += turnData.hpPierce;//Need to check if it goes before or after resistance
+        turnData.valkyrieDamage += turnData.hpPierce;
 
     if (opposingResistance)
         turnData.valkyrieDamage *= 1 - opposingResistance;
+
+    if (turnData.valkyrieDamage > opposingProtection) { 
+        turnData.valkyrieDamage -= (double) opposingProtection;
+    } else {
+        turnData.valkyrieDamage = 0;
+    }
 
     //absorb damage, damage rounded up later
     if (opposingAbsorbMult != 0) {
@@ -367,7 +371,6 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
 // Add damage to the opposing side and check for deaths
 inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     int frontliner = monstersLost; // save original frontliner
-    int counter_target_after_death = frontliner;//Variable that accounts for reflect hitting the next unit if the first one dies.
 
     // Apply normal attack damage to the frontliner
     // If direct_target is non-zero that means Lux is hitting something not the front liner
@@ -468,19 +471,23 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     // Handle wither ability
     if (skillTypes[monstersLost] == WITHER && monstersLost == frontliner) {
         // remainingHealths[monstersLost] = castCeil((double) remainingHealths[monstersLost] * skillAmounts[monstersLost]);
-        remainingHealths[monstersLost] = round((double) remainingHealths[monstersLost] * ( (double)1 -((double) 1 / skillAmounts[monstersLost]) ));//Updated for promotion values.
+        remainingHealths[monstersLost] = round(remainingHealths[monstersLost] * ( 1 -((double) 1 / skillAmounts[monstersLost]) ));//Updated for promotion values.
     }
 
     frontliner = monstersLost; //For Sanqueen's leech ability, as a check whether she's been killed by a "delayed" ability, like reflect.
 
     // Moved reflect functions to the end, reflect is now delayed till after healing and wither occur.
-    if (opposing.counter && counter_eligible && monstersLost < armySize){
-        // Finding Guy's target
-        if(opposing.guyActive)
-            opposing.counter_target = findMaxHP();
-        // Add opposing.counter_target to handle fawkes not targetting the frontliner
-        remainingHealths[monstersLost + opposing.counter_target] -= static_cast<int64_t>(ceil(turnData.baseDamage * opposing.counter));
-        //If reflect killed a frontliner, find next frontliner. Same procedure as when applying aoe.
+    if (monstersLost < armySize){
+        if (opposing.counter && counter_eligible){
+            // Finding Guy's target
+            if(opposing.guyActive)
+                opposing.counter_target = findMaxHP();
+            // Add opposing.counter_target to handle fawkes not targetting the frontliner
+            remainingHealths[monstersLost + opposing.counter_target] -= static_cast<int64_t>(ceil(turnData.baseDamage * opposing.counter));
+        }
+        if (opposing.deathstrikeDamage)
+            remainingHealths[monstersLost] -= opposing.deathstrikeDamage;
+        //If a delayed ability killed a frontliner, find next frontliner. Same procedure as when applying aoe.
         for (int i = monstersLost; i < armySize; i++){
             if (remainingHealths[i] <= 0 && !worldboss) {
                 if (i == monstersLost) {
@@ -711,11 +718,11 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         // Handle Deathstrike Damage before anything else. Deathstrike Damage caused through aoe is ignored
         if (leftCondition.skillTypes[leftCondition.monstersLost] == DEATHSTRIKE &&
             leftCondition.remainingHealths[leftCondition.monstersLost] <= rightCondition.turnData.baseDamage) {
-            leftCondition.turnData.baseDamage += leftCondition.skillAmounts[leftCondition.monstersLost];
+            leftCondition.turnData.deathstrikeDamage = leftCondition.skillAmounts[leftCondition.monstersLost];
         }
         if (rightCondition.skillTypes[rightCondition.monstersLost] == DEATHSTRIKE &&
             rightCondition.remainingHealths[rightCondition.monstersLost] <= leftCondition.turnData.baseDamage) {
-            rightCondition.turnData.baseDamage += rightCondition.skillAmounts[rightCondition.monstersLost];
+            rightCondition.turnData.deathstrikeDamage = rightCondition.skillAmounts[rightCondition.monstersLost];
         }
 
         // Check if anything died as a result
