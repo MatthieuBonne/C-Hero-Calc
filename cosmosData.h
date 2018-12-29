@@ -14,7 +14,7 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.0.1.0b";
+const std::string VERSION = "4.0.1.0c";
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
@@ -229,7 +229,7 @@ struct FightResult {
     int16_t rightAoeDamage;     // how much aoe damage right took
     int8_t monstersLost;        // how many mobs lost on the winning side (the other side lost all)
     int8_t turncounter;         // how many turns have passed since the battle started
-    int8_t berserk;             // berserk multiplier, if there is a berserker in the front
+    int64_t berserk;            // berserk attack stat, if there is a berserker in the front
     bool valid;                 // If the result is valid
     bool dominated;             // If the result is worse than another
 

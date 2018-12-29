@@ -63,7 +63,6 @@ class ArmyCondition {
 
         int64_t seed;
 
-        int berserkProcs; // for berserk ability
         int64_t lastBerserk;
         double evolveTotal; //for evolve ability
 
@@ -100,7 +99,6 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
     seed = army.seed;
     armySize = army.monsterAmount;
     monstersLost = oldMonstersLost;
-    berserkProcs = 0;
     lastBerserk = 0;
     evolveTotal = 0;
 
@@ -442,7 +440,6 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
       if (remainingHealths[i] <= 0 && !worldboss) {
         if (i == monstersLost) {
           monstersLost++;
-          berserkProcs = 0;
           lastBerserk = 0;
           evolveTotal = 0;
         }
@@ -492,7 +489,6 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             if (remainingHealths[i] <= 0 && !worldboss) {
                 if (i == monstersLost) {
                     monstersLost++;
-                    berserkProcs = 0;
                     lastBerserk = 0;
                     evolveTotal = 0;
                 }
@@ -642,7 +638,7 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         }
 
         rightCondition.remainingHealths[rightCondition.monstersLost] = left.lastFightData.frontHealth;
-        rightCondition.berserkProcs        = left.lastFightData.berserk;
+        rightCondition.lastBerserk        = left.lastFightData.berserk;
         turncounter                        = left.lastFightData.turncounter;
     } else {
         // Load Army data into conditions
@@ -764,7 +760,7 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
 
     if (leftCondition.monstersLost >= leftCondition.armySize) { //draws count as right wins.
         left.lastFightData.monstersLost = rightCondition.monstersLost;
-        left.lastFightData.berserk = rightCondition.berserkProcs;
+        left.lastFightData.berserk = rightCondition.lastBerserk;
         if (rightCondition.monstersLost < rightCondition.armySize) {
             left.lastFightData.frontHealth = (int64_t) (rightCondition.remainingHealths[rightCondition.monstersLost]);
         } else {
@@ -774,7 +770,7 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
     } else {
         left.lastFightData.monstersLost = leftCondition.monstersLost;
         left.lastFightData.frontHealth = (int64_t) (leftCondition.remainingHealths[leftCondition.monstersLost]);
-        left.lastFightData.berserk = leftCondition.berserkProcs;
+        left.lastFightData.berserk = leftCondition.lastBerserk;
         return true;
     }
 }
