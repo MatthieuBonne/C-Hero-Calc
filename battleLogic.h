@@ -15,7 +15,9 @@ struct TurnData {
 
     int buffDamage = 0;
     int protection = 0;
+    int armorArray[ARMY_MAX_SIZE];
     int aoeDamage = 0;
+    int aoeRevenge = 0;
     int healing = 0;
     double dampFactor = 1;
     double resistance = 0;
@@ -32,7 +34,9 @@ struct TurnData {
     double absorbDamage = 0;
     int explodeDamage = 0;
     bool trampleTriggered = false;
+    double trampleMult = 0;
     bool guyActive = false;
+    bool ricoActive = false;
     int direct_target = 0;
     int counter_target = 0;
     double critMult = 1;
@@ -76,7 +80,9 @@ class ArmyCondition {
         inline void afterDeath();
         inline void startNewTurn();
         inline void getDamage(const int turncounter, const ArmyCondition & opposingCondition);
+        inline void applyArmor(TurnData & opposing);
         inline void resolveDamage(TurnData & opposing);
+        inline void resolveRevenge(TurnData & opposing);
         inline int64_t getTurnSeed(int64_t seed, int turncounter) {
             // From Alya
             for (int i = 0; i < turncounter; ++i) {
@@ -142,12 +148,14 @@ inline void ArmyCondition::startNewTurn() {
     turnData.buffDamage = 0;
     turnData.protection = 0;
     turnData.aoeDamage = 0;
+    turnData.aoeRevenge = 0;
     turnData.healing = 0;
     turnData.dampFactor = 1;
     turnData.absorbMult = 0;
     turnData.absorbDamage = 0;
     turnData.resistance = 0;
     turnData.sacHeal = 0;
+    turnData.deathstrikeDamage = 0;
     turnData.immunityValue = 0;
 
     if( skillTypes[monstersLost] == DODGE )
@@ -202,7 +210,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
 
     turnData.baseDamage = lineup[monstersLost]->damage; // Get Base damage
 
-    const Element opposingElement = opposingCondition.lineup[opposingCondition.monstersLost]->element;
+    Element opposingElement = opposingCondition.lineup[opposingCondition.monstersLost]->element;
     const int opposingProtection = opposingCondition.turnData.protection;
     const double opposingDampFactor = opposingCondition.turnData.dampFactor;
     const double opposingAbsorbMult = opposingCondition.turnData.absorbMult;
@@ -215,6 +223,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.trampleTriggered = false;
     turnData.explodeDamage = 0;
     turnData.valkyrieMult = 0;
+    turnData.trampleMult = 0;
     turnData.multiplier = 1; // Not used outside this function, does it need to be stored in turnData?
     turnData.critMult = 1; // same as above
     turnData.hate = 0; // same as above
@@ -224,9 +233,9 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.leech = 0;
     turnData.execute = 0;
     turnData.guyActive = false;
+    turnData.ricoActive = false;
     turnData.aoeReflect = 0;
     turnData.hpPierce = 0;
-    turnData.deathstrikeDamage = 0;
 
     double friendsDamage = 0;
 
@@ -258,8 +267,11 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         lastBerserk = turnData.baseDamage;
                         break;
         case VALKYRIE:  turnData.valkyrieMult = skillAmounts[monstersLost];
+                        turnData.ricoActive = true;
                         break;
         case TRAMPLE:   turnData.trampleTriggered = true;
+                        turnData.trampleMult = skillAmounts[monstersLost];
+                        turnData.ricoActive = true;
                         break;
         case COUNTER:   turnData.counter = skillAmounts[monstersLost];
                         break;
@@ -269,6 +281,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         // Pick a target, Bubbles currently dampens lux damage if not targeting first according to game code, interaction should be added if this doesn't change
         case LUX:       turnData.direct_target = getLuxTarget(opposingCondition, getTurnSeed(opposingCondition.seed, 99 -turncounter));
+                        opposingElement = opposingCondition.lineup[turnData.direct_target]->element;
                         break;
         case CRIT:      // turnData.critMult *= getTurnSeed(opposingCondition.seed, turncounter) % 2 == 1 ? skillAmounts[monstersLost] : 1;
                         turnData.critMult *= getTurnSeed(opposingCondition.seed, 99 - turncounter) % 2 == 0 ? skillAmounts[monstersLost] : 1;
@@ -313,6 +326,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.valkyrieDamage *= elementalBoost + turnData.hate;
     }
 
+    int ricoValue = turnData.valkyrieDamage; //Save it so it is not affected by armor and absorb and other individual unit abilities.
+
     if (turnData.critMult > 1) {
         turnData.valkyrieDamage *= turnData.critMult;
     }
@@ -330,7 +345,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     }
 
     //absorb damage, damage rounded up later
-    if (opposingAbsorbMult != 0) {
+    if (opposingAbsorbMult != 0 && (!turnData.direct_target || turnData.direct_target == opposingCondition.monstersLost)) {
         turnData.absorbDamage = turnData.valkyrieDamage * opposingAbsorbMult;
         turnData.valkyrieDamage = turnData.valkyrieDamage - turnData.absorbDamage;
     }
@@ -347,6 +362,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     else
         // turnData.baseDamage = castCeil(turnData.valkyrieDamage);
         turnData.baseDamage = round(turnData.valkyrieDamage);
+
+    turnData.valkyrieDamage = ricoValue;
 
     // Handle enemy dampen ability and reduce aoe effects
     if (opposingDampFactor < 1) {
@@ -365,10 +382,22 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.baseDamage = 0 ;
     }
 }
-
+//in case of Ricochet, apply armor to everyone.
+inline void ArmyCondition::applyArmor(TurnData & opposing) {
+    if (opposing.ricoActive) {
+        for (int i = monstersLost + 1; i < armySize; i++) {
+            turnData.armorArray[i] = 0;
+            for (int j = i; j < armySize; j++) {
+                if ((skillTypes[j] == PROTECT || skillTypes[j] == CHAMPION) && (skillTargets[j] == ALL || skillTargets[j] == lineup[i]->element))
+                    turnData.armorArray[i] += (int) skillAmounts[j];
+            }
+        }
+    }
+}
 // Add damage to the opposing side and check for deaths
 inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     int frontliner = monstersLost; // save original frontliner
+    int armoredRicochetValue; //So the ricochet doesn't heal due to armor
 
     // Apply normal attack damage to the frontliner
     // If direct_target is non-zero that means Lux is hitting something not the front liner
@@ -406,7 +435,9 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     if (opposing.trampleTriggered) {
         for (int i = frontliner + 1; i < armySize; i++)
             if (remainingHealths[i] > 0){
-                remainingHealths[i] -= opposing.valkyrieDamage;
+                armoredRicochetValue = round(opposing.valkyrieDamage * turnData.trampleMult) - turnData.armorArray[i];
+                if (armoredRicochetValue > 0)
+                    remainingHealths[i] -= armoredRicochetValue;
                 break;
             }
     }
@@ -435,13 +466,26 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
 
       if (i > frontliner) { // Aoe that doesnt affect the frontliner
         // remainingHealths[i] -= castCeil(opposing.valkyrieDamage);
-        remainingHealths[i] -= round(opposing.valkyrieDamage);
+        armoredRicochetValue = round(opposing.valkyrieDamage) - turnData.armorArray[i];
+        if (armoredRicochetValue > 0)
+            remainingHealths[i] -= armoredRicochetValue;
       }
       if (remainingHealths[i] <= 0 && !worldboss) {
         if (i == monstersLost) {
           monstersLost++;
           lastBerserk = 0;
           evolveTotal = 0;
+        }
+        //Save revenge values
+        switch (skillTypes[i]) {
+            case REVENGE:
+                turnData.aoeRevenge += (int) round((double) lineup[i]->damage * skillAmounts[i]);
+                break;
+            case DEATHSTRIKE:
+                turnData.deathstrikeDamage += skillAmounts[i];
+                break;
+            default:
+                break;
         }
         skillTypes[i] = NOTHING; // disable dead hero's ability
       } else {
@@ -482,8 +526,6 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             // Add opposing.counter_target to handle fawkes not targetting the frontliner
             remainingHealths[monstersLost + opposing.counter_target] -= static_cast<int64_t>(ceil(turnData.baseDamage * opposing.counter));
         }
-        if (opposing.deathstrikeDamage)
-            remainingHealths[monstersLost] -= opposing.deathstrikeDamage;
         //If a delayed ability killed a frontliner, find next frontliner. Same procedure as when applying aoe.
         for (int i = monstersLost; i < armySize; i++){
             if (remainingHealths[i] <= 0 && !worldboss) {
@@ -491,6 +533,17 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                     monstersLost++;
                     lastBerserk = 0;
                     evolveTotal = 0;
+                }
+                //Save revenge values
+                switch (skillTypes[i]) {
+                    case REVENGE:
+                        turnData.aoeRevenge += (int) round((double) lineup[i]->damage * skillAmounts[i]);
+                        break;
+                    case DEATHSTRIKE:
+                        turnData.deathstrikeDamage += skillAmounts[i];
+                        break;
+                    default:
+                        break;
                 }
                 skillTypes[i] = NOTHING; // disable dead hero's ability
             }
@@ -505,7 +558,41 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     }
 
 }
-
+//Apply revenge abilities, check for dead units and check for more revenge procs
+inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
+    if (opposing.aoeRevenge || opposing.deathstrikeDamage) {
+        //Billy's single target Revenge
+        remainingHealths[monstersLost] -= opposing.deathstrikeDamage;
+        opposing.deathstrikeDamage = 0;
+        //Revenge that affects all units
+        for (int i = monstersLost; i < armySize; i++) {
+            //Revenge AoE
+            remainingHealths[i] -= opposing.aoeRevenge;
+            //Check for dead units
+            if (remainingHealths[i] <= 0 && !worldboss) {
+                if (i == monstersLost) {
+                    monstersLost++;
+                    lastBerserk = 0;
+                    evolveTotal = 0;
+                }
+                //Save Revenge values
+                switch (skillTypes[i]) {
+                    case REVENGE:
+                        turnData.aoeRevenge += (int) round((double) lineup[i]->damage * skillAmounts[i]);
+                        break;
+                    case DEATHSTRIKE:
+                        turnData.deathstrikeDamage += skillAmounts[i];
+                        break;
+                    default:
+                        break;
+                }
+                skillTypes[i] = NOTHING; // disable dead hero's ability
+            }
+        }
+        opposing.aoeRevenge = 0;
+    }
+}
+//Find highest HP unit for Guy's reflect.
 inline int ArmyCondition::findMaxHP() {
     // go through alive monsters to determine most hp
     // If there is a tie...
@@ -620,7 +707,7 @@ inline int ArmyCondition::getLuxTarget(const ArmyCondition & opposingCondition, 
   return return_value;
 }
 // Simulates One fight between 2 Armies and writes results into left's LastFightData
-inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
+inline bool simulateFight(Army & left, Army & right, bool verbose = true) {
     // left[0] and right[0] are the first monsters to fight
     ArmyCondition leftCondition;
     ArmyCondition rightCondition;
@@ -702,31 +789,25 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         leftCondition.getDamage(turncounter, rightCondition);
         rightCondition.getDamage(turncounter, leftCondition);
 
-        // Handle Revenge Damage before anything else. Revenge Damage caused through aoe is ignored
-        if (leftCondition.skillTypes[leftCondition.monstersLost] == REVENGE &&
-            leftCondition.remainingHealths[leftCondition.monstersLost] <= rightCondition.turnData.baseDamage) {
-            leftCondition.turnData.aoeDamage += (int) round((double) leftCondition.lineup[leftCondition.monstersLost]->damage * leftCondition.skillAmounts[leftCondition.monstersLost]);
-        }
-        if (rightCondition.skillTypes[rightCondition.monstersLost] == REVENGE &&
-            rightCondition.remainingHealths[rightCondition.monstersLost] <= leftCondition.turnData.baseDamage) {
-            rightCondition.turnData.aoeDamage += (int) round((double) rightCondition.lineup[rightCondition.monstersLost]->damage * rightCondition.skillAmounts[rightCondition.monstersLost]);
-        }
-        // Handle Deathstrike Damage before anything else. Deathstrike Damage caused through aoe is ignored
-        if (leftCondition.skillTypes[leftCondition.monstersLost] == DEATHSTRIKE &&
-            leftCondition.remainingHealths[leftCondition.monstersLost] <= rightCondition.turnData.baseDamage) {
-            leftCondition.turnData.deathstrikeDamage = leftCondition.skillAmounts[leftCondition.monstersLost];
-        }
-        if (rightCondition.skillTypes[rightCondition.monstersLost] == DEATHSTRIKE &&
-            rightCondition.remainingHealths[rightCondition.monstersLost] <= leftCondition.turnData.baseDamage) {
-            rightCondition.turnData.deathstrikeDamage = rightCondition.skillAmounts[rightCondition.monstersLost];
-        }
+        // Apply armor in case of ricochet
+        leftCondition.applyArmor(rightCondition.turnData);
+        rightCondition.applyArmor(leftCondition.turnData);
 
         // Check if anything died as a result
         leftCondition.resolveDamage(rightCondition.turnData);
         rightCondition.resolveDamage(leftCondition.turnData);
 
+        //Save AOE for calc optimization when expanding armies
         left.lastFightData.leftAoeDamage += rightCondition.turnData.aoeDamage;
         left.lastFightData.rightAoeDamage += leftCondition.turnData.aoeDamage;
+
+        //Resolve Revenge abilities
+        while (rightCondition.turnData.aoeRevenge || rightCondition.turnData.deathstrikeDamage || leftCondition.turnData.aoeRevenge || leftCondition.turnData.deathstrikeDamage) {
+            left.lastFightData.leftAoeDamage += rightCondition.turnData.aoeRevenge;
+            leftCondition.resolveRevenge(rightCondition.turnData);
+            left.lastFightData.rightAoeDamage += leftCondition.turnData.aoeRevenge;
+            rightCondition.resolveRevenge(leftCondition.turnData);
+        }
 
         turncounter++;
 

@@ -580,9 +580,9 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster(300,110, "bubbles",            WATER, ASCENDED,  {DAMPEN_L,      ALL, WATER, 0.0050f}, 291, 20, 58, 0.0005));
     baseHeroes.push_back(Monster(150, 86, "apontus",            WATER, ASCENDED,  {ADAPT,         WATER, WATER, 3}, 124, 211, 190, 0.3));
     baseHeroes.push_back(Monster(162, 81, "aatzar",             FIRE,  ASCENDED,  {ADAPT,         FIRE, FIRE, 3}, 333, 27, 86, 0.3));
-    baseHeroes.push_back(Monster( 74, 36, "arshen",             AIR,   LEGENDARY, {TRAMPLE,       ALL, AIR, 2}, 83, 44, 19, 0.05));
-    baseHeroes.push_back(Monster( 78, 40, "rua",                FIRE,  LEGENDARY, {TRAMPLE,       ALL, FIRE, 2}, 108, 44, 37, 0.05));
-    baseHeroes.push_back(Monster( 82, 44, "dorth",              WATER, LEGENDARY, {TRAMPLE,       ALL, WATER, 2}, 90, 38, 17, 0.05));
+    baseHeroes.push_back(Monster( 74, 36, "arshen",             AIR,   LEGENDARY, {TRAMPLE,       ALL, AIR, 1}, 83, 44, 19, 0.05));
+    baseHeroes.push_back(Monster( 78, 40, "rua",                FIRE,  LEGENDARY, {TRAMPLE,       ALL, FIRE, 1}, 108, 44, 37, 0.05));
+    baseHeroes.push_back(Monster( 82, 44, "dorth",              WATER, LEGENDARY, {TRAMPLE,       ALL, WATER, 1}, 90, 38, 17, 0.05));
     baseHeroes.push_back(Monster(141, 99, "arigr",              EARTH, ASCENDED,  {ADAPT,         EARTH, EARTH, 3}, 138, 121, 93, 0.3));
     baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 191, "motherofallkodamas", EARTH, WORLDBOSS, {DAMPEN,        ALL, EARTH, 0.5}, 20, 20, 30, 0.1));
     baseHeroes.push_back(Monster( 42, 50, "hosokawa",           AIR,   LEGENDARY, {BUFF_L,        AIR, AIR, 0.1112f}, 108, 115, 74, 0.01112));
