@@ -451,7 +451,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
 
       remainingHealths[i] -= opposing.aoeDamage;
 
-      if (i > frontliner) { // Aoe that doesnt affect the frontliner
+      if (i > frontliner && opposing.valkyrieDamage) { // Aoe that doesnt affect the frontliner
         // remainingHealths[i] -= castCeil(opposing.valkyrieDamage);
         armoredRicochetValue = round(opposing.valkyrieDamage) - turnData.armorArray[i];
         if (armoredRicochetValue > 0)
