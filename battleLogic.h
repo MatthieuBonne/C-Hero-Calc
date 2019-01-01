@@ -308,6 +308,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         default:        break;
 
     }
+
     turnData.valkyrieDamage = turnData.baseDamage;
     if (friendsDamage == 0) {
         //Linear before multiplicative
@@ -402,32 +403,18 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     // Apply normal attack damage to the frontliner
     // If direct_target is non-zero that means Lux is hitting something not the front liner
     // Also, needed to handle here is the case where there are dead units behind the frontliner
-    if(opposing.direct_target > 0) {
-      int actual_target = frontliner;
-      int alive = 0;
-      for(int i = frontliner + 1; i < ARMY_MAX_SIZE; i++) {
-        // std::cout << "I is " << i << std::endl;
-        if(remainingHealths[i] > 0) {
-          alive++;
-          // std::cout << "Alive incremented to " << alive << std::endl;
-        }
-        if(alive >= opposing.direct_target) {
-          actual_target = i;
-          // std::cout << "Setting actual target to " << i << std::endl;
-          break;
-        }
-      }
+    if(opposing.direct_target > frontliner) {
       // std::cout << " BASE " << opposing.baseDamage << " to " << actual_target << std::endl;
-      remainingHealths[actual_target] -= opposing.baseDamage;
+      remainingHealths[opposing.direct_target] -= opposing.baseDamage;
     } else {
       // std::cout << " BASE " << opposing.baseDamage << " to " << frontliner + opposing.direct_target << std::endl;
-      remainingHealths[frontliner + opposing.direct_target] -= opposing.baseDamage;
+      remainingHealths[frontliner] -= opposing.baseDamage;
     }
 
     // Lee and Fawkes can only counter if they are hit directly, so if they are opposing Lux and Lux
     // hits another units, they do not counter
     int counter_eligible = 1;
-    if(skillTypes[monstersLost] == LUX && turnData.direct_target > 0) {
+    if(skillTypes[monstersLost] == LUX && turnData.direct_target > frontliner) {
       counter_eligible = 0;
       // std::cout << "LUX DID NOT HIT FRONTLINER" << std::endl;
     }
@@ -704,7 +691,25 @@ inline int ArmyCondition::getLuxTarget(const ArmyCondition & opposingCondition, 
       return_value = i;
     }
   }
-  return return_value;
+int actual_target;
+//Moving the function that selects the alive enemy here, as it is needed for elemental damage and neil absorb check.
+    if(return_value > 0) {
+        actual_target = opposingCondition.monstersLost;
+        int alive = 0;
+        for(int i = opposingCondition.monstersLost + 1; i < ARMY_MAX_SIZE; i++) {
+            // std::cout << "I is " << i << std::endl;
+            if(opposingCondition.remainingHealths[i] > 0) {
+                alive++;
+                // std::cout << "Alive incremented to " << alive << std::endl;
+            }
+            if(alive >= return_value) {
+                actual_target = i;
+                // std::cout << "Setting actual target to " << i << std::endl;
+                break;
+            }
+        }
+    }
+  return actual_target;
 }
 // Simulates One fight between 2 Armies and writes results into left's LastFightData
 inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
