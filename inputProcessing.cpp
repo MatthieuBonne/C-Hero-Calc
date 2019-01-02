@@ -444,11 +444,6 @@ tuple<Monster, int, int> parseHeroString(string heroString) {
 string makeBattleReplay(Army friendly, Army hostile) {
     stringstream replay;
     replay << "{";
-        replay << "\"winner\""  << ":" << "\"Unknown\"" << ",";
-        replay << "\"left\""    << ":" << "\"Solution\"" << ",";
-        replay << "\"right\""   << ":" << "\"Instance\"" << ",";
-        replay << "\"date\""    << ":" << time(NULL) << ",";
-        replay << "\"title\""   << ":" << "\"Proposed Solution\"" << ",";
         replay << "\"setup\""   << ":" << getReplaySetup(friendly) << ",";
         replay << "\"shero\""   << ":" << getReplayHeroes(friendly) << ",";
         replay << "\"spromo\""  << ":" << getReplayPromo(friendly) << ",";
@@ -465,13 +460,13 @@ string getReplaySetup(Army setup) {
     stringstream stringSetup;
     size_t i;
     stringSetup << "[";
-    for (i = 0; i < ARMY_MAX_SIZE * TOURNAMENT_LINES; i++) {
-        if ((int) (i % ARMY_MAX_SIZE) < setup.monsterAmount) {
-            stringSetup << getRealIndex(monsterReference[setup.monsters[setup.monsterAmount - (i % ARMY_MAX_SIZE) - 1]]);
+    for (i = 0; i < ARMY_MAX_SIZE; i++) {
+        if (i < setup.monsterAmount) {
+            stringSetup << getRealIndex(monsterReference[setup.monsters[setup.monsterAmount - i - 1]]);
         } else {
             stringSetup << to_string(INDEX_NO_MONSTER);
         }
-        if (i < ARMY_MAX_SIZE * TOURNAMENT_LINES - 1) {
+        if (i < ARMY_MAX_SIZE - 1) {
             stringSetup << ",";
         }
     }
@@ -483,48 +478,52 @@ string getReplaySetup(Army setup) {
 string getReplayHeroes(Army setup) {
     stringstream heroes;
     Monster monster;
-    int level;
-    heroes << "[";
-    for (size_t i = 0; i < baseHeroes.size(); i++) {
-        level = 0;
-        for (int j = 0; j < setup.monsterAmount; j++) {
-            monster = monsterReference[setup.monsters[j]];
-            if (monster.rarity != NO_HERO && monster.baseName == baseHeroes[i].baseName) {
-                level = monster.level;
-                break;
-            }
-        }
-        heroes << level;
-        if (i < baseHeroes.size()-1) {
-            heroes << ",";
+    int heroCount = 0;
+    //Count heroes to see when to stop adding commas.
+    for (int i = 0; i < setup.monsterAmount; i++) {
+        monster = monsterReference[setup.monsters[i]];
+        if (monster.rarity != NO_HERO)
+            heroCount++;
+    }
+    //Hero output
+    heroes << "{";
+    for (int i = 0; i < setup.monsterAmount; i++) {
+        monster = monsterReference[setup.monsters[i]];
+        if (monster.rarity != NO_HERO) {
+            heroCount--;
+            heroes << "\"" << -1 * getRealIndex(monster) - 2 << "\":" << monster.level;
+            if (heroCount)
+                heroes << ",";
         }
     }
-    heroes << "]";
+    heroes << "}";
     return heroes.str();
 }
 
 // Get list of relevant hero promotions in ingame format
 string getReplayPromo(Army setup) {
-    stringstream heroes;
+    stringstream promos;
     Monster monster;
-    int promo;
-    heroes << "[";
-    for (size_t i = 0; i < baseHeroes.size(); i++) {
-        promo = 0;
-        for (int j = 0; j < setup.monsterAmount; j++) {
-            monster = monsterReference[setup.monsters[j]];
-            if (monster.rarity != NO_HERO && monster.baseName == baseHeroes[i].baseName) {
-                promo = monster.promo;
-                break;
-            }
-        }
-        heroes << promo;
-        if (i < baseHeroes.size()-1) {
-            heroes << ",";
+    int heroCount = 0;
+    //Count heroes to see when to stop adding commas.
+    for (int i = 0; i < setup.monsterAmount; i++) {
+        monster = monsterReference[setup.monsters[i]];
+        if (monster.rarity != NO_HERO && monster.promo)
+            heroCount++;
+    }
+    //Hero output
+    promos << "{";
+    for (int i = 0; i < setup.monsterAmount; i++) {
+        monster = monsterReference[setup.monsters[i]];
+        if (monster.rarity != NO_HERO && monster.promo) {
+            heroCount--;
+            promos << "\"" << -1 * getRealIndex(monster) - 2 << "\":" << monster.promo;
+            if (heroCount)
+                promos << ",";
         }
     }
-    heroes << "]";
-    return heroes.str();
+    promos << "}";
+    return promos.str();
 }
 
 string makeJSONFromInstance(Instance instance, bool valid) {
