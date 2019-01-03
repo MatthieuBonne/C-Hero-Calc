@@ -422,7 +422,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     if (opposing.trampleTriggered) {
         for (int i = frontliner + 1; i < armySize; i++)
             if (remainingHealths[i] > 0){
-                armoredRicochetValue = round(opposing.valkyrieDamage * turnData.trampleMult) - turnData.armorArray[i];
+                armoredRicochetValue = round(opposing.valkyrieDamage * opposing.trampleMult) - turnData.armorArray[i];
                 if (armoredRicochetValue > 0)
                     remainingHealths[i] -= armoredRicochetValue;
                 break;
