@@ -169,7 +169,7 @@ inline void ArmyCondition::startNewTurn() {
     }
 
     if( skillTypes[monstersLost] == RESISTANCE )
-        turnData.resistance = skillAmounts[monstersLost];//Needs to be here so it happens before Neil's absorb.
+        turnData.resistance = 1 - skillAmounts[monstersLost];//Needs to be here so it happens before Neil's absorb.
 
     // Gather all skills that trigger globally
     for (i = monstersLost; i < armySize; i++) {
@@ -337,7 +337,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.valkyrieDamage += turnData.hpPierce;
 
     if (opposingResistance)
-        turnData.valkyrieDamage *= 1 - opposingResistance;
+        turnData.valkyrieDamage *= opposingResistance;
 
     if (turnData.valkyrieDamage > opposingProtection) { 
         turnData.valkyrieDamage -= (double) opposingProtection;
@@ -399,6 +399,7 @@ inline void ArmyCondition::applyArmor(TurnData & opposing) {
 inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     int frontliner = monstersLost; // save original frontliner
     int armoredRicochetValue; //So the ricochet doesn't heal due to armor
+    double tempResistance; //Needed for frosty to dampen ricochet
 
     // Apply normal attack damage to the frontliner
     // If direct_target is non-zero that means Lux is hitting something not the front liner
@@ -422,7 +423,11 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     if (opposing.trampleTriggered) {
         for (int i = frontliner + 1; i < armySize; i++)
             if (remainingHealths[i] > 0){
-                armoredRicochetValue = round(opposing.valkyrieDamage * opposing.trampleMult) - turnData.armorArray[i];
+                if (skillTypes[i] == RESISTANCE)
+                    tempResistance = 1 - skillAmounts[i];
+                else
+                    tempResistance = 1;
+                armoredRicochetValue = round(opposing.valkyrieDamage * opposing.trampleMult * tempResistance) - turnData.armorArray[i];
                 if (armoredRicochetValue > 0)
                     remainingHealths[i] -= armoredRicochetValue;
                 break;
@@ -452,8 +457,11 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
       remainingHealths[i] -= opposing.aoeDamage;
 
       if (i > frontliner && opposing.valkyrieDamage) { // Aoe that doesnt affect the frontliner
-        // remainingHealths[i] -= castCeil(opposing.valkyrieDamage);
-        armoredRicochetValue = round(opposing.valkyrieDamage) - turnData.armorArray[i];
+        if (skillTypes[i] == RESISTANCE)
+            tempResistance = 1 - skillAmounts[i];
+        else
+            tempResistance = 1;
+        armoredRicochetValue = round(opposing.valkyrieDamage * tempResistance) - turnData.armorArray[i];
         if (armoredRicochetValue > 0)
             remainingHealths[i] -= armoredRicochetValue;
       }
