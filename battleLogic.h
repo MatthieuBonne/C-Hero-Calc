@@ -388,7 +388,7 @@ inline void ArmyCondition::applyArmor(TurnData & opposing) {
     if (opposing.ricoActive) {
         for (int i = monstersLost + 1; i < armySize; i++) {
             turnData.armorArray[i] = 0;
-            for (int j = i; j < armySize; j++) {
+            for (int j = monstersLost; j < armySize; j++) {
                 if ((skillTypes[j] == PROTECT || skillTypes[j] == CHAMPION) && (skillTargets[j] == ALL || skillTargets[j] == lineup[i]->element))
                     turnData.armorArray[i] += (int) skillAmounts[j];
             }
