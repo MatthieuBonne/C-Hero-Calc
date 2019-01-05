@@ -347,7 +347,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     }
 
     //absorb damage, damage rounded up later
-    if (opposingAbsorbMult != 0 && (!turnData.direct_target || turnData.direct_target == opposingCondition.monstersLost)) {
+    if (opposingAbsorbMult != 0 && turnData.direct_target == 0) {
         turnData.absorbDamage = turnData.valkyrieDamage * opposingAbsorbMult;
         turnData.valkyrieDamage = turnData.valkyrieDamage - turnData.absorbDamage;
     }
