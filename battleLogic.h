@@ -282,6 +282,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         // Pick a target, Bubbles currently dampens lux damage if not targeting first according to game code, interaction should be added if this doesn't change
         case LUX:       turnData.direct_target = getLuxTarget(opposingCondition, getTurnSeed(opposingCondition.seed, 99 -turncounter));
                         opposingElement = opposingCondition.lineup[turnData.direct_target]->element;
+                        turnData.direct_target -= opposingCondition.monstersLost;
                         break;
         case CRIT:      // turnData.critMult *= getTurnSeed(opposingCondition.seed, turncounter) % 2 == 1 ? skillAmounts[monstersLost] : 1;
                         turnData.critMult *= getTurnSeed(opposingCondition.seed, 99 - turncounter) % 2 == 0 ? skillAmounts[monstersLost] : 1;
@@ -403,19 +404,12 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
 
     // Apply normal attack damage to the frontliner
     // If direct_target is non-zero that means Lux is hitting something not the front liner
-    // Also, needed to handle here is the case where there are dead units behind the frontliner
-    if(opposing.direct_target > frontliner) {
-      // std::cout << " BASE " << opposing.baseDamage << " to " << actual_target << std::endl;
-      remainingHealths[opposing.direct_target] -= opposing.baseDamage;
-    } else {
-      // std::cout << " BASE " << opposing.baseDamage << " to " << frontliner + opposing.direct_target << std::endl;
-      remainingHealths[frontliner] -= opposing.baseDamage;
-    }
+    remainingHealths[frontliner + opposing.direct_target] -= opposing.baseDamage;
 
     // Lee and Fawkes can only counter if they are hit directly, so if they are opposing Lux and Lux
     // hits another units, they do not counter
     int counter_eligible = 1;
-    if(skillTypes[monstersLost] == LUX && turnData.direct_target > frontliner) {
+    if(skillTypes[monstersLost] == LUX && turnData.direct_target > 0) {
       counter_eligible = 0;
       // std::cout << "LUX DID NOT HIT FRONTLINER" << std::endl;
     }
