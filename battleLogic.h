@@ -693,10 +693,9 @@ inline int ArmyCondition::getLuxTarget(const ArmyCondition & opposingCondition, 
       return_value = i;
     }
   }
-int actual_target;
+int actual_target = opposingCondition.monstersLost;
 //Moving the function that selects the alive enemy here, as it is needed for elemental damage and neil absorb check.
     if(return_value > 0) {
-        actual_target = opposingCondition.monstersLost;
         int alive = 0;
         for(int i = opposingCondition.monstersLost + 1; i < ARMY_MAX_SIZE; i++) {
             // std::cout << "I is " << i << std::endl;
