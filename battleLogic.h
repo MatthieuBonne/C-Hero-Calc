@@ -25,6 +25,7 @@ struct TurnData {
     int hpPierce = 0;
     int sacHeal = 0;
     int deathstrikeDamage = 0;
+    int masochism = 0;
     int immunityValue = 0;
 
     double counter = 0;
@@ -156,6 +157,7 @@ inline void ArmyCondition::startNewTurn() {
     turnData.resistance = 0;
     turnData.sacHeal = 0;
     turnData.deathstrikeDamage = 0;
+    turnData.masochism = 0;
     turnData.immunityValue = 0;
 
     if( skillTypes[monstersLost] == DODGE )
@@ -198,7 +200,7 @@ inline void ArmyCondition::startNewTurn() {
                             break;
             case SACRIFICE: turnData.sacHeal += (int) skillAmounts[i] * 2 / 3;
                             turnData.aoeDamage += (int) skillAmounts[i];
-                            remainingHealths[i] -= (int) skillAmounts[i];
+                            turnData.masochism += (int) skillAmounts[i];
                             break;
         }
     }
@@ -478,11 +480,13 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         }
         skillTypes[i] = NOTHING; // disable dead hero's ability
       } else {
-          remainingHealths[i] += turnData.healing;
-          if (skillTypes[i] != SACRIFICE)
-            remainingHealths[i] += turnData.sacHeal;//Prevent sacrifice from working on the unit that sacrifices their health
-        if (remainingHealths[i] > maxHealths[i]) { // Avoid overhealing
-          remainingHealths[i] = maxHealths[i];
+            remainingHealths[i] += turnData.healing;
+            if (skillTypes[i] != SACRIFICE)
+                remainingHealths[i] += turnData.sacHeal;//Prevent sacrifice from working on the unit that sacrifices their health
+            else
+                remainingHealths[i] -= turnData.masochism;//Deal damage to Kedari here so counting alive units works for Lux.
+            if (remainingHealths[i] > maxHealths[i]) { // Avoid overhealing
+                remainingHealths[i] = maxHealths[i];
         }
       }
 
@@ -697,7 +701,7 @@ int actual_target = opposingCondition.monstersLost;
 //Moving the function that selects the alive enemy here, as it is needed for elemental damage and neil absorb check.
     if(return_value > 0) {
         int alive = 0;
-        for(int i = opposingCondition.monstersLost + 1; i < ARMY_MAX_SIZE; i++) {
+        for(int i = opposingCondition.monstersLost + 1; i < opposingCondition.armySize; i++) {
             // std::cout << "I is " << i << std::endl;
             if(opposingCondition.remainingHealths[i] > 0) {
                 alive++;
