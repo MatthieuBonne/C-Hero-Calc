@@ -63,6 +63,8 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
             this->hp = this->hp + (int) round((double) points * mult * (double) this->hp / (double) value) + hpBonus;
             this->damage = this->damage + (int) round((double) points * mult * (double) this->damage / (double) value) + atkBonus;
         }
+        else
+            this->level = 1; //So despite the level of the boss it always shows the replay for level 1, as bosses don't actually scale.
         if (this->promo)
             this->name = this->baseName + HEROLEVEL_SEPARATOR + std::to_string(this->level) + HEROPROMO_SEPARATOR + std::to_string(this->promo);
         else
