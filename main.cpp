@@ -81,7 +81,7 @@ void expand(vector<Army> & newPureArmies, vector<Army> & newHeroArmies,
     bool instanceInvalid = instance.hasHeal || instance.hasAsymmetricAoe || instance.hasGambler;
 
     // enemy booze will invalidate FightResults
-    bool boozeInfluence = instance.hasBeer && currentArmySize >= instance.targetSize;
+    bool boozeInfluence = instance.hasBeer && currentArmySize + 1 >= instance.targetSize;
 
     // Expansion for non-Hero Armies
     for (i = 0; i < oldPureArmiesSize; i++) {
@@ -132,7 +132,7 @@ void expand(vector<Army> & newPureArmies, vector<Army> & newHeroArmies,
                 invalidSkill |= currentSkill.hasHeal || currentSkill.hasAsymmetricAoe;
                 friendsInfluence |= currentSkill.skillType == FRIENDS;
                 rainbowInfluence |= currentSkill.skillType == RAINBOW && currentArmySize >= m + 4; // Hardcoded number of elements required to activate rainbow
-                boozeInfluence   |= currentSkill.skillType == BEER && currentArmySize < instance.targetSize;
+                boozeInfluence   |= currentSkill.skillType == BEER && currentArmySize < instance.targetSize + 1;
                 usedHeroes[oldHeroArmies[i].monsters[m]] = true;
             }
             // rainbowInfluence can only invalidate if there are exactly 3 elements fulfilled before adding new unit
