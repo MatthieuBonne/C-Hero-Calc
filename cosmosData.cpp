@@ -119,16 +119,16 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
         this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
     } else if (this->skill.skillType == RESISTANCE_L) {
         this->skill.skillType = RESISTANCE;
-        this->skill.amount = aLevel / 9 * this->skill.amount;
+        this->skill.amount = this->skill.amount * (double) aLevel / 9;
     } else if (this->skill.skillType == AOEREFLECT_L) {
         this->skill.skillType = AOEREFLECT;
-        this->skill.amount = aLevel / 3 * this->skill.amount;
+        this->skill.amount = this->skill.amount * (double) aLevel / 3;
     } else if (this->skill.skillType == HPPIERCE_L) {
         this->skill.skillType = HPPIERCE;
-        this->skill.amount = aLevel / 9 * this->skill.amount;
+        this->skill.amount = this->skill.amount * (double) aLevel / 9;
     } else if (this->skill.skillType == SACRIFICE_L) {
         this->skill.skillType = SACRIFICE;
-        this->skill.amount = aLevel / 9 * this->skill.amount;
+        this->skill.amount = this->skill.amount * (double) aLevel / 9;
     }
 }
 
@@ -638,7 +638,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 46, 52, "frosty",             WATER, RARE,      {RESISTANCE_L,    ALL, WATER, 0.03f}, 51, 69, 16, 0.003));
     baseHeroes.push_back(Monster( 50, 18, "fir",                EARTH, COMMON,    {AOEREFLECT_L,    ALL, EARTH, 0.004f}, 33, 5, 11, 0.0004));
     baseHeroes.push_back(Monster( 78, 34, "5-12-6",             AIR,   RARE,      {HPPIERCE_L,      ALL, AIR, 0.03f}, 42, 37, 39, 0.003));
-    baseHeroes.push_back(Monster(170, 18, "kedari",             FIRE,  LEGENDARY, {SACRIFICE_L,     ALL, FIRE, 3}, 133, 19, 25, 0.3));
+    baseHeroes.push_back(Monster(170, 18, "kedari",             FIRE,  LEGENDARY, {SACRIFICE_L,     ALL, FIRE, 2}, 133, 19, 25, 0.2));
     baseHeroes.push_back(Monster( 18, 26, "raze",               WATER, COMMON,    {TRAMPLE,       ALL, WATER, 0.7}, 8, 3, 14, 0.05));
     baseHeroes.push_back(Monster( 44, 48, "ruin",               AIR,   RARE,      {REVENGE,       ALL, AIR, 0.1}, 23, 61, 23, 0.05));
     baseHeroes.push_back(Monster( 48, 54, "seethe",             EARTH, LEGENDARY, {POSBONUS,      SELF, EARTH, 15}, 57, 178, 53, 15));

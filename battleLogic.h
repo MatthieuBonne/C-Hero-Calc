@@ -198,9 +198,9 @@ inline void ArmyCondition::startNewTurn() {
                             break;
             case ABSORB:    if (i != monstersLost) turnData.absorbMult += skillAmounts[i];
                             break;
-            case SACRIFICE: turnData.sacHeal += (int) skillAmounts[i] * 2 / 3;
-                            turnData.aoeDamage += (int) skillAmounts[i];
-                            turnData.masochism += (int) skillAmounts[i];
+            case SACRIFICE: turnData.sacHeal += (int) floor(skillAmounts[i] + 0.0001);
+                            turnData.aoeDamage += (int) floor(skillAmounts[i] * 1.5 + 0.0001);//Add 0.0001 to fix discrepancy between js and c++ when c++ ends up with 1.9999...
+                            turnData.masochism += (int) floor(skillAmounts[i] * 1.5 + 0.0001);
                             break;
         }
     }
@@ -436,7 +436,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     }
 
     if (opposing.aoeReflect)
-        opposing.aoeDamage += static_cast<int64_t>(ceil(turnData.baseDamage * opposing.aoeReflect));
+        opposing.aoeDamage += round(turnData.baseDamage * opposing.aoeReflect);
 
     // Handle aoe Damage for all combatants
     for (int i = frontliner; i < armySize; i++) {
