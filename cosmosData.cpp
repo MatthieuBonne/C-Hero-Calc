@@ -57,7 +57,7 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
                     this->promo = 0;
                     break;
             }
-            int mult = (aSkill.skillType == GROW) ? aSkill.amount : 1;
+            double mult = (aSkill.skillType == GROW) ? skill.amount : 1;
             points *= this->rarity * mult + pointBonus;
             points = floor(points);
             int value = this->hp + this->damage;
