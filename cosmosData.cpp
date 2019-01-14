@@ -23,7 +23,8 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
             int hpBonus = 0;
             int atkBonus = 0;
             int skillBonus = 0;
-            int points = this->rarity;
+            int pointBonus = 0;
+            double points = this->level-1;
             switch (promo){
                 case 5:
                     this->skill.amount += promoFive;
@@ -33,16 +34,16 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
                 case 3:
                     switch(rarity){
                         case COMMON:
-                            points += 1;
+                            pointBonus = 1;
                             break;
                         case RARE:
-                            points += 2;
+                            pointBonus = 2;
                             break;
                         case LEGENDARY:
-                            points += 3;
+                            pointBonus = 3;
                             break;
                         case ASCENDED:
-                            points += 4;
+                            pointBonus = 4;
                             break;
                         default:
                             break;
@@ -56,12 +57,13 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
                     this->promo = 0;
                     break;
             }
-            points *= (this->level-1);
+            int mult = (aSkill.skillType == GROW) ? aSkill.amount : 1;
+            points *= this->rarity * mult + pointBonus;
+            points = floor(points);
             int value = this->hp + this->damage;
 
-            int mult = (aSkill.skillType == GROW) ? aSkill.amount : 1;
-            this->hp = this->hp + (int) round((double) points * mult * (double) this->hp / (double) value) + hpBonus;
-            this->damage = this->damage + (int) round((double) points * mult * (double) this->damage / (double) value) + atkBonus;
+            this->hp = this->hp + (int) round((double) points * (double) this->hp / (double) value) + hpBonus;
+            this->damage = this->damage + (int) round((double) points * (double) this->damage / (double) value) + atkBonus;
         }
         else
             this->level = 1; //So despite the level of the boss it always shows the replay for level 1, as bosses don't actually scale.
