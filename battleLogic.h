@@ -27,6 +27,8 @@ struct TurnData {
     int deathstrikeDamage = 0;
     int masochism = 0;
     int immunityValue = 0;
+    int deathBuffHP = 0;
+    int deathBuffATK = 0;
 
     double counter = 0;
     double valkyrieMult = 0;
@@ -130,7 +132,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         if (skill->skillType == DICE) dice = i; //assumes only 1 unit per side can have dice ability, have to change to bool and loop at turn zero if this changes
         if (skill->skillType == BEER){ booze = true; boozeValue = skill->amount;}
         if (skill->skillType == AOEZERO) aoeZero += skill->amount;
-        if (skill->skillType == POSBONUS){ maxHealths[i] += skill->amount * (armySize - i - 1); remainingHealths[i] = maxHealths[i]; }
+        if (skill->skillType == POSBONUS){ maxHealths[i] += round(skill->amount * (armySize - i - 1)); remainingHealths[i] = maxHealths[i]; }
 
         rainbowConditions[i] = tempRainbowCondition == VALID_RAINBOW_CONDITION;
         //pureMonsters[i] = tempPureMonsters;
@@ -159,6 +161,8 @@ inline void ArmyCondition::startNewTurn() {
     turnData.deathstrikeDamage = 0;
     turnData.masochism = 0;
     turnData.immunityValue = 0;
+    turnData.deathBuffHP = 0;
+    turnData.deathBuffATK = 0;
 
     if( skillTypes[monstersLost] == DODGE )
     {
@@ -306,7 +310,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case HPPIERCE:  if (!opposingCondition.worldboss)
                         turnData.hpPierce = round((double)opposingCondition.maxHealths[opposingCondition.monstersLost] * skillAmounts[monstersLost]);
                         break;
-        case POSBONUS:  turnData.baseDamage += skillAmounts[monstersLost] * (armySize - monstersLost - 1);
+        case POSBONUS:  turnData.baseDamage += round(skillAmounts[monstersLost] * (armySize - monstersLost - 1));
                         break;
         default:        break;
 
@@ -358,7 +362,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.leech *= turnData.valkyrieDamage;
     //Check execute before resolve damage for reflect ability, neil absorbs damage before the execute, according to replays.
     if (turnData.execute && !opposingCondition.worldboss && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage)) / opposingCondition.maxHealths[opposingCondition.monstersLost] <= turnData.execute)) {
-        turnData.valkyrieDamage = opposingCondition.remainingHealths[opposingCondition.monstersLost] + 1;
+        if (turnData.valkyrieDamage < opposingCondition.remainingHealths[opposingCondition.monstersLost] + 1)
+            turnData.valkyrieDamage = opposingCondition.remainingHealths[opposingCondition.monstersLost] + 1;
     }
     // for compiling heavyDamage version
     if (turnData.valkyrieDamage >= std::numeric_limits<int>::max())
@@ -477,6 +482,10 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             case DEATHSTRIKE:
                 turnData.deathstrikeDamage += skillAmounts[i];
                 break;
+            case DEATHBUFF:
+                turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
+                turnData.deathBuffATK += (int) round(skillAmounts[i] * lineup[i]->damage);
+                break;
             default:
                 break;
         }
@@ -508,8 +517,6 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         remainingHealths[monstersLost] = round(remainingHealths[monstersLost] * ( 1 -((double) 1 / skillAmounts[monstersLost]) ));//Updated for promotion values.
     }
 
-    frontliner = monstersLost; //For Sanqueen's leech ability, as a check whether she's been killed by a "delayed" ability, like reflect.
-
     // Moved reflect functions to the end, reflect is now delayed till after healing and wither occur.
     if (monstersLost < armySize){
         if (opposing.counter && counter_eligible){
@@ -535,6 +542,9 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                     case DEATHSTRIKE:
                         turnData.deathstrikeDamage += skillAmounts[i];
                         break;
+                    case DEATHBUFF:
+                        turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
+                        turnData.deathBuffATK += (int) round(skillAmounts[i] * lineup[i]->damage);
                     default:
                         break;
                 }
@@ -542,7 +552,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             }
         }
     }
-    // Moved Sanqueen's ability (leech) to the end, to replicate delayed behavior and the fact that she heals the unit behind her in case she dies.
+    // Moved Sanqueen's ability (leech) to the end, to replicate delayed behavior
     if(turnData.leech && remainingHealths[frontliner] >= 0){
         remainingHealths[frontliner] += round(turnData.leech);
         if (remainingHealths[frontliner] > maxHealths[frontliner]) { // Avoid overhealing
@@ -576,6 +586,9 @@ inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
                     case DEATHSTRIKE:
                         turnData.deathstrikeDamage += skillAmounts[i];
                         break;
+                    case DEATHBUFF:
+                        turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
+                        turnData.deathBuffATK += (int) round(skillAmounts[i] * lineup[i]->damage);
                     default:
                         break;
                 }
@@ -583,6 +596,18 @@ inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
             }
         }
         opposing.aoeRevenge = 0;
+    }
+    if (turnData.deathBuffHP || turnData.deathBuffATK)
+    {
+        for (int i = monstersLost; i < armySize; i++) {
+            if (remainingHealths[i] > 0){
+                maxHealths[i] += turnData.deathBuffHP;
+                remainingHealths[i] += turnData.deathBuffHP;
+                lineup[i]->damage += turnData.deathBuffHP;
+            }
+        }
+        turnData.deathBuffHP = 0;
+        turnData.deathBuffATK = 0;
     }
 }
 //Find highest HP unit for Guy's reflect.
@@ -812,7 +837,8 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         left.lastFightData.rightAoeDamage += leftCondition.turnData.aoeDamage;
 
         //Resolve Revenge abilities
-        while (rightCondition.turnData.aoeRevenge || rightCondition.turnData.deathstrikeDamage || leftCondition.turnData.aoeRevenge || leftCondition.turnData.deathstrikeDamage) {
+        while (rightCondition.turnData.aoeRevenge || rightCondition.turnData.deathstrikeDamage || leftCondition.turnData.deathBuffHP  ||
+               leftCondition.turnData.aoeRevenge  || leftCondition.turnData.deathstrikeDamage  || rightCondition.turnData.deathBuffHP) {
             left.lastFightData.leftAoeDamage += rightCondition.turnData.aoeRevenge;
             leftCondition.resolveRevenge(rightCondition.turnData);
             left.lastFightData.rightAoeDamage += leftCondition.turnData.aoeRevenge;
