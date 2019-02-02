@@ -28,7 +28,6 @@ struct TurnData {
     int masochism = 0;
     int immunityValue = 0;
     int deathBuffHP = 0;
-    int deathBuffATK = 0;
 
     double counter = 0;
     double valkyrieMult = 0;
@@ -72,6 +71,7 @@ class ArmyCondition {
 
         int64_t lastBerserk;
         double evolveTotal; //for evolve ability
+        int deathBuffATK; //For S7 fairies
 
         int monstersLost;
 
@@ -110,6 +110,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
     monstersLost = oldMonstersLost;
     lastBerserk = 0;
     evolveTotal = 0;
+    deathBuffATK = 0;
 
     dice = -1;
     booze = false;
@@ -162,7 +163,6 @@ inline void ArmyCondition::startNewTurn() {
     turnData.masochism = 0;
     turnData.immunityValue = 0;
     turnData.deathBuffHP = 0;
-    turnData.deathBuffATK = 0;
 
     if( skillTypes[monstersLost] == DODGE )
     {
@@ -316,7 +316,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
 
     }
 
-    turnData.valkyrieDamage = turnData.baseDamage;
+    turnData.valkyrieDamage = turnData.baseDamage + deathBuffATK;
     if (friendsDamage == 0) {
         //Linear before multiplicative
         if (turnData.buffDamage != 0) {
@@ -484,7 +484,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                 break;
             case DEATHBUFF:
                 turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
-                turnData.deathBuffATK += (int) round(skillAmounts[i] * lineup[i]->damage);
+                deathBuffATK += (int) round(skillAmounts[i] * lineup[i]->damage);
                 break;
             default:
                 break;
@@ -544,7 +544,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                         break;
                     case DEATHBUFF:
                         turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
-                        turnData.deathBuffATK += (int) round(skillAmounts[i] * lineup[i]->damage);
+                        deathBuffATK += (int) round(skillAmounts[i] * lineup[i]->damage);
                     default:
                         break;
                 }
@@ -588,7 +588,7 @@ inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
                         break;
                     case DEATHBUFF:
                         turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
-                        turnData.deathBuffATK += (int) round(skillAmounts[i] * lineup[i]->damage);
+                        deathBuffATK += (int) round(skillAmounts[i] * lineup[i]->damage);
                     default:
                         break;
                 }
@@ -597,17 +597,15 @@ inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
         }
         opposing.aoeRevenge = 0;
     }
-    if (turnData.deathBuffHP || turnData.deathBuffATK)
+    if (turnData.deathBuffHP)
     {
         for (int i = monstersLost; i < armySize; i++) {
             if (remainingHealths[i] > 0){
                 maxHealths[i] += turnData.deathBuffHP;
                 remainingHealths[i] += turnData.deathBuffHP;
-                lineup[i]->damage += turnData.deathBuffHP;
             }
         }
         turnData.deathBuffHP = 0;
-        turnData.deathBuffATK = 0;
     }
 }
 //Find highest HP unit for Guy's reflect.
