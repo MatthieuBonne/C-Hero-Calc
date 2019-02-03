@@ -214,7 +214,7 @@ inline void ArmyCondition::startNewTurn() {
 // Protection needs to be calculated at this point.
 inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition & opposingCondition) {
 
-    turnData.baseDamage = lineup[monstersLost]->damage; // Get Base damage
+    turnData.baseDamage = lineup[monstersLost]->damage + deathBuffATK; // Get Base damage
 
     Element opposingElement = opposingCondition.lineup[opposingCondition.monstersLost]->element;
     const int opposingProtection = opposingCondition.turnData.protection;
@@ -316,7 +316,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
 
     }
 
-    turnData.valkyrieDamage = turnData.baseDamage + deathBuffATK;
+    turnData.valkyrieDamage = turnData.baseDamage;
     if (friendsDamage == 0) {
         //Linear before multiplicative
         if (turnData.buffDamage != 0) {
