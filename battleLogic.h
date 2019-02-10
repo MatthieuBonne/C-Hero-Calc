@@ -66,6 +66,7 @@ class ArmyCondition {
         bool booze; // for leprechaun's ability
         int boozeValue;//Adds an illusory amount of enemies to lep's perception amplifying his aoe
         int aoeZero; // for hawking's ability
+        double dampZero; // for bubbles's ability
 
         int64_t seed;
 
@@ -117,6 +118,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
     boozeValue = 0;
     worldboss = false;
     aoeZero = 0;
+    dampZero = 1;
 
     for (int i = armySize -1; i >= monstersLost; i--) {
         lineup[i] = &monsterReference[army.monsters[i]];
@@ -133,6 +135,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         if (skill->skillType == DICE) dice = i; //assumes only 1 unit per side can have dice ability, have to change to bool and loop at turn zero if this changes
         if (skill->skillType == BEER){ booze = true; boozeValue = skill->amount;}
         if (skill->skillType == AOEZERO) aoeZero += skill->amount;
+        if (skill->skillType == DAMPEN) dampZero *= skill->amount;
         if (skill->skillType == POSBONUS){ maxHealths[i] += round(skill->amount * (armySize - i - 1)); remainingHealths[i] = maxHealths[i]; }
 
         rainbowConditions[i] = tempRainbowCondition == VALID_RAINBOW_CONDITION;
@@ -779,15 +782,27 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         }
 
         // Apply Leprechaun's skill (Beer)
-        if (leftCondition.booze && leftCondition.armySize < (rightCondition.armySize + leftCondition.boozeValue))
+        if (leftCondition.booze && leftCondition.armySize < (rightCondition.armySize + leftCondition.boozeValue)){
+            int aoeValue = 0;
             for (size_t i = 0; i < ARMY_MAX_SIZE; ++i) {
                 rightCondition.remainingHealths[i] = int(rightCondition.maxHealths[i] * leftCondition.armySize / (rightCondition.armySize + leftCondition.boozeValue));
+                if (rightCondition.dampZero < 1){
+                    aoeValue = round((rightCondition.maxHealths[i] - rightCondition.remainingHealths[i]) * rightCondition.dampZero);
+                    rightCondition.remainingHealths[i] = rightCondition.maxHealths[i] - aoeValue;
+                }
             }
+        }
 
-        if (rightCondition.booze && rightCondition.armySize < (leftCondition.armySize + rightCondition.boozeValue))
+        if (rightCondition.booze && rightCondition.armySize < (leftCondition.armySize + rightCondition.boozeValue)){
+            int aoeValue = 0;
             for (size_t i = 0; i < ARMY_MAX_SIZE; ++i) {
                 leftCondition.remainingHealths[i] = int(leftCondition.maxHealths[i] * rightCondition.armySize / (leftCondition.armySize + rightCondition.boozeValue));
+                if (leftCondition.dampZero < 1){
+                    aoeValue = round((leftCondition.maxHealths[i] - leftCondition.remainingHealths[i]) * leftCondition.dampZero);
+                    leftCondition.remainingHealths[i] = leftCondition.maxHealths[i] - aoeValue;
+                }
             }
+        }
 
         // Reset Potential values in fightresults
         left.lastFightData.leftAoeDamage = 0;
@@ -798,11 +813,13 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         if (leftCondition.aoeZero || rightCondition.aoeZero) {
             TurnData turnZero;
             if (leftCondition.aoeZero) {
+                leftCondition.aoeZero *= rightCondition.dampZero;
                 left.lastFightData.rightAoeDamage += leftCondition.aoeZero;
                 turnZero.aoeDamage = leftCondition.aoeZero;
                 rightCondition.resolveDamage(turnZero);
             }
             if (rightCondition.aoeZero) {
+                rightCondition.aoeZero *= leftCondition.dampZero;
                 left.lastFightData.leftAoeDamage += rightCondition.aoeZero;
                 turnZero.aoeDamage = rightCondition.aoeZero;
                 leftCondition.resolveDamage(turnZero);
