@@ -655,6 +655,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 56, 56, "flint",              FIRE,  LEGENDARY, {DEATHBUFF,       ALL, FIRE,  0.11}, 100, 100, 150, 0.01));
     baseHeroes.push_back(Monster( 58, 58, "orin",               AIR,   LEGENDARY, {DEATHBUFF,       ALL, AIR,   0.12}, 101, 101, 156, 0.01));
     baseHeroes.push_back(Monster(130,130, "aurora",             WATER, ASCENDED,  {DEATHBUFF,       ALL, WATER, 0.15}, 221, 221, 344, 0.01));
+    baseHeroes.push_back(Monster(220, 20, "cupid",              AIR,   LEGENDARY, {TRAMPLE,         ALL, AIR, 3}, 150, 50, 110, 1));
 }
 
 void initIndices() {
