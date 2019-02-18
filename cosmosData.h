@@ -14,7 +14,7 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.1.1.0a";
+const std::string VERSION = "4.1.2.0a";
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
@@ -107,7 +107,9 @@ enum SkillType {
     POSBONUS,//+X attack +X health per unit behind
     POSBONUS_L,//Scaling
     
-    DEATHBUFF//+X% attack and health stat of this creature given to all allies upon death
+    DEATHBUFF,//+X% attack and health stat of this creature given to all allies upon death
+
+    VOID//X% more damage to everything but void.
 };
 
 enum Element {

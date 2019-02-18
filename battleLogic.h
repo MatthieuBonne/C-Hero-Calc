@@ -141,7 +141,8 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         rainbowConditions[i] = tempRainbowCondition == VALID_RAINBOW_CONDITION;
         //pureMonsters[i] = tempPureMonsters;
 
-        tempRainbowCondition |= 1 << lineup[i]->element;
+        if (lineup[i]->element != ALL)
+            tempRainbowCondition |= 1 << lineup[i]->element;
         if (skill->skillType == NOTHING) {
             tempPureMonsters++;
         }
@@ -315,6 +316,9 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case POSBONUS:  turnData.baseDamage += round(skillAmounts[monstersLost] * (armySize - monstersLost - 1));
                         break;
+        case VOID:      if (lineup[monstersLost]->element != opposingElement)
+                            turnData.multiplier *= skillAmounts[monstersLost] + 1;
+                        break;
         default:        break;
 
     }
@@ -333,7 +337,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.valkyrieDamage = friendsDamage;
     }
 
-    if (counter[opposingElement] == lineup[monstersLost]->element) {
+    if (counter[opposingElement] == lineup[monstersLost]->element && lineup[monstersLost]->element != ALL) {
         turnData.valkyrieDamage *= elementalBoost + turnData.hate;
     }
 
