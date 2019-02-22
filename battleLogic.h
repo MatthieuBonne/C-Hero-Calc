@@ -873,8 +873,8 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         rightCondition.resolveDamage(leftCondition.turnData);
 
         //Save AOE for calc optimization when expanding armies
-        left.lastFightData.leftAoeDamage += rightCondition.turnData.aoeDamage;
-        left.lastFightData.rightAoeDamage += leftCondition.turnData.aoeDamage;
+        left.lastFightData.leftAoeDamage += rightCondition.turnData.aoeDamage + leftCondition.turnData.sadism;
+        left.lastFightData.rightAoeDamage += leftCondition.turnData.aoeDamage + rightCondition.turnData.sadism;
 
         //Resolve Revenge abilities
         while (rightCondition.turnData.aoeRevenge || rightCondition.turnData.deathstrikeDamage || leftCondition.turnData.deathBuffHP  ||

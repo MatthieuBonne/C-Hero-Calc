@@ -143,7 +143,10 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
     sourceElement(aSource),
     amount(anAmount)
 {
-    this->hasAsymmetricAoe = (aType == VALKYRIE || aType == TRAMPLE || aType == COUNTER || aType == DEATHSTRIKE || aType == LEECH || aType == COUNTER_MAX_HP);
+    this->hasAsymmetricAoe = (aType == VALKYRIE || aType == TRAMPLE ||
+                              aType == COUNTER || aType == DEATHSTRIKE ||
+                              aType == LEECH || aType == COUNTER_MAX_HP ||
+                              aType == AOELAST);
     this->hasHeal = (aType == HEAL || aType == HEAL_L ||
                      aType == LIFESTEAL || aType == LIFESTEAL_L ||
                      aType == SACRIFICE || aType == SACRIFICE_L ||
@@ -152,6 +155,7 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
     this->hasAoe = (aType == AOE || aType == AOE_L ||
                     aType == REVENGE ||
                     aType == EXPLODE ||
+                    aType == SADISM ||
                     this->hasHeal || this->hasAsymmetricAoe);
     // For expanding armies, if new hero added to the back might have changed the fight, old result is not valid
     this->violatesFightResults = (aType == BUFF || aType == BUFF_L ||
