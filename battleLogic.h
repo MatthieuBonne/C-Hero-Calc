@@ -138,7 +138,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         if (skill->skillType == BEER){ booze = true; boozeValue = skill->amount;}
         if (skill->skillType == AOEZERO) aoeZero += skill->amount;
         if (skill->skillType == DAMPEN) dampZero *= skill->amount;
-        if (skill->skillType == POSBONUS){ maxHealths[i] += round(skill->amount * (armySize - i - 1)); remainingHealths[i] = maxHealths[i]; }
+        if (skill->skillType == POSBONUS){ maxHealths[i] += round(skill->amount * (armySize - i - 1)); remainingHealths[i] = maxHealths[i] - aoeDamage; }
 
         rainbowConditions[i] = tempRainbowCondition == VALID_RAINBOW_CONDITION;
         //pureMonsters[i] = tempPureMonsters;
