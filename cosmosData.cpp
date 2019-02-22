@@ -337,6 +337,8 @@ std::map<std::string, int> stringToEnum = {
     {"POSBONUS_L", POSBONUS_L},
     {"DEATHBUFF", DEATHBUFF},
     {"VOID", VOID},
+    {"AOELAST", AOELAST},
+    {"SADISM", SADISM},
 
     {"EARTH", EARTH},
     {"AIR", AIR},
@@ -660,6 +662,11 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 22, 22, "transient",          ALL,   COMMON,    {VOID,       ALL, ALL, 0.5}, 11, 11, 20, 0.1));
     baseHeroes.push_back(Monster( 34, 34, "maunder",            ALL,   RARE,      {VOID,       ALL, ALL, 0.5}, 22, 22, 32, 0.1));
     baseHeroes.push_back(Monster( 50, 50, "thewanderer",        ALL,   LEGENDARY, {VOID,       ALL, ALL, 0.5}, 80, 80, 120, 0.1));
+    baseHeroes.push_back(Monster(100, 40, "b-day",              AIR,   LEGENDARY, {AOELAST,    ALL, AIR, 0.1}, 61, 51, 23, 0.05));
+    baseHeroes.push_back(Monster( 44, 22, "cloud",              AIR,   COMMON,    {SADISM,     ALL, AIR,   0.95}, 36, 32, 11, 0.05));
+    baseHeroes.push_back(Monster( 64, 32, "ember",              FIRE,  RARE,      {SADISM,     ALL, FIRE,  0.95}, 34, 14, 19, 0.05));
+    baseHeroes.push_back(Monster( 84, 42, "riptide",            WATER, LEGENDARY, {SADISM,     ALL, WATER, 0.95}, 89, 34, 22, 0.05));
+    baseHeroes.push_back(Monster(180, 90, "spike",              EARTH, ASCENDED,  {SADISM,     ALL, EARTH, 0.95}, 234, 103, 136, 0.05));
 }
 
 void initIndices() {
@@ -732,6 +739,8 @@ void initHeroAliases() {
     heroAliases["maund"] = "maunder";
     heroAliases["wanderer"] = "thewanderer";
     heroAliases["wander"] = "thewanderer";
+    heroAliases["clown"] = "b-day";
+    heroAliases["bday"] = "b-day";
 
     heroAliases["loc"] = "lordofchaos";
     heroAliases["fboss"] = "lordofchaos";

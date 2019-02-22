@@ -18,7 +18,9 @@ struct TurnData {
     int armorArray[ARMY_MAX_SIZE];
     int aoeDamage = 0;
     int aoeRevenge = 0;
+    int aoeLast = 0;
     int healing = 0;
+    int sadism = 0;
     double dampFactor = 1;
     double resistance = 0;
     double aoeReflect = 0;
@@ -157,6 +159,7 @@ inline void ArmyCondition::startNewTurn() {
     turnData.protection = 0;
     turnData.aoeDamage = 0;
     turnData.aoeRevenge = 0;
+    turnData.aoeLast = 0;
     turnData.healing = 0;
     turnData.dampFactor = 1;
     turnData.absorbMult = 0;
@@ -210,6 +213,8 @@ inline void ArmyCondition::startNewTurn() {
                             turnData.aoeDamage += (int) floor(skillAmounts[i] * 1.5 + 0.0001);//Add 0.0001 to fix discrepancy between js and c++ when c++ ends up with 1.9999...
                             turnData.masochism += (int) floor(skillAmounts[i] * 1.5 + 0.0001);
                             break;
+            case AOELAST:   turnData.aoeLast += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
+                            break;
         }
     }
 }
@@ -246,6 +251,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.ricoActive = false;
     turnData.aoeReflect = 0;
     turnData.hpPierce = 0;
+    turnData.sadism = 0;
 
     double friendsDamage = 0;
 
@@ -319,6 +325,9 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case VOID:      if (lineup[monstersLost]->element != opposingElement)
                             turnData.multiplier *= skillAmounts[monstersLost] + 1;
                         break;
+        case SADISM:    turnData.sadism += round(skillAmounts[monstersLost] * turnData.baseDamage);
+                        turnData.aoeDamage += round(skillAmounts[monstersLost] * turnData.baseDamage);
+                        break;
         default:        break;
 
     }
@@ -391,6 +400,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.aoeDamage = round((double) turnData.aoeDamage * opposingDampFactor);
         turnData.healing = round((double) turnData.healing * opposingDampFactor);
         turnData.sacHeal = round((double) turnData.sacHeal * opposingDampFactor);//Have to check if Bubbles affects it
+        turnData.aoeLast = round((double) turnData.aoeLast * opposingDampFactor);
     }
 
     if( opposingImmunityDamage && (turnData.valkyrieDamage >= opposingImmunityValue || turnData.baseDamage >= opposingImmunityValue ) ) {
@@ -449,6 +459,17 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
 
     if (opposing.aoeReflect)
         opposing.aoeDamage += round(turnData.baseDamage * opposing.aoeReflect);
+
+    if (opposing.aoeLast)
+        for (int i = armySize - 1; i >= frontliner; i--)
+            if (remainingHealths[i] > 0){ //Check for last alive unit
+                remainingHealths[i] -= opposing.aoeLast;
+                break;
+            }
+
+    if (turnData.sadism)
+        for (int i = frontliner + 1; i < armySize; i++)//Doesn't affect frontliner
+            remainingHealths[i] -= turnData.sadism;
 
     // Handle aoe Damage for all combatants
     for (int i = frontliner; i < armySize; i++) {

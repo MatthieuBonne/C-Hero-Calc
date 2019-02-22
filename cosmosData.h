@@ -14,7 +14,7 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.1.2.0a";
+const std::string VERSION = "4.1.3.0a";
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
@@ -109,7 +109,11 @@ enum SkillType {
     
     DEATHBUFF,//+X% attack and health stat of this creature given to all allies upon death
 
-    VOID//X% more damage to everything but void.
+    VOID,//X% more damage to everything but void.
+
+    AOELAST,//Deals X% attack per turn to your enemies last unit
+
+    SADISM//Deals X% attack as aoe to both enemy and friendly units (excluding itself) when attacking
 };
 
 enum Element {
