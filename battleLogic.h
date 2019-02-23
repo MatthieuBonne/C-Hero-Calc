@@ -467,10 +467,6 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                 break;
             }
 
-    if (turnData.sadism)
-        for (int i = frontliner + 1; i < armySize; i++)//Doesn't affect frontliner
-            remainingHealths[i] -= turnData.sadism;
-
     // Handle aoe Damage for all combatants
     for (int i = frontliner; i < armySize; i++) {
       int aliveAtBeginning = 0;
@@ -487,15 +483,20 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
       if (skillTypes[i] == SACRIFICE)
         remainingHealths[i] -= turnData.masochism;
 
-      if (i > frontliner && opposing.valkyrieDamage) { // Aoe that doesnt affect the frontliner
-        if (skillTypes[i] == RESISTANCE)
-            tempResistance = 1 - skillAmounts[i];
-        else
-            tempResistance = 1;
-        armoredRicochetValue = round(opposing.valkyrieDamage * tempResistance) - turnData.armorArray[i];
-        if (armoredRicochetValue > 0)
-            remainingHealths[i] -= armoredRicochetValue;
+      if (i > frontliner){
+        if (opposing.valkyrieDamage) { // Aoe that doesnt affect the frontliner
+          if (skillTypes[i] == RESISTANCE)
+              tempResistance = 1 - skillAmounts[i];
+          else
+              tempResistance = 1;
+          armoredRicochetValue = round(opposing.valkyrieDamage * tempResistance) - turnData.armorArray[i];
+          if (armoredRicochetValue > 0)
+              remainingHealths[i] -= armoredRicochetValue;
+        }
+        if (turnData.sadism)
+          remainingHealths[i] -= turnData.sadism;
       }
+
       if (remainingHealths[i] <= 0 && !worldboss) {
         if (i == monstersLost) {
           monstersLost++;
