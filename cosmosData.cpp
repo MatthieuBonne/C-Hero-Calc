@@ -166,7 +166,7 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                                   aType == LIFESTEAL || aType == LIFESTEAL_L ||
                                   aType == BEER || aType == AOEZERO_L ||
                                   aType == AOEZERO || aType == ABSORB ||
-                                  aType == SACRIFICE || aType == SACRIFICE_L );
+                                  aType == SACRIFICE || aType == SACRIFICE_L || aType == AOELAST);
 }
 
 // JSON Functions to provide results in an easily readable output format. Used my Latas for example

@@ -14,7 +14,7 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.1.3.0d";
+const std::string VERSION = "4.1.3.0e";
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
