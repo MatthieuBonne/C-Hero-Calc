@@ -811,7 +811,7 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         if (leftCondition.booze && leftCondition.armySize < (rightCondition.armySize + leftCondition.boozeValue)){
             int aoeValue = 0;
             for (size_t i = 0; i < ARMY_MAX_SIZE; ++i) {
-                rightCondition.remainingHealths[i] = int(rightCondition.maxHealths[i] * leftCondition.armySize / (rightCondition.armySize + leftCondition.boozeValue));
+                rightCondition.remainingHealths[i] = round((double)(rightCondition.maxHealths[i] * leftCondition.armySize) / (rightCondition.armySize + leftCondition.boozeValue));
                 if (rightCondition.dampZero < 1){
                     aoeValue = round((rightCondition.maxHealths[i] - rightCondition.remainingHealths[i]) * rightCondition.dampZero);
                     rightCondition.remainingHealths[i] = rightCondition.maxHealths[i] - aoeValue;
@@ -822,7 +822,7 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         if (rightCondition.booze && rightCondition.armySize < (leftCondition.armySize + rightCondition.boozeValue)){
             int aoeValue = 0;
             for (size_t i = 0; i < ARMY_MAX_SIZE; ++i) {
-                leftCondition.remainingHealths[i] = int(leftCondition.maxHealths[i] * rightCondition.armySize / (leftCondition.armySize + rightCondition.boozeValue));
+                leftCondition.remainingHealths[i] = round((double)(leftCondition.maxHealths[i] * rightCondition.armySize) / (leftCondition.armySize + rightCondition.boozeValue));
                 if (leftCondition.dampZero < 1){
                     aoeValue = round((leftCondition.maxHealths[i] - leftCondition.remainingHealths[i]) * leftCondition.dampZero);
                     leftCondition.remainingHealths[i] = leftCondition.maxHealths[i] - aoeValue;
