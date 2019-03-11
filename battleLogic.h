@@ -318,7 +318,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case AOEREFLECT: turnData.aoeReflect = skillAmounts[monstersLost];
                         break;
         case HPPIERCE:  if (!opposingCondition.worldboss)
-                        turnData.hpPierce = round((double)opposingCondition.maxHealths[opposingCondition.monstersLost] * skillAmounts[monstersLost]);
+                        turnData.hpPierce = opposingCondition.maxHealths[opposingCondition.monstersLost] * skillAmounts[monstersLost];
                         break;
         case POSBONUS:  turnData.baseDamage += round(skillAmounts[monstersLost] * (armySize - monstersLost - 1));
                         break;
@@ -392,7 +392,6 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
 
     // Handle enemy dampen ability and reduce aoe effects
     if (opposingDampFactor < 1) {
-        turnData.valkyrieDamage *= opposingDampFactor;
         // turnData.explodeDamage = castCeil((double) turnData.explodeDamage * opposingDampFactor);
         // turnData.aoeDamage = castCeil((double) turnData.aoeDamage * opposingDampFactor);
         // turnData.healing = castCeil((double) turnData.healing * opposingDampFactor);
@@ -445,7 +444,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                     tempResistance = 1 - skillAmounts[i];
                 else
                     tempResistance = 1;
-                armoredRicochetValue = round(opposing.valkyrieDamage * opposing.trampleMult * tempResistance) - turnData.armorArray[i];
+                armoredRicochetValue = round(opposing.valkyrieDamage * opposing.trampleMult * tempResistance * turnData.dampFactor) - turnData.armorArray[i];
                 if (armoredRicochetValue > 0)
                     remainingHealths[i] -= armoredRicochetValue;
                 break;
@@ -534,7 +533,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
       if(opposing.valkyrieMult > 0) {
         // Only reduce the damage if it hit an alive unit
         if(aliveAtBeginning) {
-          opposing.valkyrieDamage *= opposing.valkyrieMult;
+          opposing.valkyrieDamage *= opposing.valkyrieMult * turnData.dampFactor;
         }
       }  else {
         opposing.valkyrieDamage *= opposing.valkyrieMult;
