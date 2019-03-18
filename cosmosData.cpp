@@ -671,6 +671,10 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 64, 32, "ember",              FIRE,  RARE,      {SADISM,     ALL, FIRE,  0.95}, 34, 14, 19, 0.05));
     baseHeroes.push_back(Monster( 84, 42, "riptide",            WATER, LEGENDARY, {SADISM,     ALL, WATER, 0.95}, 89, 34, 22, 0.05));
     baseHeroes.push_back(Monster(180, 90, "spike",              EARTH, ASCENDED,  {SADISM,     ALL, EARTH, 0.95}, 234, 103, 136, 0.05));
+    baseHeroes.push_back(Monster(180, 60, "amahatma",           AIR,   ASCENDED,  {HATE,       WATER, AIR,   1.7}, 241, 50, 45, 0.3));
+    baseHeroes.push_back(Monster(172, 68, "ajade",              EARTH, ASCENDED,  {HATE,       AIR,   EARTH, 1.7}, 288, 41, 33, 0.3));
+    baseHeroes.push_back(Monster(160, 80, "aedana",             FIRE,  ASCENDED,  {HATE,       EARTH, FIRE,  1.7}, 191, 180, 74, 0.3));
+    baseHeroes.push_back(Monster(176, 66, "adybbuk",            WATER, ASCENDED,  {HATE,       FIRE,  WATER, 1.7}, 272, 55, 29, 0.3));
 }
 
 void initIndices() {
@@ -918,6 +922,26 @@ void initQuests() {
     quests.push_back({"w30", "ladyodelith:1000", "ignitor:1000", "zaytus:1000", "chroma:1000", "forestdruid:1000"});
     quests.push_back({"ignitor:1000", "forestdruid:1000", "petry:1000", "chroma:1000", "ladyodelith:1000", "undine:1000"});
     quests.push_back({"f30", "ignitor:1000", "undine:1000", "neptunius:1000"}); // 160
+    quests.push_back({"e30", "forestdruid:1000", "nicte:1000", "undine:1000", "shygu:1000"});
+    quests.push_back({"e30", "f30", "petry:1000", "zaytus:1000", "ignitor:1000", "lordkirk:1000"});
+    quests.push_back({"a30", "undine:1000", "ignitor:1000", "zaytus:1000", "nicte:1000", "shygu:1000"});
+    quests.push_back({"f30", "ignitor:1000", "forestdruid:1000", "ladyodelith:1000", "undine:1000", "thert:1000"});
+    quests.push_back({"zaytus:1000", "ignitor:1000", "undine:1000", "ladyodelith:1000", "chroma:1000", "hosokawa:1000"}); // 165
+    quests.push_back({"forestdruid:1000", "undine:1000", "takeda:1000", "shygu:1000"});
+    quests.push_back({"ladyodelith:1000", "petry:1000", "neptunius:1000", "hattori:1000"});
+    quests.push_back({"zaytus:1000", "petry:1000", "chroma:1000", "mahatma:1000", "edana:1000"});
+    quests.push_back({"nicte:1000", "ladyodelith:1000", "ignitor:1000", "lordkirk:1000", "dybbuk:1000"});
+    quests.push_back({"petry:1000", "nicte:1000", "chroma:1000", "forestdruid:1000", "thert:1000", "jade:1000"}); // 170
+    quests.push_back({"zaytus:1000", "chroma:1000", "hattori:1000", "hirate:1000"});
+    quests.push_back({"undine:1000", "ladyodelith:1000", "nicte:1000", "hosokawa:1000", "edana:1000"});
+    quests.push_back({"forestdruid:1000", "thert:1000", "neptunius:1000", "mahatma:1000"});
+    quests.push_back({"zaytus:1000", "ignitor:1000", "lordkirk:1000", "hirate:1000", "takeda:1000"});
+    quests.push_back({"petry:1000", "nicte:1000", "chroma:1000", "shygu:1000", "takeda:1000", "neptunius:1000"}); // 175
+    quests.push_back({"thert:1000", "neptunius:1000", "mahatma:1000", "hosokawa:1000"});
+    quests.push_back({"zaytus:1000", "lordkirk:1000", "jade:1000", "mahatma:1000", "dybbuk:1000"});
+    quests.push_back({"forestdruid:1000", "jade:1000", "takeda:1000", "hattori:1000", "hirate:1000"});
+    quests.push_back({"zaytus:1000", "chroma:1000", "shygu:1000", "hattori:1000", "mahatma:1000", "edana:1000"});
+    quests.push_back({"forestdruid:1000", "neptunius:1000", "thert:1000", "mahatma:1000", "jade:1000", "dybbuk:1000"}); // 180
 }
 
 void readMonsterData(std::vector<std::string>::iterator it, std::vector<std::string>::iterator itEnd) {
