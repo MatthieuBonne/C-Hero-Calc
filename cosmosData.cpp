@@ -60,6 +60,8 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
             double mult = (aSkill.skillType == GROW) ? skill.amount : 1;
             points *= this->rarity * mult + pointBonus;
             points = floor(points);
+            if (aSkill.skillType == EASTER && this->level > 1)
+                this->skill.amount = floor((this->skill.amount - 1) * this->rarity * (this->level-1));
             int value = this->hp + this->damage;
 
             this->hp = this->hp + (int) round((double) points * (double) this->hp / (double) value) + hpBonus;
@@ -91,7 +93,6 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
     //Abilities no longer scale past level 99
     if (aLevel > 99)
         aLevel = 99;
-
     if (this->skill.skillType == BUFF_L) {
         this->skill.skillType = BUFF;
         this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
@@ -147,7 +148,7 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                               aType == COUNTER || aType == DEATHSTRIKE ||
                               aType == LEECH || aType == COUNTER_MAX_HP ||
                               aType == AOELAST || aType == FLATREF ||
-                              aType == SELFHEAL);
+                              aType == SELFHEAL || aType == EASTER);
     this->hasHeal = (aType == HEAL || aType == HEAL_L ||
                      aType == LIFESTEAL || aType == LIFESTEAL_L ||
                      aType == SACRIFICE || aType == SACRIFICE_L ||
@@ -349,6 +350,7 @@ std::map<std::string, int> stringToEnum = {
     {"SKILLDAMPEN", SKILLDAMPEN},
     {"SHIELDME", SHIELDME},
     {"FLATREF", FLATREF},
+    {"EASTER", EASTER},
 
     {"EARTH", EARTH},
     {"AIR", AIR},
@@ -683,7 +685,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster(176, 66, "adybbuk",            WATER, ASCENDED,  {HATE,       FIRE,  WATER, 1.7}, 272, 55, 29, 0.3));
     baseHeroes.push_back(Monster( 30, 38, "willow",             AIR,   COMMON,    {SELFHEAL,    SELF,  AIR,   0.2}, 22, 19, 24, 0.05));
     baseHeroes.push_back(Monster( 70, 40, "gizmo",              FIRE,  RARE,      {COURAGE,     SELF,  FIRE,  3}, 43, 26, 52, 1));
-    baseHeroes.push_back(Monster( 84, 50, "daisy",              WATER, LEGENDARY, {NOTHING,     ALL,   WATER, 2.5}, 50, 84, 70, 0.5));
+    baseHeroes.push_back(Monster( 84, 50, "daisy",              WATER, LEGENDARY, {EASTER,     ALL,   WATER, 2.5}, 50, 84, 70, 0.5));
     baseHeroes.push_back(Monster(120,200, "thumper",            EARTH, ASCENDED,  {SKILLDAMPEN, SELF,  EARTH, 0.6}, 230, 320, 360, 0.1));
     baseHeroes.push_back(Monster( 40, 24, "bortles",            AIR,   COMMON,    {SHIELDME,    SELF,  AIR,   3}, 10, 13, 14, 3));
     baseHeroes.push_back(Monster( 40, 28, "murphy",             EARTH, RARE,      {FLATREF,     EARTH, EARTH, 60}, 24, 18, 28, 30));

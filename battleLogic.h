@@ -71,6 +71,8 @@ class ArmyCondition {
         int boozeValue;//Adds an illusory amount of enemies to lep's perception amplifying his aoe
         int aoeZero; // for hawking's ability
         double dampZero; // for bubbles's ability
+        bool easterCheck; // for Daisy
+        int easterID; // for Daisy
 
         int64_t seed;
 
@@ -123,6 +125,8 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
     worldboss = false;
     aoeZero = 0;
     dampZero = 1;
+    easterCheck = false;
+    easterID = -1;
 
     for (int i = armySize -1; i >= monstersLost; i--) {
         lineup[i] = &monsterReference[army.monsters[i]];
@@ -141,6 +145,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         if (skill->skillType == AOEZERO) aoeZero += skill->amount;
         if (skill->skillType == DAMPEN) dampZero *= skill->amount;
         if (skill->skillType == POSBONUS){ maxHealths[i] += round(skill->amount * (armySize - i - 1)); remainingHealths[i] = maxHealths[i] - aoeDamage; }
+        if (skill->skillType == EASTER){ easterID = i; }
 
         rainbowConditions[i] = tempRainbowCondition == VALID_RAINBOW_CONDITION;
         //pureMonsters[i] = tempPureMonsters;
@@ -149,6 +154,17 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
             tempRainbowCondition |= 1 << lineup[i]->element;
         if (skill->skillType == NOTHING) {
             tempPureMonsters++;
+        }
+    }
+    if (easterID >= 0){
+        for (int j = armySize - 1; j >= monstersLost; j--) {
+            if ( lineup[j]->baseName == "sparks" || lineup[j]->baseName == "leaf" ||
+                 lineup[j]->baseName == "flynn" || lineup[j]->baseName == "willow" ||
+                 lineup[j]->baseName == "gizmo" || lineup[j]->baseName == "thumper" ) {
+                    easterCheck = true;
+                    maxHealths[easterID] += round(skillAmounts[easterID] * 84 / 134); 
+                    remainingHealths[easterID] = maxHealths[easterID] - aoeDamage;
+            }
         }
     }
 }
@@ -339,6 +355,10 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         turnData.aoeDamage += round(skillAmounts[monstersLost] * turnData.baseDamage);
                         break;
         case COURAGE:   turnData.buffDamage *= skillAmounts[monstersLost];
+                        break;
+        case EASTER:   if (easterCheck)
+                            turnData.baseDamage += round(skillAmounts[monstersLost] * 50 / 134);
+                        break;
         default:        break;
 
     }
@@ -521,14 +541,14 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         //Save revenge values
         switch (skillTypes[i]) {
             case REVENGE:
-                turnData.aoeRevenge += (int) round((double) lineup[i]->damage * skillAmounts[i]);
+                turnData.aoeRevenge += (int) round((double) (lineup[i]->damage + deathBuffATK) * skillAmounts[i]);
                 break;
             case DEATHSTRIKE:
                 turnData.deathstrikeDamage += skillAmounts[i];
                 break;
             case DEATHBUFF:
                 turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
-                deathBuffATK += (int) round(skillAmounts[i] * lineup[i]->damage);
+                deathBuffATK += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
                 break;
             default:
                 break;
@@ -571,7 +591,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             remainingHealths[monstersLost + opposing.counter_target] -= static_cast<int64_t>(ceil(turnData.baseDamage * opposing.counter));
         }
         if (opposing.flatRef && counter_eligible){
-            remainingHealths[monstersLost + opposing.counter_target] -= opposing.flatRef;
+            remainingHealths[monstersLost] -= opposing.flatRef;
         }
         //If a delayed ability killed a frontliner, find next frontliner. Same procedure as when applying aoe.
         for (int i = monstersLost; i < armySize; i++){
@@ -590,7 +610,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                         turnData.deathstrikeDamage += skillAmounts[i];
                         break;
                     case DEATHBUFF:
-                        turnData.deathBuffHP += (int) round(skillAmounts[i] * (maxHealths[i] + turnData.deathBuffHP));
+                        turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
                         deathBuffATK += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
                     default:
                         break;
@@ -628,14 +648,14 @@ inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
                 //Save Revenge values
                 switch (skillTypes[i]) {
                     case REVENGE:
-                        turnData.aoeRevenge += (int) round((double) lineup[i]->damage * skillAmounts[i]);
+                        turnData.aoeRevenge += (int) round((double) (lineup[i]->damage + deathBuffATK) * skillAmounts[i]);
                         break;
                     case DEATHSTRIKE:
                         turnData.deathstrikeDamage += skillAmounts[i];
                         break;
                     case DEATHBUFF:
                         turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
-                        deathBuffATK += (int) round(skillAmounts[i] * lineup[i]->damage);
+                        deathBuffATK += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
                     default:
                         break;
                 }
@@ -793,7 +813,6 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
     ArmyCondition rightCondition;
 
     int turncounter;
-
     // Ignore lastFightData if either army-affecting heroes were added or for debugging
     if (left.lastFightData.valid && !verbose) {
         // Set pre-computed values to pick up where we left off

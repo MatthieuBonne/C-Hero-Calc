@@ -14,7 +14,7 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.2.0.4a";
+const std::string VERSION = "4.2.0.4b";
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
@@ -119,7 +119,8 @@ enum SkillType {
     COURAGE,//Gains 3x from attack buffs
     SKILLDAMPEN,//Currently reduces AOE damage taken by X%, will reduce other skills as well.
     SHIELDME,//Gets X armor from each unit behind
-    FLATREF//deals X damage on top of each attack (reflect timing)
+    FLATREF,//deals X damage on top of each attack (reflect timing)
+    EASTER// Increase stats gained when this hero levels up, if accompanied by an Easter hero
 };
 
 enum Element {
