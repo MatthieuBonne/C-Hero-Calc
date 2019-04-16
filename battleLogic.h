@@ -852,7 +852,7 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
                 if (rightCondition.dampZero < 1 || rightCondition.skillTypes[i] == SKILLDAMPEN){
                     aoeValue = (rightCondition.maxHealths[i] - rightCondition.remainingHealths[i]) * rightCondition.dampZero;
                     if(rightCondition.skillTypes[i] == SKILLDAMPEN)
-                        aoeValue *= rightCondition.skillAmounts[i];
+                        aoeValue *=  1 - rightCondition.skillAmounts[i];
                     aoeValue = round(aoeValue);
                     rightCondition.remainingHealths[i] = rightCondition.maxHealths[i] - aoeValue;
                 }
@@ -866,7 +866,7 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
                 if (leftCondition.dampZero < 1 || leftCondition.skillTypes[i] == SKILLDAMPEN){
                     aoeValue = (leftCondition.maxHealths[i] - leftCondition.remainingHealths[i]) * leftCondition.dampZero;
                     if(leftCondition.skillTypes[i] == SKILLDAMPEN)
-                        aoeValue *= rightCondition.skillAmounts[i];
+                        aoeValue *= 1 - leftCondition.skillAmounts[i];
                     aoeValue = round(aoeValue);
                     leftCondition.remainingHealths[i] = leftCondition.maxHealths[i] - aoeValue;
                 }
