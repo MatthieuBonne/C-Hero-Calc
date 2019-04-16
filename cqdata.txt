@@ -281,6 +281,13 @@
 172 68 ajade EARTH ASCENDED HATE AIR EARTH 1.7 288 41 33 0.3
 160 80 aedana FIRE ASCENDED HATE EARTH FIRE 1.7 191 180 74 0.3
 176 66 adybbuk WATER ASCENDED HATE FIRE WATER 1.7 272 55 29 0.3
+30 38 willow AIR COMMON SELFHEAL SELF AIR 0.2 22 19 24 0.05
+70 40 gizmo FIRE RARE COURAGE SELF FIRE 3 43 26 52 1
+84 50 daisy WATER LEGENDARY NOTHING ALL WATER 2.5 50 84 70 0.5
+120 200 thumper EARTH ASCENDED SKILLDAMPEN SELF EARTH 0.6 230 320 360 0.1
+40 24 bortles AIR COMMON SHIELDME SELF AIR 3 10 13 14 3
+40 28 murphy EARTH RARE FLATREF EARTH EARTH 60 24 18 28 30
+24 82 nerissa WATER LEGENDARY RESISTANCE SELF WATER 0.45 22 45 52 0.05
 * ALIASES
 lady ladyoftwilight
 lot ladyoftwilight
@@ -301,6 +308,7 @@ dulla dullahan
 odelith ladyodelith
 kirk lordkirk
 nep neptunius
+hoso hosokawa
 tak takeda
 hall hallinskidi
 atronix atr0n1x
@@ -316,6 +324,7 @@ luxurious luxuriusmaximus
 poker pokerface
 akirk alordkirk
 anep aneptunius
+ahoso ahosokawa
 atak atakeda
 san sanqueen
 squenn sanqueen
@@ -343,6 +352,7 @@ wander thewanderer
 wanderer thewanderer
 clown b-day
 bday b-day
+lee masterlee
 loc lordofchaos
 fboss lordofchaos
 moak motherofallkodamas

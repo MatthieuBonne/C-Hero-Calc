@@ -14,7 +14,7 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.1.4.0a";
+const std::string VERSION = "4.2.0.4a";
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
@@ -113,7 +113,13 @@ enum SkillType {
 
     AOELAST,//Deals X% attack per turn to your enemies last unit
 
-    SADISM//Deals X% attack as aoe to both enemy and friendly units (excluding itself) when attacking
+    SADISM,//Deals X% attack as aoe to both enemy and friendly units (excluding itself) when attacking
+
+    SELFHEAL,//Heals X% of damage taken to self
+    COURAGE,//Gains 3x from attack buffs
+    SKILLDAMPEN,//Currently reduces AOE damage taken by X%, will reduce other skills as well.
+    SHIELDME,//Gets X armor from each unit behind
+    FLATREF//deals X damage on top of each attack (reflect timing)
 };
 
 enum Element {

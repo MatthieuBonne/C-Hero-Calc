@@ -32,6 +32,7 @@ struct TurnData {
     int deathBuffHP = 0;
 
     double counter = 0;
+    int flatRef = 0;
     double valkyrieMult = 0;
     double valkyrieDamage = 0;
     double absorbMult = 0;
@@ -46,6 +47,7 @@ struct TurnData {
     double critMult = 1;
     double hate = 0;
     double leech = 0;
+    double selfHeal = 0;
     double execute = 0;
     bool immunity5K = false ;
 };
@@ -243,9 +245,11 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.critMult = 1; // same as above
     turnData.hate = 0; // same as above
     turnData.counter = 0;
+    turnData.flatRef = 0;
     turnData.direct_target = 0;
     turnData.counter_target = 0;
     turnData.leech = 0;
+    turnData.selfHeal = 0;
     turnData.execute = 0;
     turnData.guyActive = false;
     turnData.ricoActive = false;
@@ -263,6 +267,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                             else if ((skillTypes[i] == BUFF || skillTypes[i] == CHAMPION) && (skillTargets[i] == ALL || skillTargets[i] == lineup[monstersLost]->element))
                                 friendsDamage += skillAmounts[i];
                         }
+                        break;
+        case SHIELDME:  turnData.protection += (int) skillAmounts[monstersLost] * (armySize - monstersLost - 1);
                         break;
         case TRAINING:  turnData.buffDamage += (int) (skillAmounts[monstersLost] * (double) turncounter);
                         break;
@@ -291,6 +297,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case COUNTER:   turnData.counter = skillAmounts[monstersLost];
                         break;
+        case FLATREF:   turnData.flatRef = skillAmounts[monstersLost];
+                        break;
         case EXPLODE:   turnData.explodeDamage = skillAmounts[monstersLost]; // Explode damage gets added here, but still won't apply unless enemy frontliner dies
                         break;
         case DICE:      turnData.baseDamage += opposingCondition.seed % (int)(skillAmounts[monstersLost] + 1); // Only adds dice attack effect if dice is in front, max health is done before battle
@@ -306,6 +314,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case HATE:      turnData.hate = skillAmounts[monstersLost];
                         break;
         case LEECH:     turnData.leech = skillAmounts[monstersLost];
+                        break;
+        case SELFHEAL:  turnData.selfHeal = skillAmounts[monstersLost];
                         break;
         case EVOLVE:    turnData.buffDamage += evolveTotal;
                         evolveTotal += opposingDamage * skillAmounts[monstersLost];
@@ -328,6 +338,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case SADISM:    turnData.sadism += round(skillAmounts[monstersLost] * turnData.baseDamage);
                         turnData.aoeDamage += round(skillAmounts[monstersLost] * turnData.baseDamage);
                         break;
+        case COURAGE:   turnData.buffDamage *= skillAmounts[monstersLost];
         default:        break;
 
     }
@@ -462,7 +473,10 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     if (opposing.aoeLast)
         for (int i = armySize - 1; i >= frontliner; i--)
             if (remainingHealths[i] > 0){ //Check for last alive unit
-                remainingHealths[i] -= opposing.aoeLast;
+                if (skillTypes[i] == SKILLDAMPEN)
+                    remainingHealths[i] -= round(opposing.aoeLast * skillAmounts[i]);
+                else
+                    remainingHealths[i] -= opposing.aoeLast;
                 break;
             }
 
@@ -477,8 +491,10 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         // remainingHealths[i] -= castCeil(opposing.absorbDamage);
         remainingHealths[i] -= round(opposing.absorbDamage);
       }
-
-      remainingHealths[i] -= opposing.aoeDamage;
+      if (skillTypes[i] == SKILLDAMPEN)
+        remainingHealths[i] -= round(opposing.aoeDamage * skillAmounts[i]);
+      else
+        remainingHealths[i] -= opposing.aoeDamage;
       if (skillTypes[i] == SACRIFICE)
         remainingHealths[i] -= turnData.masochism;
 
@@ -554,6 +570,9 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             // Add opposing.counter_target to handle fawkes not targetting the frontliner
             remainingHealths[monstersLost + opposing.counter_target] -= static_cast<int64_t>(ceil(turnData.baseDamage * opposing.counter));
         }
+        if (opposing.flatRef && counter_eligible){
+            remainingHealths[monstersLost + opposing.counter_target] -= opposing.flatRef;
+        }
         //If a delayed ability killed a frontliner, find next frontliner. Same procedure as when applying aoe.
         for (int i = monstersLost; i < armySize; i++){
             if (remainingHealths[i] <= 0 && !worldboss) {
@@ -565,14 +584,14 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                 //Save revenge values
                 switch (skillTypes[i]) {
                     case REVENGE:
-                        turnData.aoeRevenge += (int) round((double) lineup[i]->damage * skillAmounts[i]);
+                        turnData.aoeRevenge += (int) round((double) (lineup[i]->damage + deathBuffATK) * skillAmounts[i]);
                         break;
                     case DEATHSTRIKE:
                         turnData.deathstrikeDamage += skillAmounts[i];
                         break;
                     case DEATHBUFF:
-                        turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
-                        deathBuffATK += (int) round(skillAmounts[i] * lineup[i]->damage);
+                        turnData.deathBuffHP += (int) round(skillAmounts[i] * (maxHealths[i] + turnData.deathBuffHP));
+                        deathBuffATK += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
                     default:
                         break;
                 }
@@ -581,8 +600,8 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         }
     }
     // Moved Sanqueen's ability (leech) to the end, to replicate delayed behavior
-    if(turnData.leech && remainingHealths[frontliner] >= 0){
-        remainingHealths[frontliner] += round(turnData.leech);
+    if((turnData.leech || turnData.selfHeal) && remainingHealths[frontliner] >= 0){
+        remainingHealths[frontliner] += round(turnData.leech) + round(turnData.selfHeal * opposing.baseDamage);
         if (remainingHealths[frontliner] > maxHealths[frontliner]) { // Avoid overhealing
             remainingHealths[frontliner] = maxHealths[frontliner];
         }
@@ -811,8 +830,11 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
             int aoeValue = 0;
             for (size_t i = 0; i < ARMY_MAX_SIZE; ++i) {
                 rightCondition.remainingHealths[i] = round((double)(rightCondition.maxHealths[i] * leftCondition.armySize) / (rightCondition.armySize + leftCondition.boozeValue));
-                if (rightCondition.dampZero < 1){
-                    aoeValue = round((rightCondition.maxHealths[i] - rightCondition.remainingHealths[i]) * rightCondition.dampZero);
+                if (rightCondition.dampZero < 1 || rightCondition.skillTypes[i] == SKILLDAMPEN){
+                    aoeValue = (rightCondition.maxHealths[i] - rightCondition.remainingHealths[i]) * rightCondition.dampZero;
+                    if(rightCondition.skillTypes[i] == SKILLDAMPEN)
+                        aoeValue *= rightCondition.skillAmounts[i];
+                    aoeValue = round(aoeValue);
                     rightCondition.remainingHealths[i] = rightCondition.maxHealths[i] - aoeValue;
                 }
             }
@@ -822,8 +844,11 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
             int aoeValue = 0;
             for (size_t i = 0; i < ARMY_MAX_SIZE; ++i) {
                 leftCondition.remainingHealths[i] = round((double)(leftCondition.maxHealths[i] * rightCondition.armySize) / (leftCondition.armySize + rightCondition.boozeValue));
-                if (leftCondition.dampZero < 1){
-                    aoeValue = round((leftCondition.maxHealths[i] - leftCondition.remainingHealths[i]) * leftCondition.dampZero);
+                if (leftCondition.dampZero < 1 || leftCondition.skillTypes[i] == SKILLDAMPEN){
+                    aoeValue = (leftCondition.maxHealths[i] - leftCondition.remainingHealths[i]) * leftCondition.dampZero;
+                    if(leftCondition.skillTypes[i] == SKILLDAMPEN)
+                        aoeValue *= rightCondition.skillAmounts[i];
+                    aoeValue = round(aoeValue);
                     leftCondition.remainingHealths[i] = leftCondition.maxHealths[i] - aoeValue;
                 }
             }
@@ -838,13 +863,13 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         if (leftCondition.aoeZero || rightCondition.aoeZero) {
             TurnData turnZero;
             if (leftCondition.aoeZero) {
-                leftCondition.aoeZero *= rightCondition.dampZero;
+                leftCondition.aoeZero = round(rightCondition.dampZero * leftCondition.aoeZero);
                 left.lastFightData.rightAoeDamage += leftCondition.aoeZero;
                 turnZero.aoeDamage = leftCondition.aoeZero;
                 rightCondition.resolveDamage(turnZero);
             }
             if (rightCondition.aoeZero) {
-                rightCondition.aoeZero *= leftCondition.dampZero;
+                rightCondition.aoeZero = round(leftCondition.dampZero * rightCondition.aoeZero);
                 left.lastFightData.leftAoeDamage += rightCondition.aoeZero;
                 turnZero.aoeDamage = rightCondition.aoeZero;
                 leftCondition.resolveDamage(turnZero);

@@ -146,7 +146,8 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
     this->hasAsymmetricAoe = (aType == VALKYRIE || aType == TRAMPLE ||
                               aType == COUNTER || aType == DEATHSTRIKE ||
                               aType == LEECH || aType == COUNTER_MAX_HP ||
-                              aType == AOELAST);
+                              aType == AOELAST || aType == FLATREF ||
+                              aType == SELFHEAL);
     this->hasHeal = (aType == HEAL || aType == HEAL_L ||
                      aType == LIFESTEAL || aType == LIFESTEAL_L ||
                      aType == SACRIFICE || aType == SACRIFICE_L ||
@@ -343,6 +344,11 @@ std::map<std::string, int> stringToEnum = {
     {"VOID", VOID},
     {"AOELAST", AOELAST},
     {"SADISM", SADISM},
+    {"SELFHEAL", SELFHEAL},
+    {"COURAGE", COURAGE},
+    {"SKILLDAMPEN", SKILLDAMPEN},
+    {"SHIELDME", SHIELDME},
+    {"FLATREF", FLATREF},
 
     {"EARTH", EARTH},
     {"AIR", AIR},
@@ -675,6 +681,13 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster(172, 68, "ajade",              EARTH, ASCENDED,  {HATE,       AIR,   EARTH, 1.7}, 288, 41, 33, 0.3));
     baseHeroes.push_back(Monster(160, 80, "aedana",             FIRE,  ASCENDED,  {HATE,       EARTH, FIRE,  1.7}, 191, 180, 74, 0.3));
     baseHeroes.push_back(Monster(176, 66, "adybbuk",            WATER, ASCENDED,  {HATE,       FIRE,  WATER, 1.7}, 272, 55, 29, 0.3));
+    baseHeroes.push_back(Monster( 30, 38, "willow",             AIR,   COMMON,    {SELFHEAL,    SELF,  AIR,   0.2}, 22, 19, 24, 0.05));
+    baseHeroes.push_back(Monster( 70, 40, "gizmo",              FIRE,  RARE,      {COURAGE,     SELF,  FIRE,  3}, 43, 26, 52, 1));
+    baseHeroes.push_back(Monster( 84, 50, "daisy",              WATER, LEGENDARY, {NOTHING,     ALL,   WATER, 2.5}, 50, 84, 70, 0.5));
+    baseHeroes.push_back(Monster(120,200, "thumper",            EARTH, ASCENDED,  {SKILLDAMPEN, SELF,  EARTH, 0.6}, 230, 320, 360, 0.1));
+    baseHeroes.push_back(Monster( 40, 24, "bortles",            AIR,   COMMON,    {SHIELDME,    SELF,  AIR,   3}, 10, 13, 14, 3));
+    baseHeroes.push_back(Monster( 40, 28, "murphy",             EARTH, RARE,      {FLATREF,     EARTH, EARTH, 60}, 24, 18, 28, 30));
+    baseHeroes.push_back(Monster( 24, 82, "nerissa",            WATER, LEGENDARY, {RESISTANCE,  SELF,  WATER, 0.45}, 22, 45, 52, 0.05));
 }
 
 void initIndices() {
@@ -707,6 +720,7 @@ void initHeroAliases() {
     heroAliases["odelith"] = "ladyodelith";
     heroAliases["kirk"] = "lordkirk";
     heroAliases["nep"] = "neptunius";
+    heroAliases["hoso"] = "hosokawa";
     heroAliases["tak"] = "takeda";
     heroAliases["hall"] = "hallinskidi";
     heroAliases["atronix"] = "atr0n1x";
@@ -722,6 +736,7 @@ void initHeroAliases() {
     heroAliases["poker"] = "pokerface";
     heroAliases["akirk"] = "alordkirk";
     heroAliases["anep"] = "aneptunius";
+    heroAliases["ahoso"] = "ahosokawa";
     heroAliases["atak"] = "atakeda";
     heroAliases["san"] = "sanqueen";
     heroAliases["squeen"] = "sanqueen";
@@ -749,6 +764,7 @@ void initHeroAliases() {
     heroAliases["wander"] = "thewanderer";
     heroAliases["clown"] = "b-day";
     heroAliases["bday"] = "b-day";
+    heroAliases["lee"] = "masterlee";
 
     heroAliases["loc"] = "lordofchaos";
     heroAliases["fboss"] = "lordofchaos";
