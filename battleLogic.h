@@ -494,7 +494,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         for (int i = armySize - 1; i >= frontliner; i--)
             if (remainingHealths[i] > 0){ //Check for last alive unit
                 if (skillTypes[i] == SKILLDAMPEN)
-                    remainingHealths[i] -= round(opposing.aoeLast * skillAmounts[i]);
+                    remainingHealths[i] -= round(opposing.aoeLast * (1 - skillAmounts[i]));
                 else
                     remainingHealths[i] -= opposing.aoeLast;
                 break;
@@ -512,7 +512,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         remainingHealths[i] -= round(opposing.absorbDamage);
       }
       if (skillTypes[i] == SKILLDAMPEN)
-        remainingHealths[i] -= round(opposing.aoeDamage * skillAmounts[i]);
+        remainingHealths[i] -= round(opposing.aoeDamage * (1 - skillAmounts[i]));
       else
         remainingHealths[i] -= opposing.aoeDamage;
       if (skillTypes[i] == SACRIFICE)
