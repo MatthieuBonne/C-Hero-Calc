@@ -23,6 +23,7 @@ struct TurnData {
     int sadism = 0;
     double dampFactor = 1;
     double resistance = 0;
+    double skillDampen = 0;
     double aoeReflect = 0;
     int hpPierce = 0;
     int sacHeal = 0;
@@ -183,6 +184,7 @@ inline void ArmyCondition::startNewTurn() {
     turnData.absorbMult = 0;
     turnData.absorbDamage = 0;
     turnData.resistance = 0;
+    turnData.skillDampen = 1;
     turnData.sacHeal = 0;
     turnData.deathstrikeDamage = 0;
     turnData.masochism = 0;
@@ -201,6 +203,8 @@ inline void ArmyCondition::startNewTurn() {
 
     if( skillTypes[monstersLost] == RESISTANCE )
         turnData.resistance = 1 - skillAmounts[monstersLost];//Needs to be here so it happens before Neil's absorb.
+    if( skillTypes[monstersLost] == SKILLDAMPEN )
+        turnData.skillDampen = 1 - skillAmounts[monstersLost];
 
     // Gather all skills that trigger globally
     for (i = monstersLost; i < armySize; i++) {
@@ -250,6 +254,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     const bool opposingImmunityDamage = opposingCondition.turnData.immunity5K;
     const double opposingDamage = opposingCondition.lineup[opposingCondition.monstersLost]->damage;
     const double opposingResistance = opposingCondition.turnData.resistance;
+    const double opposingSkillDampen = opposingCondition.turnData.skillDampen;
     const int opposingImmunityValue = opposingCondition.turnData.immunityValue;
 
     // Handle Monsters with skills that only activate on attack.
@@ -408,7 +413,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     if (turnData.leech != 0)
         turnData.leech *= turnData.valkyrieDamage;
     //Check execute before resolve damage for reflect ability, neil absorbs damage before the execute, according to replays.
-    if (turnData.execute && !opposingCondition.worldboss && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage)) / opposingCondition.maxHealths[opposingCondition.monstersLost] <= turnData.execute)) {
+    if (turnData.execute && !opposingCondition.worldboss && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage)) / opposingCondition.maxHealths[opposingCondition.monstersLost] <= turnData.execute * opposingSkillDampen)) {
         if (turnData.valkyrieDamage < opposingCondition.remainingHealths[opposingCondition.monstersLost] + 1)
             turnData.valkyrieDamage = opposingCondition.remainingHealths[opposingCondition.monstersLost] + 1;
     }

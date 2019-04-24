@@ -683,7 +683,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster(172, 68, "ajade",              EARTH, ASCENDED,  {HATE,       AIR,   EARTH, 1.7}, 288, 41, 33, 0.3));
     baseHeroes.push_back(Monster(160, 80, "aedana",             FIRE,  ASCENDED,  {HATE,       EARTH, FIRE,  1.7}, 191, 180, 74, 0.3));
     baseHeroes.push_back(Monster(176, 66, "adybbuk",            WATER, ASCENDED,  {HATE,       FIRE,  WATER, 1.7}, 272, 55, 29, 0.3));
-    baseHeroes.push_back(Monster( 30, 38, "willow",             AIR,   COMMON,    {SELFHEAL,    SELF,  AIR,   0.2}, 22, 19, 24, 0.05));
+    baseHeroes.push_back(Monster( 30, 38, "willow",             AIR,   COMMON,    {SELFHEAL,    SELF,  AIR,   0.2}, 22, 19, 24, 0.2));
     baseHeroes.push_back(Monster( 70, 40, "gizmo",              FIRE,  RARE,      {COURAGE,     SELF,  FIRE,  3}, 43, 26, 52, 1));
     baseHeroes.push_back(Monster( 84, 50, "daisy",              WATER, LEGENDARY, {EASTER,     ALL,   WATER, 2.5}, 50, 84, 70, 0.5));
     baseHeroes.push_back(Monster(120,200, "thumper",            EARTH, ASCENDED,  {SKILLDAMPEN, SELF,  EARTH, 0.6}, 230, 320, 360, 0.1));
