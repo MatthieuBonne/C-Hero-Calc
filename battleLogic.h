@@ -31,6 +31,7 @@ struct TurnData {
     int masochism = 0;
     int immunityValue = 0;
     int deathBuffHP = 0;
+    int healFirst = 0;
 
     double counter = 0;
     int flatRef = 0;
@@ -190,6 +191,7 @@ inline void ArmyCondition::startNewTurn() {
     turnData.masochism = 0;
     turnData.immunityValue = 0;
     turnData.deathBuffHP = 0;
+    turnData.healFirst = 0;
 
     if( skillTypes[monstersLost] == DODGE )
     {
@@ -236,6 +238,8 @@ inline void ArmyCondition::startNewTurn() {
                             turnData.masochism += (int) floor(skillAmounts[i] * 1.5 + 0.0001);
                             break;
             case AOELAST:   turnData.aoeLast += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
+                            break;
+            case HEALFIRST: turnData.healFirst += (int) skillAmounts[i];
                             break;
         }
     }
@@ -434,6 +438,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.explodeDamage = round((double) turnData.explodeDamage * opposingDampFactor);
         turnData.aoeDamage = round((double) turnData.aoeDamage * opposingDampFactor);
         turnData.healing = round((double) turnData.healing * opposingDampFactor);
+        turnData.healFirst = round((double) turnData.healFirst * opposingDampFactor);
         turnData.sacHeal = round((double) turnData.sacHeal * opposingDampFactor);//Have to check if Bubbles affects it
         turnData.aoeLast = round((double) turnData.aoeLast * opposingDampFactor);
     }
@@ -625,8 +630,8 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         }
     }
     // Moved Sanqueen's ability (leech) to the end, to replicate delayed behavior
-    if((turnData.leech || turnData.selfHeal) && remainingHealths[frontliner] >= 0){
-        remainingHealths[frontliner] += round(turnData.leech) + round(turnData.selfHeal * opposing.baseDamage);
+    if((turnData.healFirst || turnData.leech || turnData.selfHeal) && remainingHealths[frontliner] >= 0){
+        remainingHealths[frontliner] += round(turnData.leech) + round(turnData.selfHeal * opposing.baseDamage) + turnData.healFirst;
         if (remainingHealths[frontliner] > maxHealths[frontliner]) { // Avoid overhealing
             remainingHealths[frontliner] = maxHealths[frontliner];
         }

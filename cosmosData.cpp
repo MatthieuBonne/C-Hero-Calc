@@ -152,7 +152,7 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
     this->hasHeal = (aType == HEAL || aType == HEAL_L ||
                      aType == LIFESTEAL || aType == LIFESTEAL_L ||
                      aType == SACRIFICE || aType == SACRIFICE_L ||
-                     aType == DEATHBUFF);
+                     aType == DEATHBUFF || aType == HEALFIRST);
     // hasAoe should include all things affected by dampen
     this->hasAoe = (aType == AOE || aType == AOE_L ||
                     aType == REVENGE ||
@@ -168,7 +168,8 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                                   aType == LIFESTEAL || aType == LIFESTEAL_L ||
                                   aType == BEER || aType == AOEZERO_L ||
                                   aType == AOEZERO || aType == ABSORB ||
-                                  aType == SACRIFICE || aType == SACRIFICE_L || aType == AOELAST);
+                                  aType == SACRIFICE || aType == SACRIFICE_L ||
+                                  aType == AOELAST || aType == HEALFIRST);
 }
 
 // JSON Functions to provide results in an easily readable output format. Used my Latas for example
@@ -351,6 +352,7 @@ std::map<std::string, int> stringToEnum = {
     {"SHIELDME", SHIELDME},
     {"FLATREF", FLATREF},
     {"EASTER", EASTER},
+    {"HEALFIRST", HEALFIRST},
 
     {"EARTH", EARTH},
     {"AIR", AIR},
@@ -690,6 +692,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 40, 24, "bortles",            AIR,   COMMON,    {SHIELDME,    SELF,  AIR,   3}, 10, 13, 14, 3));
     baseHeroes.push_back(Monster( 40, 28, "murphy",             EARTH, RARE,      {FLATREF,     EARTH, EARTH, 60}, 24, 18, 28, 30));
     baseHeroes.push_back(Monster( 24, 82, "nerissa",            WATER, LEGENDARY, {RESISTANCE,  SELF,  WATER, 0.45}, 22, 45, 52, 0.05));
+    baseHeroes.push_back(Monster(112, 55, "mother",             WATER, LEGENDARY, {HEALFIRST,   ALL,  WATER, 25}, 200, 120, 140, 5));
 }
 
 void initIndices() {
@@ -767,6 +770,7 @@ void initHeroAliases() {
     heroAliases["clown"] = "b-day";
     heroAliases["bday"] = "b-day";
     heroAliases["lee"] = "masterlee";
+    heroAliases["mom"] = "mother";
 
     heroAliases["loc"] = "lordofchaos";
     heroAliases["fboss"] = "lordofchaos";
