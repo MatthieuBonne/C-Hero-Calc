@@ -192,6 +192,7 @@ inline void ArmyCondition::startNewTurn() {
     turnData.immunityValue = 0;
     turnData.deathBuffHP = 0;
     turnData.healFirst = 0;
+    turnData.multiplier = 1;
 
     if( skillTypes[monstersLost] == DODGE )
     {
@@ -241,6 +242,8 @@ inline void ArmyCondition::startNewTurn() {
                             break;
             case HEALFIRST: turnData.healFirst += (int) skillAmounts[i];
                             break;
+            case PERCBUFF:  turnData.multiplier += skillAmounts[i];
+                            break;
         }
     }
 }
@@ -266,7 +269,6 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.explodeDamage = 0;
     turnData.valkyrieMult = 0;
     turnData.trampleMult = 0;
-    turnData.multiplier = 1; // Not used outside this function, does it need to be stored in turnData?
     turnData.critMult = 1; // same as above
     turnData.hate = 0; // same as above
     turnData.counter = 0;

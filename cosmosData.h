@@ -14,7 +14,7 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.2.2.0a";
+const std::string VERSION = "4.3.0.1a";
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
@@ -122,7 +122,9 @@ enum SkillType {
     FLATREF,//deals X damage on top of each attack (reflect timing)
     EASTER,// Increase stats gained when this hero levels up, if accompanied by an Easter hero
 
-    HEALFIRST// heal the frontliner for X health
+    HEALFIRST,// heal the frontliner for X health
+
+    PERCBUFF// Increase attack by X%
 };
 
 enum Element {

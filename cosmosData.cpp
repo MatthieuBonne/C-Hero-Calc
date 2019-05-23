@@ -169,7 +169,8 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                                   aType == BEER || aType == AOEZERO_L ||
                                   aType == AOEZERO || aType == ABSORB ||
                                   aType == SACRIFICE || aType == SACRIFICE_L ||
-                                  aType == AOELAST || aType == HEALFIRST);
+                                  aType == AOELAST || aType == HEALFIRST ||
+                                  aType == PERCBUFF);
 }
 
 // JSON Functions to provide results in an easily readable output format. Used my Latas for example
@@ -353,6 +354,7 @@ std::map<std::string, int> stringToEnum = {
     {"FLATREF", FLATREF},
     {"EASTER", EASTER},
     {"HEALFIRST", HEALFIRST},
+    {"PERCBUFF", PERCBUFF},
 
     {"EARTH", EARTH},
     {"AIR", AIR},
@@ -693,6 +695,12 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 40, 28, "murphy",             EARTH, RARE,      {FLATREF,     EARTH, EARTH, 60}, 24, 18, 28, 30));
     baseHeroes.push_back(Monster( 24, 82, "nerissa",            WATER, LEGENDARY, {RESISTANCE,  SELF,  WATER, 0.45}, 22, 45, 52, 0.05));
     baseHeroes.push_back(Monster(112, 55, "mother",             WATER, LEGENDARY, {HEALFIRST,   ALL,  WATER, 25}, 200, 120, 140, 5));
+    baseHeroes.push_back(Monster( 48,164, "anerissa",           WATER, ASCENDED,  {RESISTANCE_L,SELF, WATER, 0.06}, 70, 112, 100, 0.006));
+    baseHeroes.push_back(Monster( 51, 59, "agatha",             AIR,   LEGENDARY, {PERCBUFF,    ALL,  AIR,   0.1}, 76, 92, 74, 0.05));
+    baseHeroes.push_back(Monster( 52, 60, "ophelia",            EARTH, LEGENDARY, {PERCBUFF,    ALL,  EARTH, 0.15}, 78, 99, 75, 0.05));
+    baseHeroes.push_back(Monster( 53, 61, "helga",              WATER, LEGENDARY, {PERCBUFF,    ALL,  WATER, 0.2}, 84, 101, 82, 0.05));
+    baseHeroes.push_back(Monster(108,124, "minerva",            FIRE,  ASCENDED,  {PERCBUFF,    ALL,  FIRE,  0.25}, 204, 241, 256, 0.05));
+    baseHeroes.push_back(Monster(124,124, "awanderer",          ALL,   ASCENDED,  {VOID,        ALL,  ALL,   0.75}, 110, 110, 110, 0.1));
 }
 
 void initIndices() {
@@ -771,6 +779,7 @@ void initHeroAliases() {
     heroAliases["bday"] = "b-day";
     heroAliases["lee"] = "masterlee";
     heroAliases["mom"] = "mother";
+    heroAliases["awander"] = "awanderer";
 
     heroAliases["loc"] = "lordofchaos";
     heroAliases["fboss"] = "lordofchaos";
