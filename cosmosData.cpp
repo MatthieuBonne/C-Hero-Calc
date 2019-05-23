@@ -89,7 +89,11 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
     Monster(baseHero.hp, baseHero.damage, baseHero.cost, baseHero.baseName, baseHero.element, baseHero.rarity, baseHero.skill, baseHero.promoOne, baseHero.promoTwo, baseHero.promoFour, baseHero.promoFive, aLevel, aPromo)
 {
     this->index = baseHero.index;
-
+//Put aSeethe skill back where it belongs once it's capped to 99
+    if (this->skill.skillType == POSBONUS_L) {
+        this->skill.skillType = POSBONUS;
+        this->skill.amount = this->skill.amount * (double) aLevel;
+    }
     //Abilities no longer scale past level 99
     if (aLevel > 99)
         aLevel = 99;
@@ -132,9 +136,6 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
     } else if (this->skill.skillType == SACRIFICE_L) {
         this->skill.skillType = SACRIFICE;
         this->skill.amount = this->skill.amount * (double) aLevel / 9;
-    } else if (this->skill.skillType == POSBONUS_L) {
-        this->skill.skillType = POSBONUS;
-        this->skill.amount = this->skill.amount * (double) aLevel;
     }
 }
 
@@ -694,7 +695,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 40, 24, "bortles",            AIR,   COMMON,    {SHIELDME,    SELF,  AIR,   3}, 10, 13, 14, 3));
     baseHeroes.push_back(Monster( 40, 28, "murphy",             EARTH, RARE,      {FLATREF,     EARTH, EARTH, 60}, 24, 18, 28, 30));
     baseHeroes.push_back(Monster( 24, 82, "nerissa",            WATER, LEGENDARY, {RESISTANCE,  SELF,  WATER, 0.45}, 22, 45, 52, 0.05));
-    baseHeroes.push_back(Monster(112, 55, "mother",             WATER, LEGENDARY, {HEALFIRST,   ALL,  WATER, 25}, 200, 120, 140, 5));
+    baseHeroes.push_back(Monster(122, 55, "mother",             WATER, LEGENDARY, {HEALFIRST,   ALL,  WATER, 25}, 200, 120, 140, 5));
     baseHeroes.push_back(Monster( 48,164, "anerissa",           WATER, ASCENDED,  {RESISTANCE_L,SELF, WATER, 0.06}, 70, 112, 100, 0.006));
     baseHeroes.push_back(Monster( 51, 59, "agatha",             AIR,   LEGENDARY, {PERCBUFF,    ALL,  AIR,   0.1}, 76, 92, 74, 0.05));
     baseHeroes.push_back(Monster( 52, 60, "ophelia",            EARTH, LEGENDARY, {PERCBUFF,    ALL,  EARTH, 0.15}, 78, 99, 75, 0.05));
