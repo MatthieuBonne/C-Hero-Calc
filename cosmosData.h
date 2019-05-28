@@ -14,7 +14,7 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.3.0.2a";
+const std::string VERSION = "4.3.0.3a";
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
@@ -22,7 +22,7 @@ const size_t GIGABYTE = ((size_t) (1) << 30);
 // An index describing a spot in the monsterReference.
 using MonsterIndex = uint8_t;
 // A type used to denote FollowerCounts.
-using FollowerCount = uint32_t;
+using FollowerCount = uint64_t;
 
 // Constants defining the basic structure of armies
 const size_t ARMY_MAX_SIZE = 6;

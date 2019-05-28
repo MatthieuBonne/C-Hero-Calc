@@ -595,12 +595,16 @@ int64_t parseInt(string toParse) {
     int64_t num;
     istringstream is(toParse);
     is >> num;
+/* Altered because new monsters happened.
     if (!is.fail()) {
         if (num > numeric_limits<uint32_t>::max()) {
             return numeric_limits<uint32_t>::max();
         } else {
             return num;
         }
+*/
+    if (!is.fail()) {
+            return num;
     } else {
         throw invalid_argument("Could not parse number from '" + toParse + "'!");
     }

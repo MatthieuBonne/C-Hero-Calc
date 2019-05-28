@@ -374,155 +374,186 @@ std::map<std::string, int> stringToEnum = {
 
 // Fill MonsterBaseList With Monsters Order is important for ReplayStrings and gambler abilities
 void initMonsterData() {
-    monsterBaseList.push_back(Monster( 20,   8,      1000,  "a1", AIR));
-    monsterBaseList.push_back(Monster( 44,   4,      1300,  "e1", EARTH));
-    monsterBaseList.push_back(Monster( 16,  10,      1000,  "f1", FIRE));
-    monsterBaseList.push_back(Monster( 30,   6,      1400,  "w1", WATER));
-
-    monsterBaseList.push_back(Monster( 48,   6,      3900,  "a2", AIR));
-    monsterBaseList.push_back(Monster( 30,   8,      2700,  "e2", EARTH));
-    monsterBaseList.push_back(Monster( 18,  16,      3900,  "f2", FIRE));
-    monsterBaseList.push_back(Monster( 24,  12,      3900,  "w2", WATER));
-
-    monsterBaseList.push_back(Monster( 36,  12,      8000,  "a3", AIR));
-    monsterBaseList.push_back(Monster( 26,  16,      7500,  "e3", EARTH));
-    monsterBaseList.push_back(Monster( 54,   8,      8000,  "f3", FIRE));
-    monsterBaseList.push_back(Monster( 18,  24,      8000,  "w3", WATER));
-
-    monsterBaseList.push_back(Monster( 24,  26,     15000,  "a4", AIR));
-    monsterBaseList.push_back(Monster( 72,  10,     18000,  "e4", EARTH));
-    monsterBaseList.push_back(Monster( 52,  16,     23000,  "f4", FIRE));
-    monsterBaseList.push_back(Monster( 36,  20,     18000,  "w4", WATER));
-
-    monsterBaseList.push_back(Monster( 60,  20,     41000,  "a5", AIR));
-    monsterBaseList.push_back(Monster( 36,  40,     54000,  "e5", EARTH));
-    monsterBaseList.push_back(Monster( 42,  24,     31000,  "f5", FIRE));
-    monsterBaseList.push_back(Monster( 78,  18,     52000,  "w5", WATER));
-
-    monsterBaseList.push_back(Monster( 62,  34,     96000,  "a6", AIR));
-    monsterBaseList.push_back(Monster( 72,  24,     71000,  "e6", EARTH));
-    monsterBaseList.push_back(Monster(104,  20,     94000,  "f6", FIRE));
-    monsterBaseList.push_back(Monster( 44,  44,     84000,  "w6", WATER));
-
-    monsterBaseList.push_back(Monster(106,  26,    144000,  "a7", AIR));
-    monsterBaseList.push_back(Monster( 66,  36,    115000,  "e7", EARTH));
-    monsterBaseList.push_back(Monster( 54,  44,    115000,  "f7", FIRE));
-    monsterBaseList.push_back(Monster( 92,  32,    159000,  "w7", WATER));
-
-    monsterBaseList.push_back(Monster( 78,  52,    257000,  "a8", AIR));
-    monsterBaseList.push_back(Monster( 60,  60,    215000,  "e8", EARTH));
-    monsterBaseList.push_back(Monster( 94,  50,    321000,  "f8", FIRE));
-    monsterBaseList.push_back(Monster(108,  36,    241000,  "w8", WATER));
-
-    monsterBaseList.push_back(Monster(116,  54,    495000,  "a9", AIR));
-    monsterBaseList.push_back(Monster(120,  48,    436000,  "e9", EARTH));
-    monsterBaseList.push_back(Monster(102,  58,    454000,  "f9", FIRE));
-    monsterBaseList.push_back(Monster( 80,  70,    418000,  "w9", WATER));
-
-    monsterBaseList.push_back(Monster(142,  60,    785000, "a10", AIR));
-    monsterBaseList.push_back(Monster(122,  64,    689000, "e10", EARTH));
-    monsterBaseList.push_back(Monster(104,  82,    787000, "f10", FIRE));
-    monsterBaseList.push_back(Monster(110,  70,    675000, "w10", WATER));
-
-    monsterBaseList.push_back(Monster(114, 110,   1403000, "a11", AIR));
-    monsterBaseList.push_back(Monster(134,  81,   1130000, "e11", EARTH));
-    monsterBaseList.push_back(Monster(164,  70,   1229000, "f11", FIRE));
-    monsterBaseList.push_back(Monster(152,  79,   1315000, "w11", WATER));
-
-    monsterBaseList.push_back(Monster(164,  88,   1733000, "a12", AIR));
-    monsterBaseList.push_back(Monster(128, 120,   1903000, "e12", EARTH));
-    monsterBaseList.push_back(Monster(156,  92,   1718000, "f12", FIRE));
-    monsterBaseList.push_back(Monster(188,  78,   1775000, "w12", WATER));
-
-    monsterBaseList.push_back(Monster(210,  94,   2772000, "a13", AIR));
-    monsterBaseList.push_back(Monster(190, 132,   3971000, "e13", EARTH));
-    monsterBaseList.push_back(Monster(166, 130,   3169000, "f13", FIRE));
-    monsterBaseList.push_back(Monster(140, 128,   2398000, "w13", WATER));
-
-    monsterBaseList.push_back(Monster(200, 142,   4785000, "a14", AIR));
-    monsterBaseList.push_back(Monster(244, 136,   6044000, "e14", EARTH));
-    monsterBaseList.push_back(Monster(168, 168,   4741000, "f14", FIRE));
-    monsterBaseList.push_back(Monster(212, 122,   4159000, "w14", WATER));
-
-    monsterBaseList.push_back(Monster(226, 190,   8897000, "a15", AIR));
-    monsterBaseList.push_back(Monster(200, 186,   7173000, "e15", EARTH));
-    monsterBaseList.push_back(Monster(234, 136,   5676000, "f15", FIRE));
-    monsterBaseList.push_back(Monster(276, 142,   7758000, "w15", WATER));
-
-    monsterBaseList.push_back(Monster(280, 196,  12855000, "a16", AIR));
-    monsterBaseList.push_back(Monster(284, 190,  12534000, "e16", EARTH));
-    monsterBaseList.push_back(Monster(288, 192,  13001000, "f16", FIRE));
-    monsterBaseList.push_back(Monster(286, 198,  13475000, "w16", WATER));
-
-    monsterBaseList.push_back(Monster(318, 206,  16765000, "a17", AIR));
-    monsterBaseList.push_back(Monster(338, 192,  16531000, "e17", EARTH));
-    monsterBaseList.push_back(Monster(236, 292,  18090000, "f17", FIRE));
-    monsterBaseList.push_back(Monster(262, 258,  17573000, "w17", WATER));
-
-    monsterBaseList.push_back(Monster(280, 280,  21951000, "a18", AIR));
-    monsterBaseList.push_back(Monster(330, 242,  22567000, "e18", EARTH));
-    monsterBaseList.push_back(Monster(392, 200,  21951000, "f18", FIRE));
-    monsterBaseList.push_back(Monster(330, 230,  20909000, "w18", WATER));
-
-    monsterBaseList.push_back(Monster(440, 206,  27288000, "a19", AIR));
-    monsterBaseList.push_back(Monster(320, 282,  27107000, "e19", EARTH));
-    monsterBaseList.push_back(Monster(352, 244,  25170000, "f19", FIRE));
-    monsterBaseList.push_back(Monster(360, 238,  25079000, "w19", WATER));
-
-    monsterBaseList.push_back(Monster(378, 268,  32242000, "a20", AIR));
-    monsterBaseList.push_back(Monster(382, 264,  32025000, "e20", EARTH));
-    monsterBaseList.push_back(Monster(388, 266,  33155600, "f20", FIRE));
-    monsterBaseList.push_back(Monster(454, 232,  34182000, "w20", WATER));
-
-    monsterBaseList.push_back(Monster(428, 286,  42826000, "a21", AIR));
-    monsterBaseList.push_back(Monster(446, 272,  42252000, "e21", EARTH));
-    monsterBaseList.push_back(Monster(362, 338,  42798000, "f21", FIRE));
-    monsterBaseList.push_back(Monster(416, 290,  41901000, "w21", WATER));
-
-    monsterBaseList.push_back(Monster(454, 320,  55373000, "a22", AIR));
-    monsterBaseList.push_back(Monster(450, 324,  55671000, "e22", EARTH));
-    monsterBaseList.push_back(Monster(458, 318,  55582000, "f22", FIRE));
-    monsterBaseList.push_back(Monster(440, 340,  55877000, "w22", WATER));
-
-    monsterBaseList.push_back(Monster(500, 348,  72580000, "a23", AIR));
-    monsterBaseList.push_back(Monster(516, 340,  73483000, "e23", EARTH));
-    monsterBaseList.push_back(Monster(424, 410,  72480000, "f23", FIRE));
-    monsterBaseList.push_back(Monster(490, 354,  72243000, "w23", WATER));
-
-    monsterBaseList.push_back(Monster(554, 374,  94312000, "a24", AIR));
-    monsterBaseList.push_back(Monster(458, 458,  96071000, "e24", EARTH));
-    monsterBaseList.push_back(Monster(534, 392,  95772000, "f24", FIRE));
-    monsterBaseList.push_back(Monster(540, 388,  95903000, "w24", WATER));
-
-    monsterBaseList.push_back(Monster(580, 430, 124549000, "a25", AIR));
-    monsterBaseList.push_back(Monster(592, 418, 123096000, "e25", EARTH));
-    monsterBaseList.push_back(Monster(764, 328, 125443000, "f25", FIRE));
-    monsterBaseList.push_back(Monster(500, 506, 127256000, "w25", WATER));
-
-    monsterBaseList.push_back(Monster(496, 582, 155097000, "a26", AIR));
-    monsterBaseList.push_back(Monster(622, 468, 157055000, "e26", EARTH));
-    monsterBaseList.push_back(Monster(638, 462, 160026000, "f26", FIRE));
-    monsterBaseList.push_back(Monster(700, 416, 157140000, "w26", WATER));
-
-    monsterBaseList.push_back(Monster(712, 484, 202295000, "a27", AIR));
-    monsterBaseList.push_back(Monster(580, 602, 206317000, "e27", EARTH));
-    monsterBaseList.push_back(Monster(690, 498, 201426000, "f27", FIRE));
-    monsterBaseList.push_back(Monster(682, 500, 199344000, "w27", WATER));
-
-    monsterBaseList.push_back(Monster(644, 642, 265846000, "a28", AIR));
-    monsterBaseList.push_back(Monster(770, 540, 268117000, "e28", EARTH));
-    monsterBaseList.push_back(Monster(746, 552, 264250000, "f28", FIRE));
-    monsterBaseList.push_back(Monster(762, 536, 261023000, "w28", WATER));
-
-    monsterBaseList.push_back(Monster(834, 616, 368230000, "a29", AIR));
-    monsterBaseList.push_back(Monster(830, 614, 363805000, "e29", EARTH));
-    monsterBaseList.push_back(Monster(746, 676, 358119000, "f29", FIRE));
-    monsterBaseList.push_back(Monster(1008,512, 370761000, "w29", WATER));
-
-    monsterBaseList.push_back(Monster(700, 906, 505055000, "a30", AIR));
-    monsterBaseList.push_back(Monster(1022,614, 497082000, "e30", EARTH));
-    monsterBaseList.push_back(Monster(930, 690, 514040000, "f30", FIRE));
-    monsterBaseList.push_back(Monster(802, 802, 515849000, "w30", WATER));
+    monsterBaseList.push_back(Monster(20,8,500,"a1",AIR));
+    monsterBaseList.push_back(Monster(44,4,650,"e1",EARTH));
+    monsterBaseList.push_back(Monster(16,10,500,"f1",FIRE));
+    monsterBaseList.push_back(Monster(30,6,700,"w1",WATER));
+    monsterBaseList.push_back(Monster(48,6,1950,"a2",AIR));
+    monsterBaseList.push_back(Monster(30,8,1350,"e2",EARTH));
+    monsterBaseList.push_back(Monster(18,16,1950,"f2",FIRE));
+    monsterBaseList.push_back(Monster(24,12,1950,"w2",WATER));
+    monsterBaseList.push_back(Monster(36,12,4000,"a3",AIR));
+    monsterBaseList.push_back(Monster(26,16,3750,"e3",EARTH));
+    monsterBaseList.push_back(Monster(54,8,4000,"f3",FIRE));
+    monsterBaseList.push_back(Monster(18,24,4000,"w3",WATER));
+    monsterBaseList.push_back(Monster(24,26,7500,"a4",AIR));
+    monsterBaseList.push_back(Monster(72,10,9000,"e4",EARTH));
+    monsterBaseList.push_back(Monster(52,16,11500,"f4",FIRE));
+    monsterBaseList.push_back(Monster(36,20,9000,"w4",WATER));
+    monsterBaseList.push_back(Monster(60,20,20500,"a5",AIR));
+    monsterBaseList.push_back(Monster(36,40,27000,"e5",EARTH));
+    monsterBaseList.push_back(Monster(42,24,15500,"f5",FIRE));
+    monsterBaseList.push_back(Monster(78,18,26000,"w5",WATER));
+    monsterBaseList.push_back(Monster(62,34,48000,"a6",AIR));
+    monsterBaseList.push_back(Monster(72,24,35500,"e6",EARTH));
+    monsterBaseList.push_back(Monster(104,20,47000,"f6",FIRE));
+    monsterBaseList.push_back(Monster(44,44,42000,"w6",WATER));
+    monsterBaseList.push_back(Monster(106,26,72000,"a7",AIR));
+    monsterBaseList.push_back(Monster(66,36,57500,"e7",EARTH));
+    monsterBaseList.push_back(Monster(54,44,57500,"f7",FIRE));
+    monsterBaseList.push_back(Monster(92,32,79500,"w7",WATER));
+    monsterBaseList.push_back(Monster(78,52,128500,"a8",AIR));
+    monsterBaseList.push_back(Monster(60,60,107500,"e8",EARTH));
+    monsterBaseList.push_back(Monster(94,50,160500,"f8",FIRE));
+    monsterBaseList.push_back(Monster(108,36,120500,"w8",WATER));
+    monsterBaseList.push_back(Monster(116,54,247500,"a9",AIR));
+    monsterBaseList.push_back(Monster(120,48,218000,"e9",EARTH));
+    monsterBaseList.push_back(Monster(102,58,227000,"f9",FIRE));
+    monsterBaseList.push_back(Monster(80,70,209000,"w9",WATER));
+    monsterBaseList.push_back(Monster(142,60,392500,"a10",AIR));
+    monsterBaseList.push_back(Monster(122,64,344500,"e10",EARTH));
+    monsterBaseList.push_back(Monster(104,82,393500,"f10",FIRE));
+    monsterBaseList.push_back(Monster(110,70,337500,"w10",WATER));
+    monsterBaseList.push_back(Monster(114,110,701500,"a11",AIR));
+    monsterBaseList.push_back(Monster(134,81,565000,"e11",EARTH));
+    monsterBaseList.push_back(Monster(164,70,614500,"f11",FIRE));
+    monsterBaseList.push_back(Monster(152,79,657500,"w11",WATER));
+    monsterBaseList.push_back(Monster(164,88,866500,"a12",AIR));
+    monsterBaseList.push_back(Monster(128,120,951500,"e12",EARTH));
+    monsterBaseList.push_back(Monster(156,92,859000,"f12",FIRE));
+    monsterBaseList.push_back(Monster(188,78,887500,"w12",WATER));
+    monsterBaseList.push_back(Monster(210,94,1386000,"a13",AIR));
+    monsterBaseList.push_back(Monster(190,132,1985500,"e13",EARTH));
+    monsterBaseList.push_back(Monster(166,130,1584500,"f13",FIRE));
+    monsterBaseList.push_back(Monster(140,128,1199000,"w13",WATER));
+    monsterBaseList.push_back(Monster(200,142,2392500,"a14",AIR));
+    monsterBaseList.push_back(Monster(244,136,3022000,"e14",EARTH));
+    monsterBaseList.push_back(Monster(168,168,2370500,"f14",FIRE));
+    monsterBaseList.push_back(Monster(212,122,2079500,"w14",WATER));
+    monsterBaseList.push_back(Monster(226,190,4448500,"a15",AIR));
+    monsterBaseList.push_back(Monster(200,186,3586500,"e15",EARTH));
+    monsterBaseList.push_back(Monster(234,136,2838000,"f15",FIRE));
+    monsterBaseList.push_back(Monster(276,142,3879000,"w15",WATER));
+    monsterBaseList.push_back(Monster(280,196,6427500,"a16",AIR));
+    monsterBaseList.push_back(Monster(284,190,6267000,"e16",EARTH));
+    monsterBaseList.push_back(Monster(288,192,6500500,"f16",FIRE));
+    monsterBaseList.push_back(Monster(286,198,6737500,"w16",WATER));
+    monsterBaseList.push_back(Monster(318,206,8382500,"a17",AIR));
+    monsterBaseList.push_back(Monster(338,192,8265500,"e17",EARTH));
+    monsterBaseList.push_back(Monster(236,292,9045000,"f17",FIRE));
+    monsterBaseList.push_back(Monster(262,258,8786500,"w17",WATER));
+    monsterBaseList.push_back(Monster(280,280,10975500,"a18",AIR));
+    monsterBaseList.push_back(Monster(330,242,11283500,"e18",EARTH));
+    monsterBaseList.push_back(Monster(392,200,10975500,"f18",FIRE));
+    monsterBaseList.push_back(Monster(330,230,10454500,"w18",WATER));
+    monsterBaseList.push_back(Monster(440,206,13644000,"a19",AIR));
+    monsterBaseList.push_back(Monster(320,282,13553500,"e19",EARTH));
+    monsterBaseList.push_back(Monster(352,244,12585000,"f19",FIRE));
+    monsterBaseList.push_back(Monster(360,238,12539500,"w19",WATER));
+    monsterBaseList.push_back(Monster(378,268,16121000,"a20",AIR));
+    monsterBaseList.push_back(Monster(382,264,16012500,"e20",EARTH));
+    monsterBaseList.push_back(Monster(388,266,16577800,"f20",FIRE));
+    monsterBaseList.push_back(Monster(454,232,17091000,"w20",WATER));
+    monsterBaseList.push_back(Monster(428,286,21413000,"a21",AIR));
+    monsterBaseList.push_back(Monster(446,272,21126000,"e21",EARTH));
+    monsterBaseList.push_back(Monster(362,338,21399000,"f21",FIRE));
+    monsterBaseList.push_back(Monster(416,290,20950500,"w21",WATER));
+    monsterBaseList.push_back(Monster(454,320,27686500,"a22",AIR));
+    monsterBaseList.push_back(Monster(450,324,27835500,"e22",EARTH));
+    monsterBaseList.push_back(Monster(458,318,27791000,"f22",FIRE));
+    monsterBaseList.push_back(Monster(440,340,27938500,"w22",WATER));
+    monsterBaseList.push_back(Monster(500,348,36290000,"a23",AIR));
+    monsterBaseList.push_back(Monster(516,340,36741500,"e23",EARTH));
+    monsterBaseList.push_back(Monster(424,410,36240000,"f23",FIRE));
+    monsterBaseList.push_back(Monster(490,354,36121500,"w23",WATER));
+    monsterBaseList.push_back(Monster(554,374,47156000,"a24",AIR));
+    monsterBaseList.push_back(Monster(458,458,48035500,"e24",EARTH));
+    monsterBaseList.push_back(Monster(534,392,47886000,"f24",FIRE));
+    monsterBaseList.push_back(Monster(540,388,47951500,"w24",WATER));
+    monsterBaseList.push_back(Monster(580,430,62274500,"a25",AIR));
+    monsterBaseList.push_back(Monster(592,418,61548000,"e25",EARTH));
+    monsterBaseList.push_back(Monster(764,328,62721500,"f25",FIRE));
+    monsterBaseList.push_back(Monster(500,506,63628000,"w25",WATER));
+    monsterBaseList.push_back(Monster(496,582,77548500,"a26",AIR));
+    monsterBaseList.push_back(Monster(622,468,78527500,"e26",EARTH));
+    monsterBaseList.push_back(Monster(638,462,80013000,"f26",FIRE));
+    monsterBaseList.push_back(Monster(700,416,78570000,"w26",WATER));
+    monsterBaseList.push_back(Monster(712,484,101147500,"a27",AIR));
+    monsterBaseList.push_back(Monster(580,602,103158500,"e27",EARTH));
+    monsterBaseList.push_back(Monster(690,498,100713000,"f27",FIRE));
+    monsterBaseList.push_back(Monster(682,500,99672000,"w27",WATER));
+    monsterBaseList.push_back(Monster(644,642,132923000,"a28",AIR));
+    monsterBaseList.push_back(Monster(770,540,134058500,"e28",EARTH));
+    monsterBaseList.push_back(Monster(746,552,132125000,"f28",FIRE));
+    monsterBaseList.push_back(Monster(762,536,130511500,"w28",WATER));
+    monsterBaseList.push_back(Monster(834,616,184115000,"a29",AIR));
+    monsterBaseList.push_back(Monster(830,614,181902500,"e29",EARTH));
+    monsterBaseList.push_back(Monster(746,676,179059500,"f29",FIRE));
+    monsterBaseList.push_back(Monster(1008,512,185380500,"w29",WATER));
+    monsterBaseList.push_back(Monster(700,906,252527500,"a30",AIR));
+    monsterBaseList.push_back(Monster(1022,614,248541000,"e30",EARTH));
+    monsterBaseList.push_back(Monster(930,690,257020000,"f30",FIRE));
+    monsterBaseList.push_back(Monster(802,802,257924500,"w30",WATER));
+    monsterBaseList.push_back(Monster(973,950,444349500,"a31",AIR));
+    monsterBaseList.push_back(Monster(1187,739,410783500,"e31",EARTH));
+    monsterBaseList.push_back(Monster(815,1139,447190000,"f31",FIRE));
+    monsterBaseList.push_back(Monster(995,995,492537500,"w31",WATER));
+    monsterBaseList.push_back(Monster(1089,1138,689803000,"a32",AIR));
+    monsterBaseList.push_back(Monster(1110,1116,689367500,"e32",EARTH));
+    monsterBaseList.push_back(Monster(1230,1028,710914500,"f32",FIRE));
+    monsterBaseList.push_back(Monster(754,1512,608632000,"w32",WATER));
+    monsterBaseList.push_back(Monster(1105,1457,1021416000,"a33",AIR));
+    monsterBaseList.push_back(Monster(1545,1029,1002272500,"e33",EARTH));
+    monsterBaseList.push_back(Monster(1257,1257,993061000,"f33",FIRE));
+    monsterBaseList.push_back(Monster(1620,939,938082000,"w33",WATER));
+    monsterBaseList.push_back(Monster(1715,1183,1444918500,"a34",AIR));
+    monsterBaseList.push_back(Monster(1152,1772,1458291500,"e34",EARTH));
+    monsterBaseList.push_back(Monster(1224,1664,1453356500,"f34",FIRE));
+    monsterBaseList.push_back(Monster(1438,1434,1480580500,"w34",WATER));
+    monsterBaseList.push_back(Monster(1609,1594,2053698000,"a35",AIR));
+    monsterBaseList.push_back(Monster(1639,1639,2201440000,"e35",EARTH));
+    monsterBaseList.push_back(Monster(2119,1121,1830521500,"f35",FIRE));
+    monsterBaseList.push_back(Monster(1419,1929,2264341500,"w35",WATER));
+    monsterBaseList.push_back(Monster(1994,1709,6290727000,"a36",AIR));
+    monsterBaseList.push_back(Monster(1842,1902,6557680000,"e36",EARTH));
+    monsterBaseList.push_back(Monster(1634,2028,6032259000,"f36",FIRE));
+    monsterBaseList.push_back(Monster(2018,1808,6969143000,"w36",WATER));
+    monsterBaseList.push_back(Monster(2919,1566,9773245000,"a37",AIR));
+    monsterBaseList.push_back(Monster(2012,2311,10026327000,"e37",EARTH));
+    monsterBaseList.push_back(Monster(1989,2111,8603685000,"f37",FIRE));
+    monsterBaseList.push_back(Monster(2069,2529,11969168000,"w37",WATER));
+    monsterBaseList.push_back(Monster(2082,3174,16987578000,"a38",AIR));
+    monsterBaseList.push_back(Monster(2279,2842,16483620000,"e38",EARTH));
+    monsterBaseList.push_back(Monster(2578,2388,15274811000,"f38",FIRE));
+    monsterBaseList.push_back(Monster(2525,2525,16098453000,"w38",WATER));
+    monsterBaseList.push_back(Monster(2540,3487,26358974000,"a39",AIR));
+    monsterBaseList.push_back(Monster(2888,2888,24087491000,"e39",EARTH));
+    monsterBaseList.push_back(Monster(3089,2657,23513333000,"f39",FIRE));
+    monsterBaseList.push_back(Monster(2973,2837,24495221000,"w39",WATER));
+    monsterBaseList.push_back(Monster(3363,3430,39177027000,"a40",AIR));
+    monsterBaseList.push_back(Monster(3496,3038,34612964000,"e40",EARTH));
+    monsterBaseList.push_back(Monster(2989,3621,35606695000,"f40",FIRE));
+    monsterBaseList.push_back(Monster(3053,3517,35184287000,"w40",WATER));
+    monsterBaseList.push_back(Monster(4484,3273,56223440000,"a41",AIR));
+    monsterBaseList.push_back(Monster(3413,4111,52556405000,"e41",EARTH));
+    monsterBaseList.push_back(Monster(3814,3814,55480717000,"f41",FIRE));
+    monsterBaseList.push_back(Monster(3791,3791,54483043000,"w41",WATER));
+    monsterBaseList.push_back(Monster(3797,4931,81014620000,"a42",AIR));
+    monsterBaseList.push_back(Monster(4264,4264,77526752000,"e42",EARTH));
+    monsterBaseList.push_back(Monster(4527,4112,80314766000,"f42",FIRE));
+    monsterBaseList.push_back(Monster(4012,4571,78534090000,"w42",WATER));
+    monsterBaseList.push_back(Monster(4834,4834,112958766000,"a43",AIR));
+    monsterBaseList.push_back(Monster(4209,5318,105898763000,"e43",EARTH));
+    monsterBaseList.push_back(Monster(4831,4831,112748588000,"f43",FIRE));
+    monsterBaseList.push_back(Monster(5014,4574,109829937000,"w43",WATER));
+    monsterBaseList.push_back(Monster(5789,4917,151864280000,"a44",AIR));
+    monsterBaseList.push_back(Monster(5569,4948,144647311000,"e44",EARTH));
+    monsterBaseList.push_back(Monster(4559,6112,147088733000,"f44",FIRE));
+    monsterBaseList.push_back(Monster(5299,5299,148792746000,"w44",WATER));
+    monsterBaseList.push_back(Monster(5277,6419,197143156000,"a45",AIR));
+    monsterBaseList.push_back(Monster(5079,6421,186239297000,"e45",EARTH));
+    monsterBaseList.push_back(Monster(5871,5871,202365391000,"f45",FIRE));
+    monsterBaseList.push_back(Monster(6357,5231,191758841000,"w45",WATER));
 }
 
 // Fill BaseHeroes with Heroes. Order is important
@@ -701,7 +732,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 52, 60, "ophelia",            EARTH, LEGENDARY, {PERCBUFF,    ALL,  EARTH, 0.15}, 78, 99, 75, 0.05));
     baseHeroes.push_back(Monster( 53, 61, "helga",              WATER, LEGENDARY, {PERCBUFF,    ALL,  WATER, 0.2}, 84, 101, 82, 0.05));
     baseHeroes.push_back(Monster(108,124, "minerva",            FIRE,  ASCENDED,  {PERCBUFF,    ALL,  FIRE,  0.25}, 204, 241, 256, 0.05));
-    baseHeroes.push_back(Monster(124,124, "awanderer",          ALL,   ASCENDED,  {VOID,        ALL,  ALL,   0.75}, 110, 110, 110, 0.1));
+    baseHeroes.push_back(Monster(126,126, "awanderer",          ALL,   ASCENDED,  {VOID,        ALL,  ALL,   0.75}, 110, 110, 110, 0.1));
 }
 
 void initIndices() {
@@ -978,7 +1009,7 @@ void initQuests() {
 
 void readMonsterData(std::vector<std::string>::iterator it, std::vector<std::string>::iterator itEnd) {
     while (it != itEnd) {
-        monsterBaseList.push_back(Monster(std::stoi(*(it)), std::stoi(*(it+1)), std::stoi(*(it+2)), *(it+3), (Element)stringToEnum[*(it+4)]));
+                monsterBaseList.push_back(Monster(std::stoi(*(it)), std::stoi(*(it+1)), std::stoll(*(it+2)), *(it+3), (Element)stringToEnum[*(it+4)]));
         it += 5;
     }
 }
