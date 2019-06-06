@@ -97,45 +97,56 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
     //Abilities no longer scale past level 99
     if (aLevel > 99)
         aLevel = 99;
-    if (this->skill.skillType == BUFF_L) {
-        this->skill.skillType = BUFF;
-        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
-    } else if (this->skill.skillType == PROTECT_L) {
-        this->skill.skillType = PROTECT;
-        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
-    } else if (this->skill.skillType == CHAMPION_L) {
-        this->skill.skillType = CHAMPION;
-        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
-    } else if (this->skill.skillType == HEAL_L) {
-        this->skill.skillType = HEAL;
-        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
-    } else if (this->skill.skillType == AOE_L) {
-        this->skill.skillType = AOE;
-        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
-    } else if (this->skill.skillType == LIFESTEAL_L) {
-        this->skill.skillType = LIFESTEAL;
-        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
-    } else if (this->skill.skillType == DAMPEN_L) {
-        this->skill.skillType = DAMPEN;
-        this->skill.amount = 1.0f - (double) aLevel * this->skill.amount;
-    } else if (this->skill.skillType == AOEZERO_L) {
-        this->skill.skillType = AOEZERO;
-        this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
-    } else if (this->skill.skillType == EXPLODE_L) {
-        this->skill.skillType = EXPLODE;
-        this->skill.amount = this->skill.amount * floor(aLevel / 3) ;
-    } else if (this->skill.skillType == RESISTANCE_L) {
-        this->skill.skillType = RESISTANCE;
-        this->skill.amount = this->skill.amount * (double) aLevel / 9;
-    } else if (this->skill.skillType == AOEREFLECT_L) {
-        this->skill.skillType = AOEREFLECT;
-        this->skill.amount = this->skill.amount * (double) aLevel / 3;
-    } else if (this->skill.skillType == HPPIERCE_L) {
-        this->skill.skillType = HPPIERCE;
-        this->skill.amount = this->skill.amount * (double) aLevel / 9;
-    } else if (this->skill.skillType == SACRIFICE_L) {
-        this->skill.skillType = SACRIFICE;
-        this->skill.amount = this->skill.amount * (double) aLevel / 9;
+    switch(this->skill.skillType){
+        default:            break;
+        case BUFF_L:        this->skill.skillType = BUFF;
+                            this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+                            break;
+        case PROTECT_L:     this->skill.skillType = PROTECT;
+                            this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+                            break;
+        case CHAMPION_L:    this->skill.skillType = CHAMPION;
+                            this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+                            break;
+        case HEAL_L:        this->skill.skillType = HEAL;
+                            this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+                            break;
+        case AOE_L:         this->skill.skillType = AOE;
+                            this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+                            break;
+        case LIFESTEAL_L:   this->skill.skillType = LIFESTEAL;
+                            this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+                            break;
+        case DAMPEN_L:      this->skill.skillType = DAMPEN;
+                            this->skill.amount = 1.0f - (double) aLevel * this->skill.amount;
+                            break;
+        case AOEZERO_L:     this->skill.skillType = AOEZERO;
+                            this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+                            break;
+        case EXPLODE_L:     this->skill.skillType = EXPLODE;
+                            this->skill.amount = this->skill.amount * floor(aLevel / 3) ;
+                            break;
+        case RESISTANCE_L:  this->skill.skillType = RESISTANCE;
+                            this->skill.amount = this->skill.amount * (double) aLevel / 9;
+                            break;
+        case AOEREFLECT_L:  this->skill.skillType = AOEREFLECT;
+                            this->skill.amount = this->skill.amount * (double) aLevel / 3;
+                            break;
+        case HPPIERCE_L:    this->skill.skillType = HPPIERCE;
+                            this->skill.amount = this->skill.amount * (double) aLevel / 9;
+                            break;
+        case SACRIFICE_L:   this->skill.skillType = SACRIFICE;
+                            this->skill.amount = this->skill.amount * (double) aLevel / 9;
+                            break;
+        case EXECUTE_CUBE:  this->skill.skillType = FLATEXEC;
+                            this->skill.amount = pow(this->skill.amount, 3);
+                            break;
+        case AOEFIRST_CUBE: this->skill.skillType = AOEFIRST;
+                            this->skill.amount = pow(this->skill.amount, 3);
+                            break;
+        case SELFARMOR_CUBE:this->skill.skillType = SELFARMOR;
+                            this->skill.amount = pow(this->skill.amount, 3);
+                            break;
     }
 }
 
@@ -149,7 +160,8 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                               aType == COUNTER || aType == DEATHSTRIKE ||
                               aType == LEECH || aType == COUNTER_MAX_HP ||
                               aType == AOELAST || aType == FLATREF ||
-                              aType == SELFHEAL || aType == EASTER);
+                              aType == SELFHEAL || aType == EASTER ||
+                              aType == AOEFIRST || aType == AOEFIRST_CUBE);
     this->hasHeal = (aType == HEAL || aType == HEAL_L ||
                      aType == LIFESTEAL || aType == LIFESTEAL_L ||
                      aType == SACRIFICE || aType == SACRIFICE_L ||
@@ -356,6 +368,13 @@ std::map<std::string, int> stringToEnum = {
     {"EASTER", EASTER},
     {"HEALFIRST", HEALFIRST},
     {"PERCBUFF", PERCBUFF},
+    {"EXECUTE_CUBE", EXECUTE_CUBE},
+    {"SELFARMOR_CUBE", SELFARMOR_CUBE},
+    {"AOEFIRST_CUBE", AOEFIRST_CUBE},
+    {"FLATEXEC", FLATEXEC},
+    {"SELFARMOR", SELFARMOR},
+    {"AOEFIRST", AOEFIRST},
+    {"BULLSHIT", BULLSHIT},
 
     {"EARTH", EARTH},
     {"AIR", AIR},
@@ -733,6 +752,11 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 53, 61, "helga",              WATER, LEGENDARY, {PERCBUFF,    ALL,  WATER, 0.2}, 84, 101, 82, 0.05));
     baseHeroes.push_back(Monster(108,124, "minerva",            FIRE,  ASCENDED,  {PERCBUFF,    ALL,  FIRE,  0.25}, 204, 241, 256, 0.05));
     baseHeroes.push_back(Monster(126,126, "awanderer",          ALL,   ASCENDED,  {VOID,        ALL,  ALL,   0.75}, 110, 110, 110, 0.1));
+    baseHeroes.push_back(Monster( 76, 50, "tetra",              FIRE,  LEGENDARY, {BULLSHIT,       ALL,  FIRE,  1}, 154, 68, 68, 0.2));
+    baseHeroes.push_back(Monster( 16, 28, "cathos",             EARTH, COMMON,    {SELFARMOR_CUBE, SELF, EARTH, 2}, 8, 16, 14, 1));
+    baseHeroes.push_back(Monster( 42, 28, "catzar",             FIRE,  RARE,      {EXECUTE_CUBE,   ALL,  FIRE,  4}, 28, 10, 36, 1));
+    baseHeroes.push_back(Monster( 80,  8, "crei",               AIR,   LEGENDARY, {AOEFIRST_CUBE,  ALL,  AIR,   4}, 112, 28, 26, 1));
+    baseHeroes.push_back(Monster(210, 21, "acrei",              AIR,   ASCENDED,  {AOEFIRST_CUBE,  ALL,  AIR,   5}, 192, 34, 78, 1));
 }
 
 void initIndices() {

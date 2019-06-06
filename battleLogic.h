@@ -19,6 +19,7 @@ struct TurnData {
     int aoeDamage = 0;
     int aoeRevenge = 0;
     int aoeLast = 0;
+    int aoeFirst = 0;
     int healing = 0;
     int sadism = 0;
     double dampFactor = 1;
@@ -32,11 +33,16 @@ struct TurnData {
     int immunityValue = 0;
     int deathBuffHP = 0;
     int healFirst = 0;
+    int tetrisMult = 0;
+    int tetrisSeed = 0;
+
+    Element opposingElement;
 
     double counter = 0;
     int flatRef = 0;
     double valkyrieMult = 0;
     double valkyrieDamage = 0;
+    double tetrisDamage = 0;
     double absorbMult = 0;
     double absorbDamage = 0;
     int explodeDamage = 0;
@@ -180,6 +186,7 @@ inline void ArmyCondition::startNewTurn() {
     turnData.aoeDamage = 0;
     turnData.aoeRevenge = 0;
     turnData.aoeLast = 0;
+    turnData.aoeFirst = 0;
     turnData.healing = 0;
     turnData.dampFactor = 1;
     turnData.absorbMult = 0;
@@ -193,21 +200,22 @@ inline void ArmyCondition::startNewTurn() {
     turnData.deathBuffHP = 0;
     turnData.healFirst = 0;
     turnData.multiplier = 1;
+    turnData.immunity5K = false ;
 
-    if( skillTypes[monstersLost] == DODGE )
-    {
-        turnData.immunity5K = true ;
-        turnData.immunityValue = skillAmounts[monstersLost];
+    switch (skillTypes[monstersLost]) {
+        default:            break;
+        case RESISTANCE:    turnData.resistance = 1 - skillAmounts[monstersLost];//Needs to be here so it happens before Neil's absorb.
+                            break;
+        case SKILLDAMPEN:   turnData.skillDampen = 1 - skillAmounts[monstersLost];
+                            break;
+        case DODGE:         turnData.immunity5K = true ;
+                            turnData.immunityValue = skillAmounts[monstersLost];
+                            break;
+        case SHIELDME:      turnData.protection += (int) skillAmounts[monstersLost] * (armySize - monstersLost - 1);
+                            break;
+        case SELFARMOR:     turnData.protection += skillAmounts[monstersLost];
+                            break;
     }
-    else
-    {
-        turnData.immunity5K = false ;
-    }
-
-    if( skillTypes[monstersLost] == RESISTANCE )
-        turnData.resistance = 1 - skillAmounts[monstersLost];//Needs to be here so it happens before Neil's absorb.
-    if( skillTypes[monstersLost] == SKILLDAMPEN )
-        turnData.skillDampen = 1 - skillAmounts[monstersLost];
 
     // Gather all skills that trigger globally
     for (i = monstersLost; i < armySize; i++) {
@@ -240,6 +248,8 @@ inline void ArmyCondition::startNewTurn() {
                             break;
             case AOELAST:   turnData.aoeLast += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
                             break;
+            case AOEFIRST:  turnData.aoeFirst += (int) skillAmounts[i];
+                            break;
             case HEALFIRST: turnData.healFirst += (int) skillAmounts[i];
                             break;
             case PERCBUFF:  turnData.multiplier += skillAmounts[i];
@@ -254,7 +264,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
 
     turnData.baseDamage = lineup[monstersLost]->damage + deathBuffATK; // Get Base damage
 
-    Element opposingElement = opposingCondition.lineup[opposingCondition.monstersLost]->element;
+    turnData.opposingElement = opposingCondition.lineup[opposingCondition.monstersLost]->element;
     const int opposingProtection = opposingCondition.turnData.protection;
     const double opposingDampFactor = opposingCondition.turnData.dampFactor;
     const double opposingAbsorbMult = opposingCondition.turnData.absorbMult;
@@ -283,6 +293,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.aoeReflect = 0;
     turnData.hpPierce = 0;
     turnData.sadism = 0;
+    turnData.tetrisMult = 0;
+    turnData.tetrisSeed = 0;
 
     double friendsDamage = 0;
 
@@ -295,14 +307,12 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                                 friendsDamage += skillAmounts[i];
                         }
                         break;
-        case SHIELDME:  turnData.protection += (int) skillAmounts[monstersLost] * (armySize - monstersLost - 1);
-                        break;
         case TRAINING:  turnData.buffDamage += (int) (skillAmounts[monstersLost] * (double) turncounter);
                         break;
         case RAINBOW:   if (rainbowConditions[monstersLost]) {
                             turnData.buffDamage += (int) skillAmounts[monstersLost];
                         } break;
-        case ADAPT:     if (opposingElement == skillTargets[monstersLost]) {
+        case ADAPT:     if (turnData.opposingElement == skillTargets[monstersLost]) {
                             turnData.multiplier *= skillAmounts[monstersLost];
                         } break;
         case BERSERK:   if (lastBerserk)
@@ -332,11 +342,10 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         // Pick a target, Bubbles currently dampens lux damage if not targeting first according to game code, interaction should be added if this doesn't change
         case LUX:       turnData.direct_target = getLuxTarget(opposingCondition, getTurnSeed(opposingCondition.seed, 99 -turncounter));
-                        opposingElement = opposingCondition.lineup[turnData.direct_target]->element;
+                        turnData.opposingElement = opposingCondition.lineup[turnData.direct_target]->element;
                         turnData.direct_target -= opposingCondition.monstersLost;
                         break;
-        case CRIT:      // turnData.critMult *= getTurnSeed(opposingCondition.seed, turncounter) % 2 == 1 ? skillAmounts[monstersLost] : 1;
-                        turnData.critMult *= getTurnSeed(opposingCondition.seed, 99 - turncounter) % 2 == 0 ? skillAmounts[monstersLost] : 1;
+        case CRIT:      turnData.multiplier *= getTurnSeed(opposingCondition.seed, 99 - turncounter) % 2 == 0 ? skillAmounts[monstersLost] : 1;
                         break;
         case HATE:      turnData.hate = skillAmounts[monstersLost];
                         break;
@@ -350,7 +359,9 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case COUNTER_MAX_HP: turnData.counter = skillAmounts[monstersLost];
                         turnData.guyActive = true;
                         break;
-        case EXECUTE:   turnData.execute = skillAmounts[monstersLost];
+        case EXECUTE:   turnData.execute = skillAmounts[monstersLost] * opposingSkillDampen * opposingCondition.maxHealths[opposingCondition.monstersLost];
+                        break;
+        case FLATEXEC:  turnData.execute = skillAmounts[monstersLost] * opposingSkillDampen;
                         break;
         case AOEREFLECT: turnData.aoeReflect = skillAmounts[monstersLost];
                         break;
@@ -359,7 +370,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case POSBONUS:  turnData.baseDamage += round(skillAmounts[monstersLost] * (armySize - monstersLost - 1));
                         break;
-        case VOID:      if (lineup[monstersLost]->element != opposingElement)
+        case VOID:      if (lineup[monstersLost]->element != turnData.opposingElement)
                             turnData.multiplier *= skillAmounts[monstersLost] + 1;
                         break;
         case SADISM:    turnData.sadism += round(skillAmounts[monstersLost] * turnData.baseDamage);
@@ -367,8 +378,28 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case COURAGE:   turnData.buffDamage *= skillAmounts[monstersLost];
                         break;
-        case EASTER:   if (easterCheck)
+        case EASTER:    if (easterCheck)
                             turnData.baseDamage += round(skillAmounts[monstersLost] * 50 / 134);
+                        break;
+        case BULLSHIT:  turnData.tetrisSeed = getTurnSeed(opposingCondition.seed, 99 - turncounter) % 6;
+                        turnData.tetrisMult = skillAmounts[monstersLost];
+                        turnData.ricoActive = true;
+                        turnData.tetrisDamage = (turnData.baseDamage + turnData.buffDamage) * turnData.tetrisMult;
+                        //Frontliner part goes here for more accurate damage.
+                        switch(turnData.tetrisSeed){
+                            case 0: turnData.multiplier *= 2 * turnData.tetrisMult;
+                                    break;
+                            case 1: turnData.multiplier *= 1.25 * turnData.tetrisMult;
+                                    break;
+                            case 2: turnData.multiplier *= 1.75 * turnData.tetrisMult;
+                                    break;
+                            case 3: turnData.multiplier *= 1.25 * turnData.tetrisMult;
+                                    break;
+                            case 4: turnData.multiplier *= 1.25 * turnData.tetrisMult;
+                                    break;
+                            case 5: turnData.multiplier *= 1.5 * turnData.tetrisMult;
+                                    break;
+                        }
                         break;
         default:        break;
 
@@ -388,15 +419,11 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.valkyrieDamage = friendsDamage;
     }
 
-    if (counter[opposingElement] == lineup[monstersLost]->element && lineup[monstersLost]->element != ALL) {
+    if (counter[turnData.opposingElement] == lineup[monstersLost]->element && lineup[monstersLost]->element != ALL) {
         turnData.valkyrieDamage *= elementalBoost + turnData.hate;
     }
 
     int ricoValue = turnData.valkyrieDamage; //Save it so it is not affected by armor and absorb and other individual unit abilities.
-
-    if (turnData.critMult > 1) {
-        turnData.valkyrieDamage *= turnData.critMult;
-    }
 
     if (turnData.hpPierce)
         turnData.valkyrieDamage += turnData.hpPierce;
@@ -419,7 +446,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     if (turnData.leech != 0)
         turnData.leech *= turnData.valkyrieDamage;
     //Check execute before resolve damage for reflect ability, neil absorbs damage before the execute, according to replays.
-    if (turnData.execute && !opposingCondition.worldboss && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage)) / opposingCondition.maxHealths[opposingCondition.monstersLost] <= turnData.execute * opposingSkillDampen)) {
+    if (turnData.execute && !opposingCondition.worldboss && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage)) <= turnData.execute)) {
         if (turnData.valkyrieDamage < opposingCondition.remainingHealths[opposingCondition.monstersLost] + 1)
             turnData.valkyrieDamage = opposingCondition.remainingHealths[opposingCondition.monstersLost] + 1;
     }
@@ -443,6 +470,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.healFirst = round((double) turnData.healFirst * opposingDampFactor);
         turnData.sacHeal = round((double) turnData.sacHeal * opposingDampFactor);//Have to check if Bubbles affects it
         turnData.aoeLast = round((double) turnData.aoeLast * opposingDampFactor);
+        turnData.aoeFirst = round((double) turnData.aoeFirst * opposingDampFactor);
     }
 
     if( opposingImmunityDamage && (turnData.valkyrieDamage >= opposingImmunityValue || turnData.baseDamage >= opposingImmunityValue ) ) {
@@ -494,6 +522,93 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             }
     }
 
+//~~~~~~~~~~~~~~~~Tetris Skill Start ~~~~~~~~~~~~~~~~~~~~
+
+//I know there must be a better way, but good grief, this skill is not good for the old battle system.
+//Code copied from Trample (S4 ability)
+    if (opposing.tetrisMult) {
+        int times = 0;
+        switch(opposing.tetrisSeed){
+            //Nothing happens, all in first unit
+            case 0: break;
+            //3 units in the back affected
+            case 1: times = 3;
+                    for (int i = frontliner + 1; i < armySize; i++)
+                        if (remainingHealths[i] > 0){
+                            if (skillTypes[i] == RESISTANCE)
+                                tempResistance = 1 - skillAmounts[i];
+                            else
+                                tempResistance = 1;
+                            armoredRicochetValue = round(0.25 * opposing.tetrisDamage * tempResistance * turnData.dampFactor * (counter[lineup[i]->element] == turnData.opposingElement ? 1.5 : 1)) - turnData.armorArray[i];
+                            if (armoredRicochetValue > 0)
+                                remainingHealths[i] -= armoredRicochetValue;
+                            times--;
+                            opposing.tetrisDamage *= turnData.dampFactor;
+                            if (!times)
+                                break;
+                        }
+                    break;
+            //Only one unit behind the frontliner
+            case 2: for (int i = frontliner + 1; i < armySize; i++)
+                        if (remainingHealths[i] > 0){
+                            if (skillTypes[i] == RESISTANCE)
+                                tempResistance = 1 - skillAmounts[i];
+                            else
+                                tempResistance = 1;
+                            armoredRicochetValue = round(0.25 * opposing.tetrisDamage * tempResistance * turnData.dampFactor * (counter[lineup[i]->element] == turnData.opposingElement ? 1.5 : 1)) - turnData.armorArray[i];
+                            if (armoredRicochetValue > 0)
+                                remainingHealths[i] -= armoredRicochetValue;
+                            break;
+                        }
+                    break;
+            //Only one unit behind the frontliner
+            case 3: for (int i = frontliner + 1; i < armySize; i++)
+                        if (remainingHealths[i] > 0){
+                            if (skillTypes[i] == RESISTANCE)
+                                tempResistance = 1 - skillAmounts[i];
+                            else
+                                tempResistance = 1;
+                            armoredRicochetValue = round(0.75 * opposing.tetrisDamage * tempResistance * turnData.dampFactor * (counter[lineup[i]->element] == turnData.opposingElement ? 1.5 : 1)) - turnData.armorArray[i];
+                            if (armoredRicochetValue > 0)
+                                remainingHealths[i] -= armoredRicochetValue;
+                            break;
+                        }
+                    break;
+            //Two units behind, at 50% and 25%
+            case 4: times = 1;
+                    for (int i = frontliner + 1; i < armySize; i++)
+                        if (remainingHealths[i] > 0){
+                            if (skillTypes[i] == RESISTANCE)
+                                tempResistance = 1 - skillAmounts[i];
+                            else
+                                tempResistance = 1;
+                            armoredRicochetValue = round(0.5 * opposing.tetrisDamage * tempResistance * turnData.dampFactor * (counter[lineup[i]->element] == turnData.opposingElement ? 1.5 : 1) / times) - turnData.armorArray[i];
+                            if (armoredRicochetValue > 0)
+                                remainingHealths[i] -= armoredRicochetValue;
+                            times++;
+                            opposing.tetrisDamage *= turnData.dampFactor;
+                            if (times == 3)
+                                break;
+                        }
+                    break;
+            //Only one unit behind the frontliner
+            case 5: for (int i = frontliner + 1; i < armySize; i++)
+                        if (remainingHealths[i] > 0){
+                            if (skillTypes[i] == RESISTANCE)
+                                tempResistance = 1 - skillAmounts[i];
+                            else
+                                tempResistance = 1;
+                            armoredRicochetValue = round(0.5 * opposing.tetrisDamage * tempResistance * turnData.dampFactor * (counter[lineup[i]->element] == turnData.opposingElement ? 1.5 : 1)) - turnData.armorArray[i];
+                            if (armoredRicochetValue > 0)
+                                remainingHealths[i] -= armoredRicochetValue;
+                            break;
+                        }
+                    break;
+        }
+    }
+
+//~~~~~~~~~~~~~~~~Tetris Skill End ~~~~~~~~~~~~~~~~~~~~
+
     if (opposing.explodeDamage != 0 && remainingHealths[frontliner] <= 0 && !worldboss) {
         // std::cout << "EXPLODE" << std::endl;
         opposing.aoeDamage += opposing.explodeDamage;
@@ -511,6 +626,12 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                     remainingHealths[i] -= opposing.aoeLast;
                 break;
             }
+
+    if (opposing.aoeFirst)
+        if (skillTypes[frontliner] == SKILLDAMPEN)
+            remainingHealths[frontliner] -= round(opposing.aoeFirst * (1 - skillAmounts[frontliner]));
+        else
+            remainingHealths[frontliner] -= opposing.aoeFirst;
 
     // Handle aoe Damage for all combatants
     for (int i = frontliner; i < armySize; i++) {
@@ -819,7 +940,7 @@ int actual_target = opposingCondition.monstersLost;
   return actual_target;
 }
 // Simulates One fight between 2 Armies and writes results into left's LastFightData
-inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
+inline bool simulateFight(Army & left, Army & right, bool verbose = true) {
     // left[0] and right[0] are the first monsters to fight
     ArmyCondition leftCondition;
     ArmyCondition rightCondition;

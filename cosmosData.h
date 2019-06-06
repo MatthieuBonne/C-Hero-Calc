@@ -14,13 +14,13 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.3.0.3a";
+const std::string VERSION = "4.3.1.0a";
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
 // Alias for dataTypes makes Code more readable
 // An index describing a spot in the monsterReference.
-using MonsterIndex = uint8_t;
+using MonsterIndex = uint16_t;
 // A type used to denote FollowerCounts.
 using FollowerCount = uint64_t;
 
@@ -124,7 +124,16 @@ enum SkillType {
 
     HEALFIRST,// heal the frontliner for X health
 
-    PERCBUFF// Increase attack by X%
+    PERCBUFF,// Increase attack by X%
+
+    EXECUTE_CUBE,//Flat execute with value of x^3
+    SELFARMOR_CUBE,//Armor with value of x^3
+    AOEFIRST_CUBE,//deal aoe to first unit with value of x^3
+    FLATEXEC,//Execute below x hp
+    SELFARMOR,//x armor on self
+    AOEFIRST,//x aoe to first unit
+
+    BULLSHIT//Self-explanatory (Does random AoE based on RNG)
 };
 
 enum Element {
