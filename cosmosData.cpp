@@ -161,7 +161,8 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                               aType == LEECH || aType == COUNTER_MAX_HP ||
                               aType == AOELAST || aType == FLATREF ||
                               aType == SELFHEAL || aType == EASTER ||
-                              aType == AOEFIRST || aType == AOEFIRST_CUBE);
+                              aType == AOEFIRST || aType == AOEFIRST_CUBE ||
+                              aType == BULLSHIT);
     this->hasHeal = (aType == HEAL || aType == HEAL_L ||
                      aType == LIFESTEAL || aType == LIFESTEAL_L ||
                      aType == SACRIFICE || aType == SACRIFICE_L ||

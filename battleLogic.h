@@ -940,7 +940,7 @@ int actual_target = opposingCondition.monstersLost;
   return actual_target;
 }
 // Simulates One fight between 2 Armies and writes results into left's LastFightData
-inline bool simulateFight(Army & left, Army & right, bool verbose = true) {
+inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
     // left[0] and right[0] are the first monsters to fight
     ArmyCondition leftCondition;
     ArmyCondition rightCondition;
