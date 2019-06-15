@@ -143,7 +143,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         skillTypes[i] = skill->skillType;
         skillTargets[i] = skill->target;
         skillAmounts[i] = skill->amount;
-        remainingHealths[i] = lineup[i]->hp - aoeDamage;
+        remainingHealths[i] = lineup[i]->hp - aoeDamage * ((skill->skillType == SKILLDAMPEN) ? (1 - skill->amount) : 1);
 
         worldboss |= lineup[i]->rarity == WORLDBOSS;
 

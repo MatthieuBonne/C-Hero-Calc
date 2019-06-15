@@ -451,7 +451,7 @@ string makeBattleReplay(Army friendly, Army hostile) {
         replay << "\"phero\""   << ":" << getReplayHeroes(hostile) << ",";
         replay << "\"ppromo\""  << ":" << getReplayPromo(hostile);
     replay << "}";*/
-    replay << "000000000000000000000000000000000000";//36 zeroes (1 because it's not read for some reason, 1 for winner, 16 for tournament id, 6 for round number, left name and right name)
+    replay << "000000000000";//12 zeroes (6 for left name and right name)
     replay << getReplaySetup(friendly) << getReplaySetup(hostile)<<"00000000";//zeros for padding, so no errors occur.
     string unencoded = replay.str();
     stringstream compression;
@@ -467,7 +467,9 @@ string makeBattleReplay(Army friendly, Army hostile) {
         compression << parsed;
     }
     unencoded = compression.str();
-    return base64_encode((const unsigned char*) unencoded.c_str(), (int) unencoded.size());
+    stringstream b64;
+    b64 << "4312" << base64_encode((const unsigned char*) unencoded.c_str(), (int) unencoded.size());//First four characters in binary: 1 because it's not read for some reason, 1 for winner, 16 for tournament id. Useful for us, no need to ask for version number, and we can put any word in there.
+    return b64.str();
 }
 
 // Get lineup in ingame indices
