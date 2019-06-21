@@ -101,18 +101,15 @@ class ArmyCondition {
         inline void applyArmor(TurnData & opposing);
         inline void resolveDamage(TurnData & opposing);
         inline void resolveRevenge(TurnData & opposing);
-        inline int64_t getTurnSeed(int64_t seed, int turncounter) {
-            // From Alya
-            for (int i = 0; i < turncounter; ++i) {
-              seed = (16807 * seed) % 2147483647;
-            }
-            return seed;
-            //return (seed + (101 - turncounter)*(101 - turncounter)*(101 - turncounter)) % (int64_t)round((double)seed / (101 - turncounter) + (101 - turncounter)*(101 - turncounter));
-        }
         inline int findMaxHP();
         inline int getLuxTarget(const ArmyCondition & opposingCondition, int64_t seed);
 };
-
+//For gambler heroes (Dice,Lux,Pokerface,Tetra)
+inline int64_t getTurnSeed(int64_t seed, int turncounter) {
+    for (int i = 0; i < turncounter; ++i)
+        seed = (16807 * seed) % 2147483647;
+    return seed;
+}
 // extract and extrapolate all necessary data from an army
 inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, const int aoeDamage) {
     HeroSkill * skill;
@@ -338,7 +335,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case EXPLODE:   turnData.explodeDamage = skillAmounts[monstersLost]; // Explode damage gets added here, but still won't apply unless enemy frontliner dies
                         break;
-        case DICE:      turnData.baseDamage += opposingCondition.seed % (int)(skillAmounts[monstersLost] + 1); // Only adds dice attack effect if dice is in front, max health is done before battle
+        case DICE:      turnData.baseDamage += getTurnSeed(opposingCondition.seed, 100) % (int)(skillAmounts[monstersLost] + 1); // Only adds dice attack effect if dice is in front, max health is done before battle
                         break;
         // Pick a target, Bubbles currently dampens lux damage if not targeting first according to game code, interaction should be added if this doesn't change
         case LUX:       turnData.direct_target = getLuxTarget(opposingCondition, getTurnSeed(opposingCondition.seed, 99 -turncounter));
@@ -968,12 +965,12 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
 
         // Apply Dicemaster max health bonus here, attack bonus applied during battle
         if (leftCondition.dice > -1) {
-            leftCondition.maxHealths[leftCondition.dice] += rightCondition.seed % ((int)leftCondition.skillAmounts[leftCondition.dice] + 1);
+            leftCondition.maxHealths[leftCondition.dice] += getTurnSeed(rightCondition.seed, 100) % ((int)leftCondition.skillAmounts[leftCondition.dice] + 1);
             leftCondition.remainingHealths[leftCondition.dice] = leftCondition.maxHealths[leftCondition.dice];
         }
 
         if (rightCondition.dice > -1) {
-            rightCondition.maxHealths[rightCondition.dice] += leftCondition.seed % ((int)rightCondition.skillAmounts[rightCondition.dice] + 1);
+            rightCondition.maxHealths[rightCondition.dice] += getTurnSeed(leftCondition.seed, 100) % ((int)rightCondition.skillAmounts[rightCondition.dice] + 1);
             rightCondition.remainingHealths[rightCondition.dice] = rightCondition.maxHealths[rightCondition.dice];
         }
 
