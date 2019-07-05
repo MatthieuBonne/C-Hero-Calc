@@ -162,16 +162,19 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                               aType == AOELAST || aType == FLATREF ||
                               aType == SELFHEAL || aType == EASTER ||
                               aType == AOEFIRST || aType == AOEFIRST_CUBE ||
-                              aType == BULLSHIT);
+                              aType == BULLSHIT || aType == CONVERT || 
+                              aType == TRIPLE || aType == HPAMPLIFY);
     this->hasHeal = (aType == HEAL || aType == HEAL_L ||
                      aType == LIFESTEAL || aType == LIFESTEAL_L ||
                      aType == SACRIFICE || aType == SACRIFICE_L ||
-                     aType == DEATHBUFF || aType == HEALFIRST);
+                     aType == DEATHBUFF || aType == HEALFIRST ||
+                     aType == FLATHEAL);
     // hasAoe should include all things affected by dampen
     this->hasAoe = (aType == AOE || aType == AOE_L ||
                     aType == REVENGE ||
                     aType == EXPLODE ||
                     aType == SADISM ||
+                    aType == ATTACKAOE ||
                     this->hasHeal || this->hasAsymmetricAoe);
     // For expanding armies, if new hero added to the back might have changed the fight, old result is not valid
     this->violatesFightResults = (aType == BUFF || aType == BUFF_L ||
@@ -375,6 +378,11 @@ std::map<std::string, int> stringToEnum = {
     {"FLATEXEC", FLATEXEC},
     {"SELFARMOR", SELFARMOR},
     {"AOEFIRST", AOEFIRST},
+    {"CONVERT", CONVERT},
+    {"TRIPLE", TRIPLE},
+    {"ATTACKAOE", ATTACKAOE},
+    {"FLATHEAL", FLATHEAL},
+    {"HPAMPLIFY", HPAMPLIFY},
     {"BULLSHIT", BULLSHIT},
 
     {"EARTH", EARTH},
@@ -758,6 +766,12 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 42, 28, "catzar",             FIRE,  RARE,      {EXECUTE_CUBE,   ALL,  FIRE,  4}, 28, 10, 36, 1));
     baseHeroes.push_back(Monster( 80,  8, "crei",               AIR,   LEGENDARY, {AOEFIRST_CUBE,  ALL,  AIR,   4}, 112, 28, 26, 1));
     baseHeroes.push_back(Monster(210, 21, "acrei",              AIR,   ASCENDED,  {AOEFIRST_CUBE,  ALL,  AIR,   5}, 192, 34, 78, 1));
+    baseHeroes.push_back(Monster( 75, 45, "smith",              EARTH, LEGENDARY, {TRIPLE,         ALL,  EARTH, 0.9}, 84, 47, 68, 0.1));
+    baseHeroes.push_back(Monster( 32, 14, "mrcotton",           FIRE,  COMMON,    {ATTACKAOE,      ALL,  FIRE,  10}, 28, 7, 12, 5));
+    baseHeroes.push_back(Monster( 54, 20, "sharkjellyn",        WATER, RARE,      {FLATHEAL,       SELF, WATER, 30}, 44, 13, 15, 15));
+    baseHeroes.push_back(Monster( 50, 50, "chocoknight",        EARTH, LEGENDARY, {HPAMPLIFY,      ALL,  EARTH, 0.4}, 72, 47, 82, 0.1));
+    baseHeroes.push_back(Monster(124,124, "achocoknight",       EARTH, ASCENDED,  {HPAMPLIFY,      ALL,  EARTH, 0.55}, 98, 64, 104, 0.1));
+    baseHeroes.push_back(Monster( 92,211, "lili",               FIRE,  ASCENDED,  {CONVERT,        ALL,  FIRE,  0.1}, 135, 574, 171, 0.01));
 }
 
 void initIndices() {
@@ -837,6 +851,14 @@ void initHeroAliases() {
     heroAliases["lee"] = "masterlee";
     heroAliases["mom"] = "mother";
     heroAliases["awander"] = "awanderer";
+    heroAliases["cotton"] = "mrcotton";
+    heroAliases["shark"] = "sharkjellyn";
+    heroAliases["jelly"] = "sharkjellyn";
+    heroAliases["choco"] = "chocoknight";
+    heroAliases["chocobo"] = "chocoknight";
+    heroAliases["achoco"] = "achocoknight";
+    heroAliases["dchoco"] = "achocoknight";
+    heroAliases["achocobo"] = "achocoknight";
 
     heroAliases["loc"] = "lordofchaos";
     heroAliases["fboss"] = "lordofchaos";

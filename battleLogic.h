@@ -48,6 +48,7 @@ struct TurnData {
     int explodeDamage = 0;
     bool trampleTriggered = false;
     double trampleMult = 0;
+    double tripleMult = 0;
     bool guyActive = false;
     bool ricoActive = false;
     int direct_target = 0;
@@ -150,6 +151,8 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         if (skill->skillType == AOEZERO) aoeZero += skill->amount;
         if (skill->skillType == DAMPEN) dampZero *= skill->amount;
         if (skill->skillType == POSBONUS){ maxHealths[i] += round(skill->amount * (armySize - i - 1)); remainingHealths[i] = maxHealths[i] - aoeDamage; }
+        // (7 - armySize + i) <- Get absolute position, not relative to first unit, for Lili
+        if (skill->skillType == CONVERT){ maxHealths[i] += round(lineup[i]->damage * (7 - armySize + i) * skill->amount); remainingHealths[i] = maxHealths[i] - aoeDamage; }
         if (skill->skillType == EASTER){ easterID = i; }
 
         rainbowConditions[i] = tempRainbowCondition == VALID_RAINBOW_CONDITION;
@@ -276,6 +279,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.explodeDamage = 0;
     turnData.valkyrieMult = 0;
     turnData.trampleMult = 0;
+    turnData.tripleMult = 0;
     turnData.critMult = 1; // same as above
     turnData.hate = 0; // same as above
     turnData.counter = 0;
@@ -327,6 +331,9 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case TRAMPLE:   turnData.trampleTriggered = true;
                         turnData.trampleMult = skillAmounts[monstersLost];
+                        turnData.ricoActive = true;
+                        break;
+        case TRIPLE:    turnData.tripleMult = skillAmounts[monstersLost];
                         turnData.ricoActive = true;
                         break;
         case COUNTER:   turnData.counter = skillAmounts[monstersLost];
@@ -398,6 +405,14 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                                     break;
                         }
                         break;
+        case ATTACKAOE: turnData.aoeDamage += skillAmounts[monstersLost];
+                        break;
+        case HPAMPLIFY: turnData.aoeFirst += round(skillAmounts[monstersLost] * remainingHealths[monstersLost]);
+                        break;
+        case FLATHEAL:  turnData.healFirst += skillAmounts[monstersLost];
+                        break;
+        case CONVERT:   turnData.baseDamage -= round(lineup[monstersLost]->damage * (7 - armySize + monstersLost) * 0.1);
+                        break;
         default:        break;
 
     }
@@ -441,7 +456,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     }
     //leech healing based on damage dealt
     if (turnData.leech != 0)
-        turnData.leech *= turnData.valkyrieDamage;
+        turnData.healFirst += round(turnData.leech * turnData.valkyrieDamage);
     //Check execute before resolve damage for reflect ability, neil absorbs damage before the execute, according to replays.
     if (turnData.execute && !opposingCondition.worldboss && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage)) <= turnData.execute)) {
         if (turnData.valkyrieDamage < opposingCondition.remainingHealths[opposingCondition.monstersLost] + 1)
@@ -468,6 +483,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.sacHeal = round((double) turnData.sacHeal * opposingDampFactor);//Have to check if Bubbles affects it
         turnData.aoeLast = round((double) turnData.aoeLast * opposingDampFactor);
         turnData.aoeFirst = round((double) turnData.aoeFirst * opposingDampFactor);
+        turnData.tripleMult *= opposingDampFactor;
     }
 
     if( opposingImmunityDamage && (turnData.valkyrieDamage >= opposingImmunityValue || turnData.baseDamage >= opposingImmunityValue ) ) {
@@ -505,6 +521,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
       // std::cout << "LUX DID NOT HIT FRONTLINER" << std::endl;
     }
 
+//One unit behind by S4 units + Raze
     if (opposing.trampleTriggered) {
         for (int i = frontliner + 1; i < armySize; i++)
             if (remainingHealths[i] > 0){
@@ -516,6 +533,25 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                 if (armoredRicochetValue > 0)
                     remainingHealths[i] -= armoredRicochetValue;
                 break;
+            }
+    }
+
+//Three units behind hit by Smith
+    if (opposing.tripleMult) {
+        int times = 3;
+        for (int i = frontliner + 1; i < armySize; i++)
+            if (remainingHealths[i] > 0){
+                if (skillTypes[i] == RESISTANCE)
+                    tempResistance = 1 - skillAmounts[i];
+                else
+                    tempResistance = 1;
+                armoredRicochetValue = round(opposing.valkyrieDamage * opposing.tripleMult * tempResistance) - turnData.armorArray[i];
+                if (armoredRicochetValue > 0)
+                    remainingHealths[i] -= armoredRicochetValue;
+                times--;
+                opposing.tripleMult *= opposing.tripleMult;
+                if (!times)
+                    break;
             }
     }
 
@@ -711,6 +747,14 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         remainingHealths[monstersLost] = round(remainingHealths[monstersLost] * ( 1 -((double) 1 / skillAmounts[monstersLost]) ));//Updated for promotion values.
     }
 
+    // Moved Sanqueen's ability (leech) to the end, to replicate delayed behavior
+    if((turnData.healFirst || turnData.selfHeal) && remainingHealths[frontliner] >= 0){
+        remainingHealths[frontliner] += round(turnData.selfHeal * opposing.baseDamage) + turnData.healFirst;
+        if (remainingHealths[frontliner] > maxHealths[frontliner]) { // Avoid overhealing
+            remainingHealths[frontliner] = maxHealths[frontliner];
+        }
+    }
+
     // Moved reflect functions to the end, reflect is now delayed till after healing and wither occur.
     if (monstersLost < armySize){
         if (opposing.counter && counter_eligible){
@@ -747,13 +791,6 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                 }
                 skillTypes[i] = NOTHING; // disable dead hero's ability
             }
-        }
-    }
-    // Moved Sanqueen's ability (leech) to the end, to replicate delayed behavior
-    if((turnData.healFirst || turnData.leech || turnData.selfHeal) && remainingHealths[frontliner] >= 0){
-        remainingHealths[frontliner] += round(turnData.leech) + round(turnData.selfHeal * opposing.baseDamage) + turnData.healFirst;
-        if (remainingHealths[frontliner] > maxHealths[frontliner]) { // Avoid overhealing
-            remainingHealths[frontliner] = maxHealths[frontliner];
         }
     }
 
@@ -937,7 +974,7 @@ int actual_target = opposingCondition.monstersLost;
   return actual_target;
 }
 // Simulates One fight between 2 Armies and writes results into left's LastFightData
-inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
+inline bool simulateFight(Army & left, Army & right, bool verbose = true) {
     // left[0] and right[0] are the first monsters to fight
     ArmyCondition leftCondition;
     ArmyCondition rightCondition;

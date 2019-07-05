@@ -468,7 +468,7 @@ string makeBattleReplay(Army friendly, Army hostile) {
     }
     unencoded = compression.str();
     stringstream b64;
-    b64 << "4312" << base64_encode((const unsigned char*) unencoded.c_str(), (int) unencoded.size());//First four characters in binary: 1 because it's not read for some reason, 1 for winner, 16 for tournament id. Useful for us, no need to ask for version number, and we can put any word in there.
+    b64 << REPLAYCODE << base64_encode((const unsigned char*) unencoded.c_str(), (int) unencoded.size());//First four characters in binary: 1 because it's not read for some reason, 1 for winner, 16 for tournament id. Useful for us, no need to ask for version number, and we can put any word in there.
     return b64.str();
 }
 
