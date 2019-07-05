@@ -772,7 +772,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 54, 20, "sharkjellyn",        WATER, RARE,      {FLATHEAL,       SELF, WATER, 30}, 44, 13, 15, 15));
     baseHeroes.push_back(Monster( 50, 50, "chocoknight",        EARTH, LEGENDARY, {HPAMPLIFY,      ALL,  EARTH, 0.4}, 72, 47, 82, 0.1));
     baseHeroes.push_back(Monster(124,124, "achocoknight",       EARTH, ASCENDED,  {HPAMPLIFY,      ALL,  EARTH, 0.55}, 98, 64, 104, 0.1));
-    baseHeroes.push_back(Monster( 92,211, "lili",               FIRE,  ASCENDED,  {CONVERT,        ALL,  FIRE,  0.1}, 135, 574, 171, 0.01));
+    baseHeroes.push_back(Monster( 92,211, "lili",               FIRE,  ASCENDED,  {CONVERT,        ALL,  FIRE,  0.1}, 174, 535, 171, 0.01));
 }
 
 void initIndices() {
