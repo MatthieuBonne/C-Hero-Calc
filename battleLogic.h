@@ -388,7 +388,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case BULLSHIT:  turnData.tetrisSeed = getTurnSeed(opposingCondition.seed, 99 - turncounter) % 6;
                         turnData.tetrisMult = skillAmounts[monstersLost];
                         turnData.ricoActive = true;
-                        turnData.tetrisDamage = (turnData.baseDamage + turnData.buffDamage) * turnData.tetrisMult;
+                        turnData.tetrisDamage = (turnData.baseDamage + turnData.buffDamage) * turnData.tetrisMult * turnData.multiplier;
                         //Frontliner part goes here for more accurate damage.
                         switch(turnData.tetrisSeed){
                             case 0: turnData.multiplier *= 2 * turnData.tetrisMult;
@@ -1067,7 +1067,7 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
 
     // Battle Loop. Continues until one side is out of monsters
     //TODO: handle 100 turn limit for non-wb, also handle it for wb better maybe
-    while (leftCondition.monstersLost < leftCondition.armySize && rightCondition.monstersLost < rightCondition.armySize && turncounter < 100) {
+    while (leftCondition.monstersLost < leftCondition.armySize && rightCondition.monstersLost < rightCondition.armySize && turncounter < 99) {
         leftCondition.startNewTurn();
         rightCondition.startNewTurn();
 
@@ -1118,7 +1118,7 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
     }
 
     // how 100 turn limit is handled for WB
-    if (turncounter >= 100 && rightCondition.worldboss == true) {
+    if (turncounter >= 99 && rightCondition.worldboss == true) {
         leftCondition.monstersLost = leftCondition.armySize;
     }
 
