@@ -191,7 +191,7 @@ inline void ArmyCondition::startNewTurn() {
     turnData.dampFactor = 1;
     turnData.absorbMult = 0;
     turnData.absorbDamage = 0;
-    turnData.resistance = 0;
+    turnData.resistance = 1;
     turnData.skillDampen = 1;
     turnData.sacHeal = 0;
     turnData.deathstrikeDamage = 0;
@@ -440,7 +440,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     if (turnData.hpPierce)
         turnData.valkyrieDamage += turnData.hpPierce;
 
-    if (opposingResistance)
+    if (opposingResistance < 1)
         turnData.valkyrieDamage *= opposingResistance;
 
     if (turnData.valkyrieDamage > opposingProtection) { 
@@ -652,7 +652,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
 
     if (opposing.aoeLast)
         for (int i = armySize - 1; i >= frontliner; i--)
-            if (remainingHealths[i] > 0){ //Check for last alive unit
+            if (remainingHealths[i] > 0 || worldboss){ //Check for last alive unit
                 if (skillTypes[i] == SKILLDAMPEN)
                     remainingHealths[i] -= round(opposing.aoeLast * (1 - skillAmounts[i]));
                 else
