@@ -452,6 +452,8 @@ kry kryton
 aboss kryton
 doy doyenne
 wboss doyenne
+bor bornag
+vboss bornag
 
 * QUESTS
 w5 +

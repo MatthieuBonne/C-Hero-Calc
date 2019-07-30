@@ -773,6 +773,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 50, 50, "chocoknight",        EARTH, LEGENDARY, {HPAMPLIFY,      ALL,  EARTH, 0.4}, 72, 47, 82, 0.1));
     baseHeroes.push_back(Monster(124,124, "achocoknight",       EARTH, ASCENDED,  {HPAMPLIFY,      ALL,  EARTH, 0.55}, 98, 64, 104, 0.1));
     baseHeroes.push_back(Monster( 92,211, "lili",               FIRE,  ASCENDED,  {CONVERT,        ALL,  FIRE,  0.1}, 174, 535, 171, 0.01));
+    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 151, "bornag", ALL,  WORLDBOSS, {RESISTANCE,    SELF, ALL,   1}, 20, 20, 30, 0.1));
 }
 
 void initIndices() {
@@ -869,6 +870,8 @@ void initHeroAliases() {
     heroAliases["aboss"] = "kryton";
     heroAliases["doy"] = "doyenne";
     heroAliases["wboss"] = "doyenne";
+    heroAliases["bor"] = "bornag";
+    heroAliases["vboss"] = "bornag";
 }
 
 void initQuests() {
