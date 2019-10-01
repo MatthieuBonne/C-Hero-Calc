@@ -88,6 +88,7 @@ class ArmyCondition {
         int64_t lastBerserk;
         double evolveTotal; //for evolve ability
         int deathBuffATK; //For S7 fairies
+        int64_t furyArray[ARMY_MAX_SIZE];//for subatomic heroes
 
         int monstersLost;
 
@@ -97,7 +98,7 @@ class ArmyCondition {
 
         inline void init(const Army & army, const int oldMonstersLost, const int aoeDamage);
         inline void afterDeath();
-        inline void startNewTurn();
+        inline void startNewTurn(const int turncounter);
         inline void getDamage(const int turncounter, const ArmyCondition & opposingCondition);
         inline void applyArmor(TurnData & opposing);
         inline void resolveDamage(TurnData & opposing);
@@ -142,6 +143,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         skillTargets[i] = skill->target;
         skillAmounts[i] = skill->amount;
         remainingHealths[i] = lineup[i]->hp - aoeDamage * ((skill->skillType == SKILLDAMPEN) ? (1 - skill->amount) : 1);
+        furyArray[i] = lineup[i]->damage;
 
         worldboss |= lineup[i]->rarity == WORLDBOSS;
 
@@ -178,7 +180,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
 }
 
 // Reset turndata and fill it again with the hero abilities' values
-inline void ArmyCondition::startNewTurn() {
+inline void ArmyCondition::startNewTurn(const int turncounter) {
     int i;
 
     turnData.buffDamage = 0;
@@ -253,6 +255,24 @@ inline void ArmyCondition::startNewTurn() {
             case HEALFIRST: turnData.healFirst += (int) skillAmounts[i];
                             break;
             case PERCBUFF:  turnData.multiplier += skillAmounts[i];
+                            break;
+            case FURY:      int cooldown;
+                            switch(lineup[i]->rarity){
+                                case COMMON:
+                                    cooldown = 5;
+                                    break;
+                                case RARE:
+                                    cooldown = 6;
+                                    break;
+                                case LEGENDARY:
+                                    cooldown = 8;
+                                    break;
+                                case ASCENDED:
+                                    cooldown = 9;
+                                    break;
+                            }
+                            if ((turncounter + 1) % cooldown == 1 && turncounter != 0)
+                                furyArray[i] = round((double)furyArray[i] * skillAmounts[i]);
                             break;
         }
     }
@@ -412,6 +432,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case FLATHEAL:  turnData.healFirst += skillAmounts[monstersLost];
                         break;
         case CONVERT:   turnData.baseDamage -= round(lineup[monstersLost]->damage * (7 - armySize + monstersLost) * 0.1);
+                        break;
+        case FURY:      turnData.baseDamage = furyArray[monstersLost];
                         break;
         default:        break;
 
@@ -714,6 +736,8 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                 break;
             case DEATHBUFF:
                 turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
+                for (int j = monstersLost; j < armySize; j++)
+                    furyArray[j] += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
                 deathBuffATK += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
                 break;
             default:
@@ -785,6 +809,8 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                         break;
                     case DEATHBUFF:
                         turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
+                        for (int j = monstersLost; j < armySize; j++)
+                            furyArray[j] += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
                         deathBuffATK += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
                     default:
                         break;
@@ -822,6 +848,8 @@ inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
                         break;
                     case DEATHBUFF:
                         turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
+                        for (int j = monstersLost; j < armySize; j++)
+                            furyArray[j] += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
                         deathBuffATK += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
                     default:
                         break;
@@ -1068,8 +1096,8 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
     // Battle Loop. Continues until one side is out of monsters
     //TODO: handle 100 turn limit for non-wb, also handle it for wb better maybe
     while (leftCondition.monstersLost < leftCondition.armySize && rightCondition.monstersLost < rightCondition.armySize && turncounter < 99) {
-        leftCondition.startNewTurn();
-        rightCondition.startNewTurn();
+        leftCondition.startNewTurn(turncounter);
+        rightCondition.startNewTurn(turncounter);
 
         // Get damage with all relevant multipliers
         leftCondition.getDamage(turncounter, rightCondition);

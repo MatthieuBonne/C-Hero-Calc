@@ -189,7 +189,7 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                                   aType == AOELAST || aType == HEALFIRST ||
                                   aType == PERCBUFF || aType == CONVERT ||
                                   aType == EASTER || aType == AOEFIRST ||
-                                  aType == AOEFIRST_CUBE);
+                                  aType == AOEFIRST_CUBE || aType == FURY);
 }
 
 // JSON Functions to provide results in an easily readable output format. Used my Latas for example
@@ -385,6 +385,7 @@ std::map<std::string, int> stringToEnum = {
     {"ATTACKAOE", ATTACKAOE},
     {"FLATHEAL", FLATHEAL},
     {"HPAMPLIFY", HPAMPLIFY},
+    {"FURY", FURY},
     {"BULLSHIT", BULLSHIT},
 
     {"EARTH", EARTH},

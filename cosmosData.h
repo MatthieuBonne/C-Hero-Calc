@@ -14,8 +14,8 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.3.3.0b";
-const std::string REPLAYCODE = "433b"; //4-number/letter sequence at the start of replay, that helps identify calc version. First 4 characters are responsible for tournament info in replay.
+const std::string VERSION = "4.5.0.1_Test";
+const std::string REPLAYCODE = "45t1"; //4-number/letter sequence at the start of replay, that helps identify calc version. First 4 characters are responsible for tournament info in replay.
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
@@ -139,6 +139,8 @@ enum SkillType {
     ATTACKAOE,//deals aoe while attacking
     FLATHEAL,//heals self for X hp while attacking
     HPAMPLIFY,//deals X% of its current hp as AoE to front enemy unit while attacking
+
+    FURY,//multiplies attack stat by X every Y turns
 
     BULLSHIT//Self-explanatory (Does random AoE based on RNG)
 };
