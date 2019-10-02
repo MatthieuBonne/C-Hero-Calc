@@ -35,6 +35,7 @@ struct TurnData {
     int healFirst = 0;
     int tetrisMult = 0;
     int tetrisSeed = 0;
+    int bloodlust = 0;
 
     Element opposingElement;
 
@@ -282,7 +283,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
 // Protection needs to be calculated at this point.
 inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition & opposingCondition) {
 
-    turnData.baseDamage = lineup[monstersLost]->damage + deathBuffATK; // Get Base damage
+    turnData.baseDamage = lineup[monstersLost]->damage + deathBuffATK + evolveTotal; // Get Base damage (deathBuff from Fairies, evolveTotal for Clio/Gladiator buff)
 
     turnData.opposingElement = opposingCondition.lineup[opposingCondition.monstersLost]->element;
     const int opposingProtection = opposingCondition.turnData.protection;
@@ -316,6 +317,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.sadism = 0;
     turnData.tetrisMult = 0;
     turnData.tetrisSeed = 0;
+    turnData.bloodlust = 0;
 
     double friendsDamage = 0;
 
@@ -377,8 +379,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case SELFHEAL:  turnData.selfHeal = skillAmounts[monstersLost];
                         break;
-        case EVOLVE:    turnData.buffDamage += evolveTotal;
-                        evolveTotal += opposingDamage * skillAmounts[monstersLost];
+        case EVOLVE:    evolveTotal += opposingDamage * skillAmounts[monstersLost];
                         break;
         case COUNTER_MAX_HP: turnData.counter = skillAmounts[monstersLost];
                         turnData.guyActive = true;
@@ -434,6 +435,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case CONVERT:   turnData.baseDamage -= round(lineup[monstersLost]->damage * (7 - armySize + monstersLost) * 0.1);
                         break;
         case FURY:      turnData.baseDamage = furyArray[monstersLost];
+                        break;
+        case BLOODLUST: turnData.bloodlust += skillAmounts[monstersLost];
                         break;
         default:        break;
 
@@ -512,6 +515,11 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.valkyrieDamage = 0 ;
         turnData.baseDamage = 0 ;
     }
+
+    //Check gladiators before resolve damage to make sure there is no left-right discrepancy. Buff takes place before delayed abilities but after AoE.
+    if (!(turnData.bloodlust && !opposingCondition.worldboss && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage) - turnData.aoeDamage - turnData.aoeFirst) <= 0)))
+        turnData.bloodlust = 0;
+
 }
 //in case of Ricochet, apply armor to everyone.
 inline void ArmyCondition::applyArmor(TurnData & opposing) {
@@ -781,6 +789,11 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
 
     // Moved reflect functions to the end, reflect is now delayed till after healing and wither occur.
     if (monstersLost < armySize){
+        if(turnData.bloodlust){
+            evolveTotal += turnData.bloodlust;
+            maxHealths[monstersLost] += turnData.bloodlust;
+            remainingHealths[monstersLost] += turnData.bloodlust;
+        }
         if (opposing.counter && counter_eligible){
             // Finding Guy's target
             if(opposing.guyActive)

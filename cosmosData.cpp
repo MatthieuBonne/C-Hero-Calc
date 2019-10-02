@@ -168,7 +168,7 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                      aType == LIFESTEAL || aType == LIFESTEAL_L ||
                      aType == SACRIFICE || aType == SACRIFICE_L ||
                      aType == DEATHBUFF || aType == HEALFIRST ||
-                     aType == FLATHEAL);
+                     aType == FLATHEAL  || aType == BLOODLUST);
     // hasAoe should include all things affected by dampen
     this->hasAoe = (aType == AOE || aType == AOE_L ||
                     aType == REVENGE ||
@@ -386,6 +386,7 @@ std::map<std::string, int> stringToEnum = {
     {"FLATHEAL", FLATHEAL},
     {"HPAMPLIFY", HPAMPLIFY},
     {"FURY", FURY},
+    {"BLOODLUST", BLOODLUST},
     {"BULLSHIT", BULLSHIT},
 
     {"EARTH", EARTH},
@@ -776,6 +777,14 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster(124,124, "achocoknight",       EARTH, ASCENDED,  {HPAMPLIFY,      ALL,  EARTH, 0.55}, 98, 64, 104, 0.1));
     baseHeroes.push_back(Monster( 92,211, "lili",               FIRE,  ASCENDED,  {CONVERT,        ALL,  FIRE,  0.1}, 174, 535, 171, 0.01));
     baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 151, "bornag", ALL,  WORLDBOSS, {RESISTANCE,    SELF, ALL,   1}, 20, 20, 30, 0.1));
+    baseHeroes.push_back(Monster( 53, 61, "thrace",             FIRE,  LEGENDARY, {BLOODLUST,      AIR,  AIR,   125}, 82, 131, 104, 25));
+    baseHeroes.push_back(Monster( 55, 63, "scinda",             AIR,   LEGENDARY, {BLOODLUST,      AIR,  AIR,   150}, 78, 125, 116, 30));
+    baseHeroes.push_back(Monster( 57, 65, "myrmillo",           EARTH, LEGENDARY, {BLOODLUST,      AIR,  AIR,   175}, 94, 141, 99, 35));
+    baseHeroes.push_back(Monster(144,126, "retia",              WATER, ASCENDED,  {BLOODLUST,      AIR,  AIR,   350}, 246, 318, 338, 100));
+    baseHeroes.push_back(Monster( 48,  4, "newt",               WATER, COMMON,    {FURY,           AIR,  AIR,   2}, 14, 1, 4, 0.5));
+    baseHeroes.push_back(Monster( 58,  6, "electra",            AIR,   RARE,      {FURY,           AIR,  AIR,   3}, 30, 4, 8, 1));
+    baseHeroes.push_back(Monster( 72,  3, "boson",              FIRE,  LEGENDARY, {FURY,           AIR,  AIR,   3}, 181, 19, 21, 1));
+    baseHeroes.push_back(Monster(214,  7, "higgs",              FIRE,  ASCENDED,  {FURY,           AIR,  AIR,   4}, 301, 14, 30, 1));
 }
 
 void initIndices() {
