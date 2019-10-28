@@ -117,6 +117,9 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
         case LIFESTEAL_L:   this->skill.skillType = LIFESTEAL;
                             this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
                             break;
+        case WBIDEAL_L:     this->skill.skillType = WBIDEAL;
+                            this->skill.amount = (double) floor((double) aLevel * this->skill.amount);
+                            break;
         case DAMPEN_L:      this->skill.skillType = DAMPEN;
                             this->skill.amount = 1.0f - (double) aLevel * this->skill.amount;
                             break;
@@ -163,17 +166,19 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                               aType == SELFHEAL || aType == EASTER ||
                               aType == AOEFIRST || aType == AOEFIRST_CUBE ||
                               aType == BULLSHIT || aType == CONVERT || 
-                              aType == TRIPLE || aType == HPAMPLIFY);
+                              aType == TRIPLE || aType == HPAMPLIFY ||
+                              aType == FURY);
     this->hasHeal = (aType == HEAL || aType == HEAL_L ||
                      aType == LIFESTEAL || aType == LIFESTEAL_L ||
+                     aType == WBIDEAL   || aType == WBIDEAL_L   ||
                      aType == SACRIFICE || aType == SACRIFICE_L ||
-                     aType == DEATHBUFF || aType == HEALFIRST ||
+                     aType == DEATHBUFF || aType == HEALFIRST   ||
                      aType == FLATHEAL  || aType == BLOODLUST);
     // hasAoe should include all things affected by dampen
     this->hasAoe = (aType == AOE || aType == AOE_L ||
-                    aType == REVENGE ||
-                    aType == EXPLODE ||
-                    aType == SADISM ||
+                    aType == AOEEXP || aType == REVENGE ||
+                    aType == AOELIN || aType == EXPLODE ||
+                    aType == AOEHP || aType == SADISM ||
                     aType == ATTACKAOE ||
                     this->hasHeal || this->hasAsymmetricAoe);
     // For expanding armies, if new hero added to the back might have changed the fight, old result is not valid
@@ -183,13 +188,18 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                                   aType == AOE || aType == AOE_L ||
                                   aType == HEAL || aType == HEAL_L ||
                                   aType == LIFESTEAL || aType == LIFESTEAL_L ||
+                                  aType == WBIDEAL   || aType == WBIDEAL_L   ||
                                   aType == BEER || aType == AOEZERO_L ||
                                   aType == AOEZERO || aType == ABSORB ||
                                   aType == SACRIFICE || aType == SACRIFICE_L ||
                                   aType == AOELAST || aType == HEALFIRST ||
                                   aType == PERCBUFF || aType == CONVERT ||
                                   aType == EASTER || aType == AOEFIRST ||
-                                  aType == AOEFIRST_CUBE || aType == FURY);
+                                  aType == AOEFIRST_CUBE || aType == FURY ||
+                                  aType == AOEEXP || aType == AOELIN || 
+                                  aType == WBIDEAL || aType == WBIDEAL_L ||
+                                  aType == AOEHP 
+                                  );
 }
 
 // JSON Functions to provide results in an easily readable output format. Used my Latas for example
@@ -387,6 +397,11 @@ std::map<std::string, int> stringToEnum = {
     {"HPAMPLIFY", HPAMPLIFY},
     {"FURY", FURY},
     {"BLOODLUST", BLOODLUST},
+    {"AOEEXP", AOEEXP},
+    {"AOELIN", AOELIN},
+    {"AOEHP", AOEHP},
+    {"WBIDEAL", WBIDEAL},
+    {"WBIDEAL_L", WBIDEAL_L},
     {"BULLSHIT", BULLSHIT},
 
     {"EARTH", EARTH},
@@ -783,8 +798,12 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster(144,126, "retia",              WATER, ASCENDED,  {BLOODLUST,      AIR,  AIR,   350}, 246, 318, 338, 100));
     baseHeroes.push_back(Monster( 48,  4, "newt",               WATER, COMMON,    {FURY,           AIR,  AIR,   2}, 14, 1, 4, 0.5));
     baseHeroes.push_back(Monster( 58,  6, "electra",            AIR,   RARE,      {FURY,           AIR,  AIR,   3}, 30, 4, 8, 1));
-    baseHeroes.push_back(Monster( 72,  3, "boson",              FIRE,  LEGENDARY, {FURY,           AIR,  AIR,   3}, 181, 19, 21, 1));
-    baseHeroes.push_back(Monster(214,  7, "higgs",              FIRE,  ASCENDED,  {FURY,           AIR,  AIR,   4}, 301, 14, 30, 1));
+    baseHeroes.push_back(Monster( 66,  6, "boson",              FIRE,  LEGENDARY, {FURY,           AIR,  AIR,   3}, 82, 20, 21, 1));
+    baseHeroes.push_back(Monster(210, 10, "higgs",              FIRE,  ASCENDED,  {FURY,           AIR,  AIR,   4}, 225, 24, 30, 1));
+    baseHeroes.push_back(Monster( 30, 28, "casper",             AIR,   COMMON,    {AOEEXP,         AIR,  AIR,   2}, 14, 14, 20, 1));
+    baseHeroes.push_back(Monster( 64, 20, "adrian",             FIRE,  RARE,      {AOELIN,         FIRE, FIRE,  5}, 32, 14, 28, 2));
+    baseHeroes.push_back(Monster( 66, 66, "bride",              WATER, LEGENDARY, {WBIDEAL,        ALL,  WATER, 0.1112}, 258, 178, 104, 0.0202));
+    baseHeroes.push_back(Monster(200,100, "adam",               EARTH, ASCENDED,  {AOEHP,          EARTH,EARTH, 0.04}, 321, 93, 134, 0.01));
 }
 
 void initIndices() {

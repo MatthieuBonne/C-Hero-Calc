@@ -238,8 +238,19 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
                             break;
             case AOE:       turnData.aoeDamage += (int) skillAmounts[i];
                             break;
+            case AOEEXP:    turnData.aoeDamage += (int) skillAmounts[i] * pow(2,floor((turncounter + 1) / 3));
+                            break;
+            case AOELIN:    turnData.aoeDamage += (int) (skillAmounts[i] + 2 * (turncounter + 1));
+                            break;
+            case AOEHP:     turnData.aoeDamage += (int) round(skillAmounts[i] * remainingHealths[i]);
+                            break;
             case LIFESTEAL: turnData.aoeDamage += (int) skillAmounts[i];
                             turnData.healing += (int) skillAmounts[i];
+                            break;
+            case WBIDEAL:   turnData.aoeDamage  += (int) skillAmounts[i];
+                            turnData.healing    += (int) skillAmounts[i];
+                            turnData.buffDamage += (int) skillAmounts[i];
+                            turnData.protection += (int) skillAmounts[i];
                             break;
             case DAMPEN:    turnData.dampFactor *= skillAmounts[i];
                             break;
@@ -266,10 +277,10 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
                                     cooldown = 6;
                                     break;
                                 case LEGENDARY:
-                                    cooldown = 8;
+                                    cooldown = 7;
                                     break;
                                 case ASCENDED:
-                                    cooldown = 9;
+                                    cooldown = 8;
                                     break;
                             }
                             if ((turncounter + 1) % cooldown == 1 && turncounter != 0)
@@ -527,7 +538,7 @@ inline void ArmyCondition::applyArmor(TurnData & opposing) {
         for (int i = monstersLost + 1; i < armySize; i++) {
             turnData.armorArray[i] = 0;
             for (int j = monstersLost; j < armySize; j++) {
-                if ((skillTypes[j] == PROTECT || skillTypes[j] == CHAMPION) && (skillTargets[j] == ALL || skillTargets[j] == lineup[i]->element))
+                if ((skillTypes[j] == PROTECT || skillTypes[j] == CHAMPION || skillTypes[j] == WBIDEAL) && (skillTargets[j] == ALL || skillTargets[j] == lineup[i]->element))
                     turnData.armorArray[i] += (int) skillAmounts[j];
             }
         }
