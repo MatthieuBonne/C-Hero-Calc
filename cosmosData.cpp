@@ -802,7 +802,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster(210, 10, "higgs",              FIRE,  ASCENDED,  {FURY,           AIR,  AIR,   4}, 225, 24, 30, 1));
     baseHeroes.push_back(Monster( 30, 28, "casper",             AIR,   COMMON,    {AOEEXP,         AIR,  AIR,   2}, 14, 14, 20, 1));
     baseHeroes.push_back(Monster( 64, 20, "adrian",             FIRE,  RARE,      {AOELIN,         FIRE, FIRE,  5}, 32, 14, 28, 2));
-    baseHeroes.push_back(Monster( 66, 66, "bride",              WATER, LEGENDARY, {WBIDEAL_L,      ALL,  WATER, 0.1112}, 258, 178, 104, 0.0202));
+    baseHeroes.push_back(Monster( 66, 66, "emily",              WATER, LEGENDARY, {WBIDEAL_L,      ALL,  WATER, 0.1112}, 258, 178, 104, 0.0202));
     baseHeroes.push_back(Monster(200,100, "adam",               EARTH, ASCENDED,  {AOEHP,          EARTH,EARTH, 0.04}, 321, 93, 134, 0.01));
 }
 
@@ -891,6 +891,7 @@ void initHeroAliases() {
     heroAliases["achoco"] = "achocoknight";
     heroAliases["dchoco"] = "achocoknight";
     heroAliases["achocobo"] = "achocoknight";
+    heroAliases["bride"] = "emily";//To work with macrocreator without updating it
 
     heroAliases["loc"] = "lordofchaos";
     heroAliases["fboss"] = "lordofchaos";
