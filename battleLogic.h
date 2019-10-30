@@ -238,8 +238,6 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
                             break;
             case AOE:       turnData.aoeDamage += (int) skillAmounts[i];
                             break;
-            case AOEEXP:    turnData.aoeDamage += (int) skillAmounts[i] * pow(2,floor((turncounter + 1) / 3));
-                            break;
             case AOELIN:    turnData.aoeDamage += (int) (skillAmounts[i] + 2 * (turncounter + 1));
                             break;
             case AOEHP:     turnData.aoeDamage += (int) round(skillAmounts[i] * remainingHealths[i]);
@@ -390,7 +388,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case SELFHEAL:  turnData.selfHeal = skillAmounts[monstersLost];
                         break;
-        case EVOLVE:    evolveTotal += opposingDamage * skillAmounts[monstersLost];
+        case EVOLVE:    evolveTotal += round(opposingDamage * skillAmounts[monstersLost]);
                         break;
         case COUNTER_MAX_HP: turnData.counter = skillAmounts[monstersLost];
                         turnData.guyActive = true;
