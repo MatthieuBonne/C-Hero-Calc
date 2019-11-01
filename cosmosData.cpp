@@ -882,14 +882,17 @@ void initHeroAliases() {
     heroAliases["lee"] = "masterlee";
     heroAliases["mom"] = "mother";
     heroAliases["awander"] = "awanderer";
+    heroAliases["4thos"] = "cathos";
+    heroAliases["4tzar"] = "catzar";
+    heroAliases["r31"] = "crei";
+    heroAliases["ar31"] = "acrei";
     heroAliases["cotton"] = "mrcotton";
     heroAliases["shark"] = "sharkjellyn";
     heroAliases["jelly"] = "sharkjellyn";
     heroAliases["choco"] = "chocoknight";
-    heroAliases["chocobo"] = "chocoknight";
     heroAliases["achoco"] = "achocoknight";
     heroAliases["dchoco"] = "achocoknight";
-    heroAliases["achocobo"] = "achocoknight";
+    heroAliases["darkchoco"] = "achocoknight";
     heroAliases["bride"] = "emily";//To work with macrocreator without updating it
 
     heroAliases["loc"] = "lordofchaos";

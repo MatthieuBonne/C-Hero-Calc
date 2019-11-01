@@ -163,14 +163,14 @@ void expand(vector<Army> & newPureArmies, vector<Army> & newHeroArmies,
             // Add Hero. Check if hero was used before.
             for (m = 0; m < availableHeroesSize; m++) {
                 if (!usedHeroes[availableHeroes[m]]) {
-                    if (!removeUseless || instance.monsterUsefulLast[availableHeroes[m]] || (rainbowInfluence && monsterReference[aMonsters[m]].element == missingElement) || instance.targetSize == oldHeroArmies[i].lastFightData.monstersLost) {
+                    if (!removeUseless || instance.monsterUsefulLast[availableHeroes[m]] || (rainbowInfluence && monsterReference[availableHeroes[m]].element == missingElement) || instance.targetSize == oldHeroArmies[i].lastFightData.monstersLost) {
                         newHeroArmies.push_back(oldHeroArmies[i]);
                         newHeroArmies.back().add(availableHeroes[m]);
                         newHeroArmies.back().lastFightData.valid = !instanceInvalid &&
                                                                    !invalidSkill &&
                                                                    !monsterReference[availableHeroes[m]].skill.violatesFightResults &&
                                                                    !boozeInfluence &&
-                                                                   !(rainbowInfluence && monsterReference[aMonsters[m]].element == missingElement) &&
+                                                                   !(rainbowInfluence && monsterReference[availableHeroes[m]].element == missingElement) &&
                                                                    !(monsterReference[availableHeroes[m]].skill.skillType == DAMPEN && instance.hasAoe);
 
                     }

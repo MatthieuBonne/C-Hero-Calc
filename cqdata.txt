@@ -446,8 +446,10 @@ bday b-day
 lee masterlee
 mom mother
 awander awanderer
-forthos cathos
-fortzar catzar
+4thos cathos
+4tzar catzar
+r31 crei
+ar31 acrei
 cotton mrcotton
 shark sharkjellyn
 jelly sharkjellyn
