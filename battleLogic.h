@@ -16,6 +16,7 @@ struct TurnData {
     int buffDamage = 0;
     int protection = 0;
     int armorArray[ARMY_MAX_SIZE];
+    bool aliveAtTurnStart[ARMY_MAX_SIZE];
     int aoeDamage = 0;
     int aoeRevenge = 0;
     int aoeLast = 0;
@@ -204,6 +205,8 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
     turnData.healFirst = 0;
     turnData.multiplier = 1;
     turnData.immunity5K = false ;
+    for (i = monstersLost; i < armySize; i++)
+        turnData.aliveAtTurnStart[i] = remainingHealths[i] > 0;
 
     switch (skillTypes[monstersLost]) {
         default:            break;
@@ -331,12 +334,9 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     double friendsDamage = 0;
 
     switch (skillTypes[monstersLost]) {
-        case FRIENDS:   friendsDamage = turnData.baseDamage;
-                        for (int i = monstersLost + 1; i < armySize; i++) {
+        case FRIENDS:   for (int i = monstersLost + 1; i < armySize; i++) {
                             if (skillTypes[i] == NOTHING && remainingHealths[i] > 0)
-                                friendsDamage *= skillAmounts[monstersLost];
-                            else if ((skillTypes[i] == BUFF || skillTypes[i] == CHAMPION) && (skillTargets[i] == ALL || skillTargets[i] == lineup[monstersLost]->element))
-                                friendsDamage += skillAmounts[i];
+                                turnData.baseDamage *= skillAmounts[monstersLost];
                         }
                         break;
         case TRAINING:  turnData.buffDamage += (int) (skillAmounts[monstersLost] * (double) turncounter);
@@ -452,17 +452,12 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     }
 
     turnData.valkyrieDamage = turnData.baseDamage;
-    if (friendsDamage == 0) {
-        //Linear before multiplicative
-        if (turnData.buffDamage != 0) {
-            turnData.valkyrieDamage += turnData.buffDamage;
-        }
-        if (turnData.multiplier > 1) {
-            turnData.valkyrieDamage *= turnData.multiplier;
-        }
+    //Linear before multiplicative
+    if (turnData.buffDamage != 0) {
+        turnData.valkyrieDamage += turnData.buffDamage;
     }
-    else {
-        turnData.valkyrieDamage = friendsDamage;
+    if (turnData.multiplier > 1) {
+        turnData.valkyrieDamage *= turnData.multiplier;
     }
 
     if (counter[turnData.opposingElement] == lineup[monstersLost]->element && lineup[monstersLost]->element != ALL) {
@@ -547,6 +542,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     int frontliner = monstersLost; // save original frontliner
     int armoredRicochetValue; //So the ricochet doesn't heal due to armor
     double tempResistance; //Needed for frosty to dampen ricochet
+    int aoeConst = 0; //AoE that is not affected by SKILLDAMPEN
 
     // Apply normal attack damage to the frontliner
     // If direct_target is non-zero that means Lux is hitting something not the front liner
@@ -578,6 +574,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
 //Three units behind hit by Smith
     if (opposing.tripleMult) {
         int times = 3;
+        double baseMult = opposing.tripleMult;
         for (int i = frontliner + 1; i < armySize; i++)
             if (remainingHealths[i] > 0){
                 if (skillTypes[i] == RESISTANCE)
@@ -588,9 +585,9 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                 if (armoredRicochetValue > 0)
                     remainingHealths[i] -= armoredRicochetValue;
                 times--;
-                opposing.tripleMult *= opposing.tripleMult;
                 if (!times)
                     break;
+                opposing.tripleMult *= baseMult;
             }
     }
 
@@ -687,7 +684,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     }
 
     if (opposing.aoeReflect)
-        opposing.aoeDamage += round(turnData.baseDamage * opposing.aoeReflect);
+        aoeConst += std::max((int)round(turnData.baseDamage * opposing.aoeReflect),1);
 
     if (opposing.aoeLast)
         for (int i = armySize - 1; i >= frontliner; i--)
@@ -720,6 +717,8 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         remainingHealths[i] -= round(opposing.aoeDamage * (1 - skillAmounts[i]));
       else
         remainingHealths[i] -= opposing.aoeDamage;
+      remainingHealths[i] -= aoeConst;
+
       if (skillTypes[i] == SACRIFICE)
         remainingHealths[i] -= turnData.masochism;
 
@@ -752,7 +751,17 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                 turnData.deathstrikeDamage += skillAmounts[i];
                 break;
             case DEATHBUFF:
-                turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
+                turnData.deathBuffHP = (int) round(skillAmounts[i] * maxHealths[i]);
+                for (int j = monstersLost; j < i; j++)
+                    if (remainingHealths[j] > 0){
+                        remainingHealths[j] += turnData.deathBuffHP;
+                        maxHealths[j] += turnData.deathBuffHP;
+                    }
+                for (int j = i + 1; j < armySize; j++)
+                    if (turnData.aliveAtTurnStart[j]){
+                        remainingHealths[j] += turnData.deathBuffHP;
+                        maxHealths[j] += turnData.deathBuffHP;
+                    }
                 for (int j = monstersLost; j < armySize; j++)
                     furyArray[j] += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
                 deathBuffATK += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
@@ -830,7 +839,17 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                         turnData.deathstrikeDamage += skillAmounts[i];
                         break;
                     case DEATHBUFF:
-                        turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
+                        turnData.deathBuffHP = (int) round(skillAmounts[i] * maxHealths[i]);
+                        for (int j = monstersLost; j < i; j++)
+                            if (remainingHealths[j] > 0){
+                                remainingHealths[j] += turnData.deathBuffHP;
+                                maxHealths[j] += turnData.deathBuffHP;
+                            }
+                        for (int j = i + 1; j < armySize; j++)
+                            if (turnData.aliveAtTurnStart[j]){
+                                remainingHealths[j] += turnData.deathBuffHP;
+                                maxHealths[j] += turnData.deathBuffHP;
+                            }
                         for (int j = monstersLost; j < armySize; j++)
                             furyArray[j] += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
                         deathBuffATK += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
@@ -869,7 +888,17 @@ inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
                         turnData.deathstrikeDamage += skillAmounts[i];
                         break;
                     case DEATHBUFF:
-                        turnData.deathBuffHP += (int) round(skillAmounts[i] * maxHealths[i]);
+                        turnData.deathBuffHP = (int) round(skillAmounts[i] * maxHealths[i]);
+                        for (int j = monstersLost; j < i; j++)
+                            if (remainingHealths[j] > 0){
+                                remainingHealths[j] += turnData.deathBuffHP;
+                                maxHealths[j] += turnData.deathBuffHP;
+                            }
+                        for (int j = i + 1; j < armySize; j++)
+                            if (turnData.aliveAtTurnStart[j]){
+                                remainingHealths[j] += turnData.deathBuffHP;
+                                maxHealths[j] += turnData.deathBuffHP;
+                            }
                         for (int j = monstersLost; j < armySize; j++)
                             furyArray[j] += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
                         deathBuffATK += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
@@ -880,16 +909,6 @@ inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
             }
         }
         opposing.aoeRevenge = 0;
-    }
-    if (turnData.deathBuffHP)
-    {
-        for (int i = monstersLost; i < armySize; i++) {
-            if (remainingHealths[i] > 0){
-                maxHealths[i] += turnData.deathBuffHP;
-                remainingHealths[i] += turnData.deathBuffHP;
-            }
-        }
-        turnData.deathBuffHP = 0;
     }
 }
 //Find highest HP unit for Guy's reflect.
@@ -1138,8 +1157,8 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         left.lastFightData.rightAoeDamage += leftCondition.turnData.aoeDamage + rightCondition.turnData.sadism;
 
         //Resolve Revenge abilities
-        while (rightCondition.turnData.aoeRevenge || rightCondition.turnData.deathstrikeDamage || leftCondition.turnData.deathBuffHP  ||
-               leftCondition.turnData.aoeRevenge  || leftCondition.turnData.deathstrikeDamage  || rightCondition.turnData.deathBuffHP) {
+        while (rightCondition.turnData.aoeRevenge || rightCondition.turnData.deathstrikeDamage ||
+               leftCondition.turnData.aoeRevenge  || leftCondition.turnData.deathstrikeDamage) {
             left.lastFightData.leftAoeDamage += rightCondition.turnData.aoeRevenge;
             leftCondition.resolveRevenge(rightCondition.turnData);
             left.lastFightData.rightAoeDamage += leftCondition.turnData.aoeRevenge;
