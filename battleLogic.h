@@ -205,8 +205,6 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
     turnData.healFirst = 0;
     turnData.multiplier = 1;
     turnData.immunity5K = false ;
-    for (i = monstersLost; i < armySize; i++)
-        turnData.aliveAtTurnStart[i] = remainingHealths[i] > 0;
 
     switch (skillTypes[monstersLost]) {
         default:            break;
@@ -225,6 +223,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
 
     // Gather all skills that trigger globally
     for (i = monstersLost; i < armySize; i++) {
+        turnData.aliveAtTurnStart[i] = remainingHealths[i] > 0;
         switch (skillTypes[i]) {
             default:        break;
             case PROTECT:   if (skillTargets[i] == ALL || skillTargets[i] == lineup[monstersLost]->element) {
@@ -805,13 +804,9 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         }
     }
 
-    // Moved reflect functions to the end, reflect is now delayed till after healing and wither occur.
+    // Delayed abilities start here. Happen after direct damage and AoE. Can carry over to the next unit
     if (monstersLost < armySize){
-        if(turnData.bloodlust){
-            evolveTotal += turnData.bloodlust;
-            maxHealths[monstersLost] += turnData.bloodlust;
-            remainingHealths[monstersLost] += turnData.bloodlust;
-        }
+        //Reflect
         if (opposing.counter && counter_eligible){
             // Finding Guy's target
             if(opposing.guyActive)
@@ -821,6 +816,12 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         }
         if (opposing.flatRef && counter_eligible){
             remainingHealths[monstersLost] -= opposing.flatRef;
+        }
+        //Gladiator buff
+        if(turnData.bloodlust && remainingHealths[monstersLost] > 0){
+            evolveTotal += turnData.bloodlust;
+            maxHealths[monstersLost] += turnData.bloodlust;
+            remainingHealths[monstersLost] += turnData.bloodlust;
         }
         //If a delayed ability killed a frontliner, find next frontliner. Same procedure as when applying aoe.
         for (int i = monstersLost; i < armySize; i++){

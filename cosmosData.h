@@ -14,8 +14,8 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.6.0.6g";
-const std::string REPLAYCODE = "460g"; //4-number/letter sequence at the start of replay, that helps identify calc version. First 4 characters are responsible for tournament info in replay.
+const std::string VERSION = "4.6.0.6h";
+const std::string REPLAYCODE = "460h"; //4-number/letter sequence at the start of replay, that helps identify calc version. First 4 characters are responsible for tournament info in replay.
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
