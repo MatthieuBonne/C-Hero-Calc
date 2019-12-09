@@ -463,7 +463,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.valkyrieDamage *= elementalBoost + turnData.hate;
     }
 
-    int ricoValue = turnData.valkyrieDamage; //Save it so it is not affected by armor and absorb and other individual unit abilities.
+    double ricoValue = turnData.valkyrieDamage; //Save it so it is not affected by armor and absorb and other individual unit abilities.
 
     if (turnData.hpPierce)
         turnData.valkyrieDamage += turnData.hpPierce;
