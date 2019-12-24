@@ -14,8 +14,8 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.6.0.6i";
-const std::string REPLAYCODE = "460i"; //4-number/letter sequence at the start of replay, that helps identify calc version. First 4 characters are responsible for tournament info in replay.
+const std::string VERSION = "4.6.2.2a";
+const std::string REPLAYCODE = "462a"; //4-number/letter sequence at the start of replay, that helps identify calc version. First 4 characters are responsible for tournament info in replay.
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
@@ -147,6 +147,18 @@ enum SkillType {
     AOEHP,// AoE based on HP
     WBIDEAL,// BUFF, PROTECT, AOE, HEAL
     WBIDEAL_L,// BUFF, PROTECT, AOE, HEAL (scaling)
+
+    AOELOW,//Start of battle X AOE that damages the lowest HP unit
+    BUFFUP,//+0 attack that increases every 4/5 turns by X (not actually an aura, gizmo is useless)
+    FLATLEP,//Start of battle X AOE dmg multiplied by enemy unit advantage
+    MORALE,//+X stats every 2 turns per each alive unit in front
+    TURNDAMP,//Reduces direct damage by X% for one turn (not sure if 1st turn of battle or 1st time it attacks)
+
+    AOELOW_L,//Scaling
+    BUFFUP_L,
+    FLATLEP_L,
+    MORALE_L,
+    TURNDAMP_L,
 
     BULLSHIT//Self-explanatory (Does random AoE based on RNG)
 };

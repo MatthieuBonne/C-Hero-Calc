@@ -141,6 +141,21 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
         case SACRIFICE_L:   this->skill.skillType = SACRIFICE;
                             this->skill.amount = this->skill.amount * (double) aLevel / 9;
                             break;
+        case AOELOW_L:      this->skill.skillType = AOELOW;
+                            this->skill.amount = floor(this->skill.amount * (double) aLevel);
+                            break;
+        case BUFFUP_L:      this->skill.skillType = BUFFUP;
+                            this->skill.amount = 9 * floor((double) aLevel / 9);
+                            break;
+        case FLATLEP_L:     this->skill.skillType = FLATLEP;
+                            this->skill.amount = this->skill.amount * floor((double) aLevel / 9);
+                            break;
+        case MORALE_L:      this->skill.skillType = MORALE;
+                            this->skill.amount = this->skill.amount * floor((double) aLevel / 9);
+                            break;
+        case TURNDAMP_L:    this->skill.skillType = TURNDAMP;
+                            this->skill.amount = this->skill.amount * floor((double) aLevel / 9);
+                            break;
         case EXECUTE_CUBE:  this->skill.skillType = FLATEXEC;
                             this->skill.amount = pow(this->skill.amount, 3);
                             break;
@@ -167,7 +182,9 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                               aType == AOEFIRST || aType == AOEFIRST_CUBE ||
                               aType == BULLSHIT || aType == CONVERT || 
                               aType == TRIPLE || aType == HPAMPLIFY ||
-                              aType == FURY);
+                              aType == FURY || aType == MORALE ||
+                              aType == MORALE_L || aType == AOELOW ||
+                              aType == AOELOW_L);
     this->hasHeal = (aType == HEAL || aType == HEAL_L ||
                      aType == LIFESTEAL || aType == LIFESTEAL_L ||
                      aType == WBIDEAL   || aType == WBIDEAL_L   ||
@@ -183,6 +200,7 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                     this->hasHeal || this->hasAsymmetricAoe);
     // For expanding armies, if new hero added to the back might have changed the fight, old result is not valid
     this->violatesFightResults = (aType == BUFF || aType == BUFF_L ||
+                                  aType == BUFFUP || aType == BUFFUP_L ||
                                   aType == PROTECT || aType == PROTECT_L ||
                                   aType == CHAMPION || aType == CHAMPION_L ||
                                   aType == AOE || aType == AOE_L ||
@@ -198,7 +216,10 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                                   aType == AOEFIRST_CUBE || aType == FURY ||
                                   aType == AOELIN || 
                                   aType == WBIDEAL || aType == WBIDEAL_L ||
-                                  aType == AOEHP 
+                                  aType == AOEHP || aType == MORALE ||
+                                  aType == MORALE_L || aType == AOELOW ||
+                                  aType == AOELOW_L || aType == FLATLEP ||
+                                  aType == FLATLEP_L
                                   );
 }
 
@@ -401,6 +422,16 @@ std::map<std::string, int> stringToEnum = {
     {"AOEHP", AOEHP},
     {"WBIDEAL", WBIDEAL},
     {"WBIDEAL_L", WBIDEAL_L},
+    {"AOELOW", AOELOW},
+    {"BUFFUP", BUFFUP},
+    {"FLATLEP", FLATLEP},
+    {"MORALE", MORALE},
+    {"TURNDAMP", TURNDAMP},
+    {"AOELOW_L", AOELOW_L},
+    {"BUFFUP_L", BUFFUP_L},
+    {"FLATLEP_L", FLATLEP_L},
+    {"MORALE_L", MORALE_L},
+    {"TURNDAMP_L", TURNDAMP_L},
     {"BULLSHIT", BULLSHIT},
 
     {"EARTH", EARTH},
@@ -803,6 +834,11 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 64, 20, "adrian",             FIRE,  RARE,      {AOELIN,         FIRE, FIRE,  5}, 32, 14, 28, 2));
     baseHeroes.push_back(Monster( 66, 66, "emily",              WATER, LEGENDARY, {WBIDEAL_L,      ALL,  WATER, 0.1112}, 258, 178, 104, 0.0202));
     baseHeroes.push_back(Monster(200,100, "adam",               EARTH, ASCENDED,  {AOEHP,          EARTH,EARTH, 0.04}, 321, 93, 134, 0.01));
+    baseHeroes.push_back(Monster( 32, 48, "yisus",              EARTH, RARE,      {FLATLEP_L,      EARTH,EARTH, 3}, 38, 18, 34, 1));
+    baseHeroes.push_back(Monster( 32, 40, "galla",              FIRE,  COMMON,    {AOELOW_L,       FIRE, FIRE,  1}, 30, 22, 22, 0.5));
+    baseHeroes.push_back(Monster( 58, 58, "yetithepostman",     WATER, RARE,      {BUFFUP_L,       WATER,WATER, 4}, 40, 40, 40, 1));
+    baseHeroes.push_back(Monster( 74, 74, "hans",               EARTH, LEGENDARY, {NOTHING,        EARTH,EARTH, 3}, 200, 200, 180, 2));
+    baseHeroes.push_back(Monster(  5,250, "mechamary",          AIR,   ASCENDED,  {NOTHING,        AIR,  AIR,   0.08}, 12, 1080, 30, 0.01));
 }
 
 void initIndices() {
@@ -894,6 +930,9 @@ void initHeroAliases() {
     heroAliases["dchoco"] = "achocoknight";
     heroAliases["darkchoco"] = "achocoknight";
     heroAliases["bride"] = "emily";//To work with macrocreator without updating it
+    heroAliases["yeti"] = "yetithepostman";
+    heroAliases["mary"] = "mechamary";
+    heroAliases["jesus"] = "yisus";
 
     heroAliases["loc"] = "lordofchaos";
     heroAliases["fboss"] = "lordofchaos";

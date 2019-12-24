@@ -81,6 +81,8 @@ class ArmyCondition {
         bool booze; // for leprechaun's ability
         int boozeValue;//Adds an illusory amount of enemies to lep's perception amplifying his aoe
         int aoeZero; // for hawking's ability
+        int aoeLow; // for xmas common ability
+        int flatLep; // for xmas rare ability
         double dampZero; // for bubbles's ability
         bool easterCheck; // for Daisy
         int easterID; // for Daisy
@@ -133,6 +135,8 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
     boozeValue = 0;
     worldboss = false;
     aoeZero = 0;
+    aoeLow = 0;
+    flatLep = 0;
     dampZero = 1;
     easterCheck = false;
     easterID = -1;
@@ -153,6 +157,8 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         if (skill->skillType == DICE) dice = i; //assumes only 1 unit per side can have dice ability, have to change to bool and loop at turn zero if this changes
         if (skill->skillType == BEER){ booze = true; boozeValue = skill->amount;}
         if (skill->skillType == AOEZERO) aoeZero += skill->amount;
+        if (skill->skillType == AOELOW) aoeLow += skill->amount;
+        if (skill->skillType == FLATLEP) flatLep += skill->amount;
         if (skill->skillType == DAMPEN) dampZero *= skill->amount;
         if (skill->skillType == POSBONUS){ maxHealths[i] += round(skill->amount * (armySize - i - 1)); remainingHealths[i] = maxHealths[i] - aoeDamage; }
         // (7 - armySize + i) <- Get absolute position, not relative to first unit, for Lili
@@ -210,6 +216,9 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
         default:            break;
         case RESISTANCE:    turnData.resistance = 1 - skillAmounts[monstersLost];//Needs to be here so it happens before Neil's absorb.
                             break;
+        case TURNDAMP:      turnData.resistance = 1 - skillAmounts[monstersLost];
+                            skillTypes[monstersLost] = NOTHING; // Disable ability
+                            break;
         case SKILLDAMPEN:   turnData.skillDampen = 1 - skillAmounts[monstersLost];
                             break;
         case DODGE:         turnData.immunity5K = true ;
@@ -232,6 +241,8 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
             case BUFF:      if (skillTargets[i] == ALL || skillTargets[i] == lineup[monstersLost]->element) {
                                 turnData.buffDamage += (int) skillAmounts[i];
                             } break;
+            case BUFFUP:    turnData.buffDamage += (int) (skillAmounts[i] * floor((turncounter + 1) / 4));
+                            break;
             case CHAMPION:  if (skillTargets[i] == ALL || skillTargets[i] == lineup[monstersLost]->element) {
                                 turnData.buffDamage += (int) skillAmounts[i];
                                 turnData.protection += (int) skillAmounts[i];
@@ -285,6 +296,13 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
                             }
                             if ((turncounter + 1) % cooldown == 1 && turncounter != 0)
                                 furyArray[i] = round((double)furyArray[i] * skillAmounts[i]);
+                            break;
+            case MORALE:    if (turncounter % 2 == 1){
+                                int statBuff = skillAmounts[i] * (i - monstersLost);
+                                remainingHealths[i] += statBuff;
+                                maxHealths[i] += statBuff;
+                                furyArray[i] += statBuff;
+                        }
                             break;
         }
     }
@@ -406,8 +424,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case VOID:      if (lineup[monstersLost]->element != turnData.opposingElement)
                             turnData.multiplier *= skillAmounts[monstersLost] + 1;
                         break;
-        case SADISM:    turnData.sadism += round(skillAmounts[monstersLost] * turnData.baseDamage);
-                        turnData.aoeDamage += round(skillAmounts[monstersLost] * turnData.baseDamage);
+        case SADISM:    turnData.sadism += round(skillAmounts[monstersLost] * (turnData.baseDamage - evolveTotal));
+                        turnData.aoeDamage += round(skillAmounts[monstersLost] * (turnData.baseDamage - evolveTotal));
                         break;
         case COURAGE:   turnData.buffDamage *= skillAmounts[monstersLost];
                         break;
@@ -445,6 +463,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case FURY:      turnData.baseDamage = furyArray[monstersLost];
                         break;
         case BLOODLUST: turnData.bloodlust += skillAmounts[monstersLost];
+                        break;
+        case MORALE:    turnData.baseDamage = furyArray[monstersLost];
                         break;
         default:        break;
 
@@ -820,6 +840,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         //Gladiator buff
         if(turnData.bloodlust && remainingHealths[monstersLost] > 0){
             evolveTotal += turnData.bloodlust;
+            furyArray[monstersLost] += turnData.bloodlust;
             maxHealths[monstersLost] += turnData.bloodlust;
             remainingHealths[monstersLost] += turnData.bloodlust;
         }
@@ -1114,6 +1135,44 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         left.lastFightData.leftAoeDamage = 0;
         left.lastFightData.rightAoeDamage = 0;
         turncounter = 0;
+
+        // Apply Xmas common AOE
+        if (leftCondition.aoeLow || rightCondition.aoeLow) {
+            int target;
+            if (leftCondition.aoeLow){
+                target = 0;
+                for (int i = 1; i < rightCondition.armySize; ++i){
+                    if(rightCondition.remainingHealths[i] < rightCondition.remainingHealths[target])
+                        target = i;
+                }
+                rightCondition.remainingHealths[target] -= leftCondition.aoeLow;
+            }
+            if (rightCondition.aoeLow){
+                target = 0;
+                for (int i = 1; i < leftCondition.armySize; ++i){
+                    if(leftCondition.remainingHealths[i] < leftCondition.remainingHealths[target])
+                        target = i;
+                }
+                leftCondition.remainingHealths[target] -= rightCondition.aoeLow;
+            }
+        }
+
+        // Apply Xmas rare AOE
+        if (leftCondition.flatLep || rightCondition.flatLep) {
+            TurnData turnFlatLep;
+            if (leftCondition.flatLep && leftCondition.armySize < rightCondition.armySize) {
+                leftCondition.flatLep = round(rightCondition.dampZero * leftCondition.flatLep * (rightCondition.armySize - leftCondition.armySize));
+                left.lastFightData.rightAoeDamage += leftCondition.flatLep;
+                turnFlatLep.aoeDamage = leftCondition.flatLep;
+                rightCondition.resolveDamage(turnFlatLep);
+            }
+            if (rightCondition.flatLep && rightCondition.armySize < leftCondition.armySize) {
+                rightCondition.flatLep = round(leftCondition.dampZero * rightCondition.flatLep * (leftCondition.armySize - rightCondition.armySize));
+                left.lastFightData.leftAoeDamage += rightCondition.flatLep;
+                turnFlatLep.aoeDamage = rightCondition.flatLep;
+                leftCondition.resolveDamage(turnFlatLep);
+            }
+        }
 
         // Apply Hawking's AOE
         if (leftCondition.aoeZero || rightCondition.aoeZero) {

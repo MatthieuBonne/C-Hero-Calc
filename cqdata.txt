@@ -379,6 +379,11 @@
 64 20 adrian FIRE RARE AOELIN FIRE FIRE 5 32 14 28 2
 66 66 emily WATER LEGENDARY WBIDEAL_L ALL WATER 0.1112 258 178 104 0.0202
 200 100 adam EARTH ASCENDED AOEHP EARTH EARTH 0.04 321 93 134 0.01
+32 48 yisus EARTH RARE FLATLEP_L EARTH EARTH 3 38 18 34 1
+32 40 galla FIRE COMMON AOELOW_L FIRE FIRE 1 30 22 22 0.5
+58 58 yetithepostman WATER RARE BUFFUP_L WATER WATER 4 40 40 40 1
+74 74 hans EARTH LEGENDARY NOTHING EARTH EARTH 3 200 200 180 2
+5 250 mechamary AIR ASCENDED NOTHING AIR AIR 0.08 12 1080 30 0.01
 * ALIASES
 lady ladyoftwilight
 lot ladyoftwilight
@@ -458,6 +463,9 @@ achoco achocoknight
 dchoco achocoknight
 darkchoco achocoknight
 bride emily
+yeti yetithepostman
+mary mechamary
+jesus yisus
 loc lordofchaos
 fboss lordofchaos
 moak motherofallkodamas
