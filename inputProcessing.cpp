@@ -278,7 +278,7 @@ vector<MonsterIndex> IOManager::takeHerolevelInput() {
         input = this->getResistantInput("Enter Hero " + to_string(heroes.size()+1) + ": ", rawFirst);
         if (input[0] == TOKENS.EMPTY) {
             cancelCounter++;
-        } else {
+        } else if (input[0] != TOKENS.HEROES_FINISHED) {
             cancelCounter = 0;
             try {
                 heroData = parseHeroString(input[0]);
@@ -411,6 +411,13 @@ Army makeArmyFromStrings(vector<string> stringMonsters) {
     return army;
 }
 
+void parseHeroStringFail(string heroString) {
+    if (!heroString.empty()) {
+        interface.outputMessage("Cannot parse hero/monster: " + heroString, NOTIFICATION_OUTPUT);
+    }
+    throw HERO_PARSE;
+}
+
 // Parse hero input from a string into its name and level
 tuple<Monster, int, int> parseHeroString(string heroString) {
     string name = heroString.substr(0, heroString.find(HEROLEVEL_SEPARATOR));
@@ -421,7 +428,7 @@ tuple<Monster, int, int> parseHeroString(string heroString) {
             promo = config.heroDefaultPromo;
             level = config.heroDefaultLevel;
         } else {
-            throw HERO_PARSE;
+            parseHeroStringFail(heroString);
         }
     } else {
         if (heroString.find(HEROPROMO_SEPARATOR) == string::npos) {
@@ -429,19 +436,19 @@ tuple<Monster, int, int> parseHeroString(string heroString) {
             try {
                 level = (int) parseInt(heroString.substr(heroString.find(HEROLEVEL_SEPARATOR)+1));
             } catch (const exception & e) {
-                throw HERO_PARSE;
+                parseHeroStringFail(heroString);
             }
         }
         else {
             try {
                 level = (int) parseInt(heroString.substr(heroString.find(HEROLEVEL_SEPARATOR)+1, heroString.find(HEROPROMO_SEPARATOR)));
             } catch (const exception & e) {
-                throw HERO_PARSE;
+                parseHeroStringFail(heroString);
             }
             try {
                 promo = (int) parseInt(heroString.substr(heroString.find(HEROPROMO_SEPARATOR)+1));
             } catch (const exception & e) {
-                throw HERO_PARSE;
+                parseHeroStringFail(heroString);
             }
         }
     }
@@ -457,7 +464,9 @@ tuple<Monster, int, int> parseHeroString(string heroString) {
             return tuple<Monster, int, int>(baseHeroes[i], level, promo);
         }
     }
-    throw HERO_PARSE;
+
+    parseHeroStringFail(heroString);
+    throw logic_error("unreachable");
 }
 
 // Create valid string to be used ingame to view the battle between armies friendly and hostile
