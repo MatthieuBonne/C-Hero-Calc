@@ -179,8 +179,14 @@ void IOManager::getConfiguration() {
                         config.ignoreExecutionHalt = parseBool(tokens.at(1));
                     } else if (tokens[0] == TOKENS.INDIVIDUAL_BATTLES) {
                         config.individualBattles = parseBool(tokens.at(1));
+                    } else if (tokens[0] == TOKENS.SKIP_EXPAND) {
+                        config.skipExpand = parseBool(tokens.at(1));
                     } else if (tokens[0] == TOKENS.SKIP_CONTINUE) {
                         config.skipContinue = parseBool(tokens.at(1));
+                    } else if (tokens[0] == TOKENS.HERO_DEFAULT_LEVEL) {
+                        config.heroDefaultLevel = parseInt(tokens.at(1));
+                    } else if (tokens[0] == TOKENS.HERO_DEFAULT_PROMO) {
+                        config.heroDefaultPromo = parseInt(tokens.at(1));
                     } else if (tokens[0] != TOKENS.EMPTY) {
                         interface.outputMessage("Unrecognized option '" + tokens[0] + "'", NOTIFICATION_OUTPUT);
                     }
@@ -243,7 +249,7 @@ vector<string> IOManager::getResistantInput(string query, QueryType queryType) {
 // Ask the user a question that they can answer via command line
 bool IOManager::askYesNoQuestion(string questionMessage, OutputLevel urgency, string defaultAnswer) {
     string inputString;
-    if (!shouldOutput(urgency)) {
+    if (config.ignoreQuestions || !shouldOutput(urgency)) {
         inputString = defaultAnswer;
     } else {
         inputString = this->getResistantInput(questionMessage + " (" + TOKENS.YES + "/" + TOKENS.NO + "): ", question)[0];
@@ -385,8 +391,8 @@ Army makeArmyFromStrings(vector<string> stringMonsters) {
     Army army;
     tuple<Monster, int, int> heroData;
 
-    for(size_t i = 0; i < stringMonsters.size(); i++) {
-        if(stringMonsters[i].find(HEROLEVEL_SEPARATOR) != stringMonsters[i].npos) {
+    for (size_t i = 0; i < stringMonsters.size(); i++) {
+        if (stringMonsters[i].find(HEROLEVEL_SEPARATOR) != string::npos) {
             heroData = parseHeroString(stringMonsters[i]);
             army.add(addLeveledHero(std::get<0>(heroData), std::get<1>(heroData), std::get<2>(heroData)));
         } else {
@@ -410,12 +416,15 @@ tuple<Monster, int, int> parseHeroString(string heroString) {
     string name = heroString.substr(0, heroString.find(HEROLEVEL_SEPARATOR));
     int level;
     int promo;
-    // default to lv 1000 if no level specified
-    if (heroString.find(HEROLEVEL_SEPARATOR) == -1) {
-        promo = 0;
-        level = 1000;
+    if (heroString.find(HEROLEVEL_SEPARATOR) == string::npos) {
+        if (config.heroDefaultLevel > 0 && config.heroDefaultPromo >= 0) {
+            promo = config.heroDefaultPromo;
+            level = config.heroDefaultLevel;
+        } else {
+            throw HERO_PARSE;
+        }
     } else {
-        if (heroString.find(HEROPROMO_SEPARATOR) == -1){
+        if (heroString.find(HEROPROMO_SEPARATOR) == string::npos) {
             promo = 0;
             try {
                 level = (int) parseInt(heroString.substr(heroString.find(HEROLEVEL_SEPARATOR)+1));

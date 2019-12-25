@@ -67,7 +67,10 @@ struct ParserTokens {
     const std::string STOP_FIRST_SOLUTION = "stop_first_solution";
     const std::string NUM_THREADS =         "num_threads";
     const std::string INDIVIDUAL_BATTLES =  "individual_battles";
-    const std::string SKIP_CONTINUE = "skip_continue";
+    const std::string SKIP_EXPAND =         "skip_expand";
+    const std::string SKIP_CONTINUE =       "skip_continue";
+    const std::string HERO_DEFAULT_LEVEL =  "hero_default_level";
+    const std::string HERO_DEFAULT_PROMO =  "hero_default_promo";
 
     const std::string T_SOLUTION_OUTPUT =   "solution";
     const std::string T_BASIC_OUTPUT =      "basic";
@@ -79,11 +82,14 @@ struct Configuration {
     bool showReplayStrings = true;
     bool showQueries = true;
     bool ignoreEmptyLines = false;
-    bool ignoreQuestions = false; //
+    bool ignoreQuestions = false; // true means all questions are auto-answered with the default answer
     bool ignoreExecutionHalt = false;
-    bool skipContinue = false;
+    bool skipExpand = false; // skip asking whether to expand lineups to calculate solution
+    bool skipContinue = false; // skip asking whether to calculate another lineup
     bool JSONOutput = false; //
     int firstDominance = ARMY_MAX_BRUTEFORCEABLE_SIZE;
+    int heroDefaultLevel = -1; // default level for a hero that has no level specified (<=0 = fail)
+    int heroDefaultPromo = -1; // default promo for a hero that has no level specified (<0 = fail)
     OutputLevel outputLevel = BASIC_OUTPUT;
     bool autoAdjustOutputLevel = true;
     bool individualBattles = false; //
