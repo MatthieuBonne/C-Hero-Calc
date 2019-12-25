@@ -187,6 +187,8 @@ void IOManager::getConfiguration() {
                         config.heroDefaultLevel = parseInt(tokens.at(1));
                     } else if (tokens[0] == TOKENS.HERO_DEFAULT_PROMO) {
                         config.heroDefaultPromo = parseInt(tokens.at(1));
+                    } else if (tokens[0] == TOKENS.HERO_PREFIX_COMPLETE) {
+                        config.heroPrefixComplete = parseBool(tokens.at(1));
                     } else if (tokens[0] != TOKENS.EMPTY) {
                         interface.outputMessage("Unrecognized option '" + tokens[0] + "'", NOTIFICATION_OUTPUT);
                     }
@@ -449,6 +451,46 @@ tuple<Monster, int, int> parseHeroString(string heroString) {
                 promo = (int) parseInt(heroString.substr(heroString.find(HEROPROMO_SEPARATOR)+1));
             } catch (const exception & e) {
                 parseHeroStringFail(heroString);
+            }
+        }
+    }
+
+    if (config.heroPrefixComplete) {
+        string expanded_name = "";
+        for (auto x = heroAliases.begin(); x != heroAliases.end(); ++x) {
+            if (name.size() <= x->first.size() && mismatch(name.begin(), name.end(), x->first.begin()).first == name.end()) {
+                if (expanded_name.empty()) {
+                    expanded_name = x->second;
+                } else if (x->second != expanded_name) {
+                    expanded_name = "_FAIL";
+                    break;
+                }
+            }
+        }
+
+        if (expanded_name != "_FAIL") {
+            size_t hero_index = -1;
+            if (!expanded_name.empty()) {
+                for (hero_index = 0; hero_index < baseHeroes.size(); hero_index++) {
+                    if (baseHeroes[hero_index].baseName == expanded_name) {
+                        break;
+                    }
+                }
+            }
+
+            for (size_t i = 0; i < baseHeroes.size(); i++) {
+                if (name.size() <= baseHeroes[i].baseName.size() && mismatch(name.begin(), name.end(), baseHeroes[i].baseName.begin()).first == name.end()) {
+                    if (hero_index == (size_t)-1) {
+                        hero_index = i;
+                    } else {
+                        hero_index = -1;
+                        break;
+                    }
+                }
+            }
+
+            if (hero_index != (size_t)-1) {
+                return tuple<Monster, int, int>(baseHeroes[hero_index], level, promo);
             }
         }
     }
