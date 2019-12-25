@@ -393,7 +393,12 @@ Army makeArmyFromStrings(vector<string> stringMonsters) {
             try {
                 army.add(monsterMap.at(stringMonsters[i]));
             } catch (const exception & e) {
-                throw MONSTER_PARSE;
+                try {
+                    heroData = parseHeroString(stringMonsters[i]);
+                    army.add(addLeveledHero(std::get<0>(heroData), std::get<1>(heroData), std::get<2>(heroData)));
+                } catch (const exception & e) {
+                    throw MONSTER_PARSE;
+                }
             }
         }
     }
@@ -405,24 +410,30 @@ tuple<Monster, int, int> parseHeroString(string heroString) {
     string name = heroString.substr(0, heroString.find(HEROLEVEL_SEPARATOR));
     int level;
     int promo;
-    if (heroString.find(HEROPROMO_SEPARATOR) == -1){
+    // default to lv 1000 if no level specified
+    if (heroString.find(HEROLEVEL_SEPARATOR) == -1) {
         promo = 0;
-        try {
-            level = (int) parseInt(heroString.substr(heroString.find(HEROLEVEL_SEPARATOR)+1));
-        } catch (const exception & e) {
-            throw HERO_PARSE;
+        level = 1000;
+    } else {
+        if (heroString.find(HEROPROMO_SEPARATOR) == -1){
+            promo = 0;
+            try {
+                level = (int) parseInt(heroString.substr(heroString.find(HEROLEVEL_SEPARATOR)+1));
+            } catch (const exception & e) {
+                throw HERO_PARSE;
+            }
         }
-    }
-    else {
-        try {
-            level = (int) parseInt(heroString.substr(heroString.find(HEROLEVEL_SEPARATOR)+1, heroString.find(HEROPROMO_SEPARATOR)));
-        } catch (const exception & e) {
-            throw HERO_PARSE;
-        }
-        try {
-            promo = (int) parseInt(heroString.substr(heroString.find(HEROPROMO_SEPARATOR)+1));
-        } catch (const exception & e) {
-            throw HERO_PARSE;
+        else {
+            try {
+                level = (int) parseInt(heroString.substr(heroString.find(HEROLEVEL_SEPARATOR)+1, heroString.find(HEROPROMO_SEPARATOR)));
+            } catch (const exception & e) {
+                throw HERO_PARSE;
+            }
+            try {
+                promo = (int) parseInt(heroString.substr(heroString.find(HEROPROMO_SEPARATOR)+1));
+            } catch (const exception & e) {
+                throw HERO_PARSE;
+            }
         }
     }
 
