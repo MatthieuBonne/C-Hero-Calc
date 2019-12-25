@@ -71,6 +71,7 @@ struct ParserTokens {
     const std::string SKIP_CONTINUE =        "skip_continue";
     const std::string HERO_DEFAULT_LEVEL =   "hero_default_level";
     const std::string HERO_DEFAULT_PROMO =   "hero_default_promo";
+    const std::string MONSTER_DEFAULT_TIER = "monster_default_tier";
     const std::string HERO_PREFIX_COMPLETE = "hero_prefix_complete";
 
     const std::string T_SOLUTION_OUTPUT =    "solution";
@@ -91,6 +92,7 @@ struct Configuration {
     int firstDominance = ARMY_MAX_BRUTEFORCEABLE_SIZE;
     int heroDefaultLevel = -1; // default level for a hero that has no level specified (<=0 = fail)
     int heroDefaultPromo = -1; // default promo for a hero that has no level specified (<0 = fail)
+    int monsterDefaultTier = -1; // default tier for a monster with no tier ("e"; <=0 = fail)
     bool heroPrefixComplete = false; // use unique prefix expansion to accept incomplete hero names
     OutputLevel outputLevel = BASIC_OUTPUT;
     bool autoAdjustOutputLevel = true;

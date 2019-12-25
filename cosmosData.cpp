@@ -1213,6 +1213,18 @@ void initGameData() {
         monsterReference.push_back(monsterBaseList[i]);
         monsterMap.insert(std::pair<std::string, MonsterIndex>(monsterBaseList[i].name, i));
     }
+
+    // requires iomanager.getConfig to be called first in main()
+    if (config.monsterDefaultTier > 0) {
+        for (auto elem : {"a", "e", "f", "w"}) {
+            std::string name = elem + std::to_string(config.monsterDefaultTier);
+            for (size_t i = 0; i < monsterBaseList.size(); i++) {
+                if (monsterBaseList[i].name == name) {
+                    monsterMap.insert(std::pair<std::string, MonsterIndex>(elem, i));
+                }
+            }
+        }
+    }
 }
 
 // Filter monsters according to user input. Fills the available-references

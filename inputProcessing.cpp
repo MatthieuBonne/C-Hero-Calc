@@ -187,6 +187,8 @@ void IOManager::getConfiguration() {
                         config.heroDefaultLevel = parseInt(tokens.at(1));
                     } else if (tokens[0] == TOKENS.HERO_DEFAULT_PROMO) {
                         config.heroDefaultPromo = parseInt(tokens.at(1));
+                    } else if (tokens[0] == TOKENS.MONSTER_DEFAULT_TIER) {
+                        config.monsterDefaultTier = parseInt(tokens.at(1));
                     } else if (tokens[0] == TOKENS.HERO_PREFIX_COMPLETE) {
                         config.heroPrefixComplete = parseBool(tokens.at(1));
                     } else if (tokens[0] != TOKENS.EMPTY) {
