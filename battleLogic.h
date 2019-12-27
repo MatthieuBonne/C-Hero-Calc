@@ -217,8 +217,8 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
         default:            break;
         case RESISTANCE:    turnData.resistance = 1 - skillAmounts[monstersLost];//Needs to be here so it happens before Neil's absorb.
                             break;
-        case TURNDAMP:      turnData.resistance = 1 - skillAmounts[monstersLost];
-                            skillTypes[monstersLost] = NOTHING; // Disable ability
+        case TURNDAMP:      if (!turncounter)
+                            turnData.resistance = 1 - skillAmounts[monstersLost];
                             break;
         case SKILLDAMPEN:   turnData.skillDampen = 1 - skillAmounts[monstersLost];
                             break;

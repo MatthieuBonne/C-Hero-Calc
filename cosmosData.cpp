@@ -148,13 +148,13 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
                             this->skill.amount = 9 * floor((double) aLevel / 9);
                             break;
         case FLATLEP_L:     this->skill.skillType = FLATLEP;
-                            this->skill.amount = this->skill.amount * floor((double) aLevel / 9);
+                            this->skill.amount = this->skill.amount * floor(aLevel / 9);
                             break;
         case MORALE_L:      this->skill.skillType = MORALE;
-                            this->skill.amount = this->skill.amount * floor((double) aLevel / 9);
+                            this->skill.amount = this->skill.amount * floor(aLevel / 9);
                             break;
         case TURNDAMP_L:    this->skill.skillType = TURNDAMP;
-                            this->skill.amount = this->skill.amount * floor((double) aLevel / 9);
+                            this->skill.amount = this->skill.amount * floor(aLevel / 9);
                             break;
         case EXECUTE_CUBE:  this->skill.skillType = FLATEXEC;
                             this->skill.amount = pow(this->skill.amount, 3);
@@ -837,8 +837,8 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 32, 48, "yisus",              EARTH, RARE,      {FLATLEP_L,      EARTH,EARTH, 3}, 38, 18, 34, 1));
     baseHeroes.push_back(Monster( 32, 40, "galla",              FIRE,  COMMON,    {AOELOW_L,       FIRE, FIRE,  1}, 30, 22, 22, 0.5));
     baseHeroes.push_back(Monster( 58, 58, "yetithepostman",     WATER, RARE,      {BUFFUP_L,       WATER,WATER, 4}, 40, 40, 40, 1));
-    baseHeroes.push_back(Monster( 74, 74, "hans",               EARTH, LEGENDARY, {NOTHING,        EARTH,EARTH, 3}, 200, 200, 180, 2));
-    baseHeroes.push_back(Monster(  5,250, "mechamary",          AIR,   ASCENDED,  {NOTHING,        AIR,  AIR,   0.08}, 12, 1080, 30, 0.01));
+    baseHeroes.push_back(Monster( 74, 74, "hans",               EARTH, LEGENDARY, {MORALE_L,        EARTH,EARTH, 3}, 200, 200, 180, 2));
+    baseHeroes.push_back(Monster(  5,250, "mechamary",          AIR,   ASCENDED,  {TURNDAMP_L,        AIR,  AIR,   0.08}, 12, 1080, 30, 0.01));
 }
 
 void initIndices() {
