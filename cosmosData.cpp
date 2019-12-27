@@ -12,17 +12,17 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
     skill(aSkill),
     level(aLevel),
     promo(aPromo),
-    name(aName),
     promoOne(promoOne),
     promoTwo(promoTwo),
     promoFour(promoFour),
-    promoFive(promoFive)
+    promoFive(promoFive),
+    name(aName)
 {
     if (this->rarity != NO_HERO) {
         if (this->rarity != WORLDBOSS) {
             int hpBonus = 0;
             int atkBonus = 0;
-            int skillBonus = 0;
+            // int skillBonus = 0;
             int pointBonus = 0;
             double points = this->level-1;
             switch (promo){
@@ -1212,6 +1212,18 @@ void initGameData() {
     for (size_t i = 0; i < monsterBaseList.size(); i++) {
         monsterReference.push_back(monsterBaseList[i]);
         monsterMap.insert(std::pair<std::string, MonsterIndex>(monsterBaseList[i].name, i));
+    }
+
+    // requires iomanager.getConfig to be called first in main()
+    if (config.monsterDefaultTier > 0) {
+        for (auto elem : {"a", "e", "f", "w"}) {
+            std::string name = elem + std::to_string(config.monsterDefaultTier);
+            for (size_t i = 0; i < monsterBaseList.size(); i++) {
+                if (monsterBaseList[i].name == name) {
+                    monsterMap.insert(std::pair<std::string, MonsterIndex>(elem, i));
+                }
+            }
+        }
     }
 }
 

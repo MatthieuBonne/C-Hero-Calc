@@ -283,7 +283,7 @@ struct FightResult {
     DamageType frontHealth;     // how much health remaining to the current leading mob of the winning side
     int16_t leftAoeDamage;      // how much aoe damage left took
     int16_t rightAoeDamage;     // how much aoe damage right took
-    int8_t monstersLost;        // how many mobs lost on the winning side (the other side lost all)
+    uint8_t monstersLost;       // how many mobs lost on the winning side (the other side lost all)
     int8_t turncounter;         // how many turns have passed since the battle started
     int64_t berserk;            // berserk attack stat, if there is a berserker in the front
     bool valid;                 // If the result is valid

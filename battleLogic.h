@@ -3,6 +3,7 @@
 
 #include <vector>
 #include <cmath>
+#include <stdexcept>
 
 #include "cosmosData.h"
 
@@ -280,7 +281,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
             case PERCBUFF:  turnData.multiplier += skillAmounts[i];
                             break;
             case FURY:      int cooldown;
-                            switch(lineup[i]->rarity){
+                            switch (lineup[i]->rarity) {
                                 case COMMON:
                                     cooldown = 5;
                                     break;
@@ -293,6 +294,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
                                 case ASCENDED:
                                     cooldown = 8;
                                     break;
+                                default: throw std::logic_error("hero should not have FURY skill");
                             }
                             if ((turncounter + 1) % cooldown == 1 && turncounter != 0)
                                 furyArray[i] = round((double)furyArray[i] * skillAmounts[i]);
@@ -348,7 +350,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.tetrisSeed = 0;
     turnData.bloodlust = 0;
 
-    double friendsDamage = 0;
+    // double friendsDamage = 0;
 
     switch (skillTypes[monstersLost]) {
         case FRIENDS:   for (int i = monstersLost + 1; i < armySize; i++) {
@@ -705,8 +707,8 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     if (opposing.aoeReflect)
         aoeConst += std::max((int)round(turnData.baseDamage * opposing.aoeReflect),1);
 
-    if (opposing.aoeLast)
-        for (int i = armySize - 1; i >= frontliner; i--)
+    if (opposing.aoeLast) {
+        for (int i = armySize - 1; i >= frontliner; i--) {
             if (remainingHealths[i] > 0 || worldboss){ //Check for last alive unit
                 if (skillTypes[i] == SKILLDAMPEN)
                     remainingHealths[i] -= round(opposing.aoeLast * (1 - skillAmounts[i]));
@@ -714,12 +716,15 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                     remainingHealths[i] -= opposing.aoeLast;
                 break;
             }
+        }
+    }
 
-    if (opposing.aoeFirst)
+    if (opposing.aoeFirst) {
         if (skillTypes[frontliner] == SKILLDAMPEN)
             remainingHealths[frontliner] -= round(opposing.aoeFirst * (1 - skillAmounts[frontliner]));
         else
             remainingHealths[frontliner] -= opposing.aoeFirst;
+    }
 
     // Handle aoe Damage for all combatants
     for (int i = frontliner; i < armySize; i++) {
@@ -1013,7 +1018,7 @@ inline int ArmyCondition::getLuxTarget(const ArmyCondition & opposingCondition, 
   std::cout << std::endl;
 */
   // Shuffle
-  for(int i = alive_count - 1; i > 0; i--) {
+  for (int i = alive_count - 1; i > 0; i--) {
     // arr[i] = arr.splice(mapa[size - 1 - i], 1, arr[i])[0]
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/splice
     // array.splice(start[, deleteCount[, item1[, item2[, ...]]]])
@@ -1037,7 +1042,7 @@ inline int ArmyCondition::getLuxTarget(const ArmyCondition & opposingCondition, 
   }
 
   // now figure out which target to return
-  int return_value;
+  int return_value = -1;
   for(int i = 0; i < alive_count; i++) {
     // std::cout << "Index " << i << " has value " << arr[i] << std::endl;
     if(arr[i] > 0) {
@@ -1047,15 +1052,15 @@ inline int ArmyCondition::getLuxTarget(const ArmyCondition & opposingCondition, 
   }
 int actual_target = opposingCondition.monstersLost;
 //Moving the function that selects the alive enemy here, as it is needed for elemental damage and neil absorb check.
-    if(return_value > 0) {
+    if (return_value > 0) {
         int alive = 0;
-        for(int i = opposingCondition.monstersLost + 1; i < opposingCondition.armySize; i++) {
+        for (int i = opposingCondition.monstersLost + 1; i < opposingCondition.armySize; i++) {
             // std::cout << "I is " << i << std::endl;
             if(opposingCondition.remainingHealths[i] > 0) {
                 alive++;
                 // std::cout << "Alive incremented to " << alive << std::endl;
             }
-            if(alive >= return_value) {
+            if (alive >= return_value) {
                 actual_target = i;
                 // std::cout << "Setting actual target to " << i << std::endl;
                 break;

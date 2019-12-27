@@ -47,31 +47,36 @@ enum InputException {
 };
 
 struct ParserTokens {
-    const std::string START_CONFIG =        "config";
-    const std::string START_ENTITIES =      "entities";
-    const std::string HEROES_FINISHED =     "done";
-    const std::string NEXT_FILE =           "next_file";
-    const std::string TRUE =                "true";
-    const std::string FALSE =               "false";
-    const std::string YES =                 "y";
-    const std::string NO =                  "n";
-    const std::string EMPTY =               "";
+    const std::string START_CONFIG =         "config";
+    const std::string START_ENTITIES =       "entities";
+    const std::string HEROES_FINISHED =      "done";
+    const std::string NEXT_FILE =            "next_file";
+    const std::string TRUE =                 "true";
+    const std::string FALSE =                "false";
+    const std::string YES =                  "y";
+    const std::string NO =                   "n";
+    const std::string EMPTY =                "";
 
-    const std::string SHOW_QUERIES =        "show_queries";
-    const std::string FIRST_DOMINANCE =     "first_dominance";
-    const std::string OUTPUT_LEVEL =        "output_level";
-    const std::string AUTO_ADJUST_OUTPUT =  "auto_adjust_output";
-    const std::string SHOW_REPLAY_STRINGS = "show_replays";
-    const std::string IGNORE_EMPTY =        "ignore_empty_lines";
-    const std::string IGNORE_EXEC_HALT =    "ignore_exec_halt";
-    const std::string STOP_FIRST_SOLUTION = "stop_first_solution";
-    const std::string NUM_THREADS =         "num_threads";
-    const std::string INDIVIDUAL_BATTLES =  "individual_battles";
-    const std::string SKIP_CONTINUE = "skip_continue";
+    const std::string SHOW_QUERIES =         "show_queries";
+    const std::string FIRST_DOMINANCE =      "first_dominance";
+    const std::string OUTPUT_LEVEL =         "output_level";
+    const std::string AUTO_ADJUST_OUTPUT =   "auto_adjust_output";
+    const std::string SHOW_REPLAY_STRINGS =  "show_replays";
+    const std::string IGNORE_EMPTY =         "ignore_empty_lines";
+    const std::string IGNORE_EXEC_HALT =     "ignore_exec_halt";
+    const std::string STOP_FIRST_SOLUTION =  "stop_first_solution";
+    const std::string NUM_THREADS =          "num_threads";
+    const std::string INDIVIDUAL_BATTLES =   "individual_battles";
+    const std::string SKIP_EXPAND =          "skip_expand";
+    const std::string SKIP_CONTINUE =        "skip_continue";
+    const std::string HERO_DEFAULT_LEVEL =   "hero_default_level";
+    const std::string HERO_DEFAULT_PROMO =   "hero_default_promo";
+    const std::string MONSTER_DEFAULT_TIER = "monster_default_tier";
+    const std::string HERO_PREFIX_COMPLETE = "hero_prefix_complete";
 
-    const std::string T_SOLUTION_OUTPUT =   "solution";
-    const std::string T_BASIC_OUTPUT =      "basic";
-    const std::string T_DETAILED_OUPUT =    "detailed";
+    const std::string T_SOLUTION_OUTPUT =    "solution";
+    const std::string T_BASIC_OUTPUT =       "basic";
+    const std::string T_DETAILED_OUPUT =     "detailed";
 }; static const ParserTokens TOKENS;
 
 struct Configuration {
@@ -79,11 +84,16 @@ struct Configuration {
     bool showReplayStrings = true;
     bool showQueries = true;
     bool ignoreEmptyLines = false;
-    bool ignoreQuestions = false; //
+    bool ignoreQuestions = false; // true means all questions are auto-answered with the default answer
     bool ignoreExecutionHalt = false;
-    bool skipContinue = false;
+    bool skipExpand = false; // skip asking whether to expand lineups to calculate solution
+    bool skipContinue = false; // skip asking whether to calculate another lineup
     bool JSONOutput = false; //
     int firstDominance = ARMY_MAX_BRUTEFORCEABLE_SIZE;
+    int heroDefaultLevel = -1; // default level for a hero that has no level specified (<=0 = fail)
+    int heroDefaultPromo = -1; // default promo for a hero that has no level specified (<0 = fail)
+    int monsterDefaultTier = -1; // default tier for a monster with no tier ("e"; <=0 = fail)
+    bool heroPrefixComplete = false; // use unique prefix expansion to accept incomplete hero names
     OutputLevel outputLevel = BASIC_OUTPUT;
     bool autoAdjustOutputLevel = true;
     bool individualBattles = false; //

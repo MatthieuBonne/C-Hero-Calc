@@ -440,7 +440,7 @@ void solveInstance(Instance & instance, size_t firstDominance) {
                 }
                 instance.calculationTime = time(NULL) - startTime;
                 if (!instance.hasWorldBoss && instance.bestSolution.monsterAmount > 0 && (config.stopFirstSolution || instance.bestSolution.followerCost == 0)) break;
-                if (!iomanager.askYesNoQuestion("Continue calculation?", DETAILED_OUTPUT, TOKENS.YES)) {return;}
+                if (!config.skipExpand && !iomanager.askYesNoQuestion("Continue calculation?", DETAILED_OUTPUT, TOKENS.YES)) {return;}
                 startTime = time(NULL);
                 interface.outputMessage("\nPreparing to work on loop for armies of size " + to_string(armySize+1), DETAILED_OUTPUT);
                 interface.outputMessage("Currently considering " + to_string(pureMonsterArmies.size()) + " normal and " + to_string(heroMonsterArmies.size()) + " hero armies.", DETAILED_OUTPUT);
@@ -663,7 +663,7 @@ int main(int argc, char** argv) {
             solveInstance(instances[i], config.firstDominance);
             outputSolution(instances[i]);
         }
-        if(config.skipContinue) {
+        if (config.skipContinue) {
           userWantsContinue = true;
         } else {
           userWantsContinue = iomanager.askYesNoQuestion("Do you want to calculate more lineups?", NOTIFICATION_OUTPUT, TOKENS.NO);
