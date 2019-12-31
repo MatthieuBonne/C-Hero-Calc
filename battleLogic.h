@@ -47,6 +47,7 @@ struct TurnData {
     double valkyrieDamage = 0;
     double tetrisDamage = 0;
     double absorbMult = 0;
+    int absorbID = -1;
     double absorbDamage = 0;
     int explodeDamage = 0;
     bool trampleTriggered = false;
@@ -201,6 +202,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
     turnData.healing = 0;
     turnData.dampFactor = 1;
     turnData.absorbMult = 0;
+    turnData.absorbID = -1;
     turnData.absorbDamage = 0;
     turnData.resistance = 1;
     turnData.skillDampen = 1;
@@ -266,7 +268,10 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
                             break;
             case DAMPEN:    turnData.dampFactor *= skillAmounts[i];
                             break;
-            case ABSORB:    if (i != monstersLost) turnData.absorbMult += skillAmounts[i];
+            case ABSORB:    if (i != monstersLost) {
+                                turnData.absorbMult = skillAmounts[i];
+                                turnData.absorbID = i;
+                            }
                             break;
             case SACRIFICE: turnData.sacHeal += (int) floor(skillAmounts[i] + 0.0001);
                             turnData.aoeDamage += (int) floor(skillAmounts[i] * 1.5 + 0.0001);//Add 0.0001 to fix discrepancy between js and c++ when c++ ends up with 1.9999...
@@ -577,6 +582,12 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
       // std::cout << "LUX DID NOT HIT FRONTLINER" << std::endl;
     }
 
+    // Neil takes damage from absorb before Ricochet and fairy buffs take place, needs a check for being alive after that
+    if (turnData.absorbID != -1 && counter_eligible) {
+        remainingHealths[turnData.absorbID] -= round(opposing.absorbDamage);
+        turnData.aliveAtTurnStart[turnData.absorbID] = remainingHealths[turnData.absorbID] > 0;
+    }
+
 //One unit behind by S4 units + Raze
     if (opposing.trampleTriggered) {
         for (int i = frontliner + 1; i < armySize; i++)
@@ -731,11 +742,6 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
       int aliveAtBeginning = 0;
       if(remainingHealths[i] > 0 || i == frontliner) {
         aliveAtBeginning = 1;
-      }
-      // handle absorbed damage
-      if (skillTypes[i] == ABSORB && i > frontliner) {
-        // remainingHealths[i] -= castCeil(opposing.absorbDamage);
-        remainingHealths[i] -= round(opposing.absorbDamage);
       }
       if (skillTypes[i] == SKILLDAMPEN)
         remainingHealths[i] -= round(opposing.aoeDamage * (1 - skillAmounts[i]));
