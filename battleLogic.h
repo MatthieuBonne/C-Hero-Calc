@@ -63,6 +63,7 @@ struct TurnData {
     double selfHeal = 0;
     double execute = 0;
     bool immunity5K = false ;
+    bool turnDamp = false ;
 };
 
 // Keep track of an army's condition during a fight and save some convenience data
@@ -214,12 +215,13 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
     turnData.healFirst = 0;
     turnData.multiplier = 1;
     turnData.immunity5K = false ;
+    turnData.turnDamp = turncounter ? false : true; //is it the first turn?
 
     switch (skillTypes[monstersLost]) {
         default:            break;
         case RESISTANCE:    turnData.resistance = 1 - skillAmounts[monstersLost];//Needs to be here so it happens before Neil's absorb.
                             break;
-        case TURNDAMP:      if (!turncounter)
+        case TURNDAMP:      if (turnData.turnDamp)
                             turnData.resistance = 1 - skillAmounts[monstersLost];
                             break;
         case SKILLDAMPEN:   turnData.skillDampen = 1 - skillAmounts[monstersLost];
@@ -244,7 +246,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
             case BUFF:      if (skillTargets[i] == ALL || skillTargets[i] == lineup[monstersLost]->element) {
                                 turnData.buffDamage += (int) skillAmounts[i];
                             } break;
-            case BUFFUP:    turnData.buffDamage += (int) (skillAmounts[i] * floor((turncounter + 1) / 4));
+            case BUFFUP:    turnData.buffDamage += (int) (skillAmounts[i] * floor(turncounter / 4));
                             break;
             case CHAMPION:  if (skillTargets[i] == ALL || skillTargets[i] == lineup[monstersLost]->element) {
                                 turnData.buffDamage += (int) skillAmounts[i];
@@ -326,7 +328,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     const double opposingDampFactor = opposingCondition.turnData.dampFactor;
     const double opposingAbsorbMult = opposingCondition.turnData.absorbMult;
     const bool opposingImmunityDamage = opposingCondition.turnData.immunity5K;
-    const double opposingDamage = opposingCondition.lineup[opposingCondition.monstersLost]->damage;
+    const double opposingDamage = opposingCondition.furyArray[opposingCondition.monstersLost];
     const double opposingResistance = opposingCondition.turnData.resistance;
     const double opposingSkillDampen = opposingCondition.turnData.skillDampen;
     const int opposingImmunityValue = opposingCondition.turnData.immunityValue;
@@ -592,7 +594,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     if (opposing.trampleTriggered) {
         for (int i = frontliner + 1; i < armySize; i++)
             if (remainingHealths[i] > 0){
-                if (skillTypes[i] == RESISTANCE)
+                if (skillTypes[i] == RESISTANCE || (skillTypes[i] == TURNDAMP && turnData.turnDamp))
                     tempResistance = 1 - skillAmounts[i];
                 else
                     tempResistance = 1;
@@ -609,7 +611,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         double baseMult = opposing.tripleMult;
         for (int i = frontliner + 1; i < armySize; i++)
             if (remainingHealths[i] > 0){
-                if (skillTypes[i] == RESISTANCE)
+                if (skillTypes[i] == RESISTANCE || (skillTypes[i] == TURNDAMP && turnData.turnDamp))
                     tempResistance = 1 - skillAmounts[i];
                 else
                     tempResistance = 1;
@@ -636,7 +638,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             case 1: times = 3;
                     for (int i = frontliner + 1; i < armySize; i++)
                         if (remainingHealths[i] > 0){
-                            if (skillTypes[i] == RESISTANCE)
+                            if (skillTypes[i] == RESISTANCE || (skillTypes[i] == TURNDAMP && turnData.turnDamp))
                                 tempResistance = 1 - skillAmounts[i];
                             else
                                 tempResistance = 1;
@@ -652,7 +654,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             //Only one unit behind the frontliner
             case 2: for (int i = frontliner + 1; i < armySize; i++)
                         if (remainingHealths[i] > 0){
-                            if (skillTypes[i] == RESISTANCE)
+                            if (skillTypes[i] == RESISTANCE || (skillTypes[i] == TURNDAMP && turnData.turnDamp))
                                 tempResistance = 1 - skillAmounts[i];
                             else
                                 tempResistance = 1;
@@ -665,7 +667,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             //Only one unit behind the frontliner
             case 3: for (int i = frontliner + 1; i < armySize; i++)
                         if (remainingHealths[i] > 0){
-                            if (skillTypes[i] == RESISTANCE)
+                            if (skillTypes[i] == RESISTANCE || (skillTypes[i] == TURNDAMP && turnData.turnDamp))
                                 tempResistance = 1 - skillAmounts[i];
                             else
                                 tempResistance = 1;
@@ -679,7 +681,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             case 4: times = 1;
                     for (int i = frontliner + 1; i < armySize; i++)
                         if (remainingHealths[i] > 0){
-                            if (skillTypes[i] == RESISTANCE)
+                            if (skillTypes[i] == RESISTANCE || (skillTypes[i] == TURNDAMP && turnData.turnDamp))
                                 tempResistance = 1 - skillAmounts[i];
                             else
                                 tempResistance = 1;
@@ -695,7 +697,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             //Only one unit behind the frontliner
             case 5: for (int i = frontliner + 1; i < armySize; i++)
                         if (remainingHealths[i] > 0){
-                            if (skillTypes[i] == RESISTANCE)
+                            if (skillTypes[i] == RESISTANCE || (skillTypes[i] == TURNDAMP && turnData.turnDamp))
                                 tempResistance = 1 - skillAmounts[i];
                             else
                                 tempResistance = 1;
@@ -754,7 +756,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
 
       if (i > frontliner){
         if (opposing.valkyrieDamage) { // Aoe that doesnt affect the frontliner
-          if (skillTypes[i] == RESISTANCE)
+          if (skillTypes[i] == RESISTANCE || (skillTypes[i] == TURNDAMP && turnData.turnDamp))
               tempResistance = 1 - skillAmounts[i];
           else
               tempResistance = 1;
@@ -1150,6 +1152,7 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         // Apply Xmas common AOE
         if (leftCondition.aoeLow || rightCondition.aoeLow) {
             int target;
+            TurnData aoeLowHP;
             if (leftCondition.aoeLow){
                 target = 0;
                 for (int i = 1; i < rightCondition.armySize; ++i){
@@ -1157,6 +1160,8 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
                         target = i;
                 }
                 rightCondition.remainingHealths[target] -= leftCondition.aoeLow;
+                aoeLowHP.aoeDamage = 0;
+                rightCondition.resolveDamage(aoeLowHP);
             }
             if (rightCondition.aoeLow){
                 target = 0;
@@ -1165,6 +1170,8 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
                         target = i;
                 }
                 leftCondition.remainingHealths[target] -= rightCondition.aoeLow;
+                aoeLowHP.aoeDamage = 0;
+                leftCondition.resolveDamage(aoeLowHP);
             }
         }
 

@@ -145,7 +145,7 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
                             this->skill.amount = floor(this->skill.amount * (double) aLevel);
                             break;
         case BUFFUP_L:      this->skill.skillType = BUFFUP;
-                            this->skill.amount = 9 * floor((double) aLevel / 9);
+                            this->skill.amount = 9 * floor(aLevel / 9);
                             break;
         case FLATLEP_L:     this->skill.skillType = FLATLEP;
                             this->skill.amount = this->skill.amount * floor(aLevel / 9);
