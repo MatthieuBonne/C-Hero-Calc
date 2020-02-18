@@ -322,7 +322,7 @@ void Instance::setTarget(Army aTarget) {
             // attack = castCeil((double) attack * elementalBoost);
             attack = round((double) attack * elementalBoost);
         }
-        this->monsterUsefulLast.push_back(currentMonster.hp > attack || currentMonster.skill.violatesFightResults);
+        this->monsterUsefulLast.push_back(currentMonster.hp > attack || currentMonster.skill.violatesFightResults || currentMonster.passive.passiveType == ANGEL);
     }
 }
 
