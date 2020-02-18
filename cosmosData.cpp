@@ -2,7 +2,7 @@
 #include "inputProcessing.h"
 
 // Private constructor that is called by all public ones. Fully initializes all attributes
-Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aName, Element anElement, HeroRarity aRarity, HeroSkill aSkill, int promoOne, int promoTwo, int promoFour, double promoFive, int aLevel, int aPromo) :
+Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aName, Element anElement, HeroRarity aRarity, HeroSkill aSkill, int promoOne, int promoTwo, int promoFour, double promoFive, HeroPassive aPassive, int aLevel, int aPromo) :
     hp(someHp),
     damage(someDamage),
     cost(aCost),
@@ -16,6 +16,7 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
     promoTwo(promoTwo),
     promoFour(promoFour),
     promoFive(promoFive),
+    passive(aPassive),
     name(aName)
 {
     if (this->rarity != NO_HERO) {
@@ -26,6 +27,7 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
             int pointBonus = 0;
             double points = this->level-1;
             switch (promo){
+                case 6:
                 case 5:
                     this->skill.amount += promoFive;
                 case 4:
@@ -66,6 +68,7 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
 
             this->hp = this->hp + (int) round((double) points * (double) this->hp / (double) value) + hpBonus;
             this->damage = this->damage + (int) round((double) points * (double) this->damage / (double) value) + atkBonus;
+
         }
         else
             this->level = 1; //So despite the level of the boss it always shows the replay for level 1, as bosses don't actually scale.
@@ -78,17 +81,25 @@ Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aN
 
 // Constructor for normal Monsters
 Monster::Monster(int someHp, int someDamage, FollowerCount aCost, std::string aName, Element anElement) :
-    Monster(someHp, someDamage, aCost, aName, anElement, NO_HERO, NO_SKILL, 0, 0, 0, 0, 0, 0) {}
+    Monster(someHp, someDamage, aCost, aName, anElement, NO_HERO, NO_SKILL, 0, 0, 0, 0, NO_PASSIVE, 0, 0) {}
 
 // Constructor for Heroes
-Monster::Monster(int someHp, int someDamage, std::string aName, Element anElement, HeroRarity aRarity, HeroSkill aSkill, int promoOne, int promoTwo, int promoFour, double promoFive) :
-    Monster(someHp, someDamage, 0, aName, anElement, aRarity, aSkill, promoOne, promoTwo, promoFour, promoFive, 1, 0) {}
+Monster::Monster(int someHp, int someDamage, std::string aName, Element anElement, HeroRarity aRarity, HeroSkill aSkill, int promoOne, int promoTwo, int promoFour, double promoFive, HeroPassive aPassive) :
+    Monster(someHp, someDamage, 0, aName, anElement, aRarity, aSkill, promoOne, promoTwo, promoFour, promoFive, aPassive, 1, 0) {}
 
 // Constructor for leveled heroes
 Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
-    Monster(baseHero.hp, baseHero.damage, baseHero.cost, baseHero.baseName, baseHero.element, baseHero.rarity, baseHero.skill, baseHero.promoOne, baseHero.promoTwo, baseHero.promoFour, baseHero.promoFive, aLevel, aPromo)
+    Monster(baseHero.hp, baseHero.damage, baseHero.cost, baseHero.baseName, baseHero.element, baseHero.rarity, baseHero.skill, baseHero.promoOne, baseHero.promoTwo, baseHero.promoFour, baseHero.promoFive, baseHero.passive, aLevel, aPromo)
 {
     this->index = baseHero.index;
+
+    if (aPromo != 6){
+        this->passive.passiveType = NONE;
+        this->passive.amount = 0;
+        if (this->passive.passiveType == TANK)
+            this->hp *= 1 + this->passive.amount;
+    }
+
 //Put aSeethe skill back where it belongs once it's capped to 99
     if (this->skill.skillType == POSBONUS_L) {
         this->skill.skillType = POSBONUS;
@@ -223,6 +234,13 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                                   );
 }
 
+HeroPassive::HeroPassive(PassiveType aType, double anAmount) :
+    passiveType(aType),
+    amount(anAmount)
+{
+    this->hasAsymmetricAoe = aType == ANGEL;
+}
+
 // JSON Functions to provide results in an easily readable output format. Used my Latas for example
 std::string Monster::toJSON() {
     std::stringstream s;
@@ -276,6 +294,7 @@ void Instance::setTarget(Army aTarget) {
     this->lowestBossHealth = 0;
 
     HeroSkill currentSkill;
+    HeroPassive currentPassive;
     this->hasAoe = false;
     this->hasHeal = false;
     this->hasAsymmetricAoe = false;
@@ -286,7 +305,7 @@ void Instance::setTarget(Army aTarget) {
         currentSkill = monsterReference[this->target.monsters[i]].skill;
         this->hasAoe |= currentSkill.hasAoe;
         this->hasHeal |= currentSkill.hasHeal;
-        this->hasAsymmetricAoe |= currentSkill.hasAsymmetricAoe;
+        this->hasAsymmetricAoe |= currentSkill.hasAsymmetricAoe || currentPassive.hasAsymmetricAoe;
         this->hasBeer |= currentSkill.skillType == BEER;
         this->hasGambler |= currentSkill.skillType == DICE || currentSkill.skillType == LUX || currentSkill.skillType == CRIT;
         this->hasWorldBoss |= monsterReference[this->target.monsters[i]].rarity == WORLDBOSS;
@@ -433,6 +452,16 @@ std::map<std::string, int> stringToEnum = {
     {"MORALE_L", MORALE_L},
     {"TURNDAMP_L", TURNDAMP_L},
     {"BULLSHIT", BULLSHIT},
+
+    {"NONE", NONE},
+    {"AFFINITY", AFFINITY},
+    {"ANGEL", ANGEL},
+    {"ARMOR", ARMOR},
+    {"DAMAGE", DAMAGE},
+    {"DPS", DPS},
+    {"HEALPLUS", HEALPLUS},
+    {"ANTIMAGIC", ANTIMAGIC},
+    {"TANK", TANK},
 
     {"EARTH", EARTH},
     {"AIR", AIR},
@@ -635,210 +664,210 @@ void initMonsterData() {
 
 // Fill BaseHeroes with Heroes. Order is important
 void initBaseHeroes() {
-    baseHeroes.push_back(Monster( 45, 20, "ladyoftwilight",     AIR,   COMMON,    {CHAMPION,      ALL, AIR, 3}, 28, 25, 15, 3));
-    baseHeroes.push_back(Monster( 70, 30, "tiny",               EARTH, RARE,      {LIFESTEAL_L,   ALL, EARTH, 0.04167f}, 40, 28, 17, 0.0404));
-    baseHeroes.push_back(Monster(110, 40, "nebra",              FIRE,  LEGENDARY, {BUFF,          ALL, FIRE, 20}, 140, 100, 83, 20));
-    baseHeroes.push_back(Monster( 20, 10, "valor",              AIR,   COMMON,    {PROTECT,       AIR, AIR, 2}, 12, 7, 19, 2));
-    baseHeroes.push_back(Monster( 30,  8, "rokka",              EARTH, COMMON,    {PROTECT,       EARTH, EARTH, 2}, 40, 12, 5, 2));
-    baseHeroes.push_back(Monster( 24, 12, "pyromancer",         FIRE,  COMMON,    {PROTECT,       FIRE, FIRE, 2}, 16, 8, 8, 2));
-    baseHeroes.push_back(Monster( 50,  6, "bewat",              WATER, COMMON,    {PROTECT,       WATER, WATER, 2}, 31, 10, 16, 2));
-    baseHeroes.push_back(Monster( 22, 14, "hunter",             AIR,   COMMON,    {BUFF,          AIR, AIR, 2}, 14, 12, 11, 2));
-    baseHeroes.push_back(Monster( 40, 20, "shaman",             EARTH, RARE,      {PROTECT,       EARTH, EARTH , 3}, 36, 16, 25, 3));
-    baseHeroes.push_back(Monster( 82, 22, "alpha",              FIRE,  LEGENDARY, {AOE,           ALL, FIRE, 2}, 115, 37, 75, 5));
-    baseHeroes.push_back(Monster( 28, 12, "carl",               WATER, COMMON,    {BUFF,          WATER, WATER , 2}, 18, 5, 12, 2));
-    baseHeroes.push_back(Monster( 38, 22, "nimue",              AIR,   RARE,      {PROTECT,       AIR, AIR, 3}, 49, 19, 12, 3));
-    baseHeroes.push_back(Monster( 70, 26, "athos",              EARTH, LEGENDARY, {PROTECT,       ALL, EARTH, 4}, 70, 32, 96, 6));
-    baseHeroes.push_back(Monster( 24, 16, "jet",                FIRE,  COMMON,    {BUFF,          FIRE, FIRE, 2}, 11, 9, 12, 2));
-    baseHeroes.push_back(Monster( 36, 24, "geron",              WATER, RARE,      {PROTECT,       WATER, WATER, 3}, 27, 11, 28, 3));
-    baseHeroes.push_back(Monster( 46, 40, "rei",                AIR,   LEGENDARY, {BUFF,          ALL, AIR, 5}, 79, 67, 89, 10));
-    baseHeroes.push_back(Monster( 19, 22, "ailen",              EARTH, COMMON,    {BUFF,          EARTH, EARTH, 2}, 21, 17, 12, 2));
-    baseHeroes.push_back(Monster( 50, 18, "faefyr",             FIRE,  RARE,      {PROTECT,       FIRE, FIRE, 3}, 53, 17, 19, 3));
-    baseHeroes.push_back(Monster( 60, 32, "auri",               WATER, LEGENDARY, {HEAL,          ALL, WATER, 4}, 70, 74, 23, 4));
-    baseHeroes.push_back(Monster( 22, 32, "nicte",              AIR,   RARE,      {BUFF,          AIR, AIR, 4}, 21, 43, 24, 4));
-    baseHeroes.push_back(Monster( 50, 12, "james",              EARTH, LEGENDARY, {VALKYRIE,      ALL, EARTH, 0.75f}, 103, 111, 41, 0.1));
-    baseHeroes.push_back(Monster( 28, 16, "k41ry",              AIR,   COMMON,    {BUFF,          AIR, AIR, 3}, 19, 14, 19, 3));
-    baseHeroes.push_back(Monster( 46, 20, "t4urus",             EARTH, RARE,      {BUFF,          ALL, EARTH, 2}, 28, 20, 30, 2));
-    baseHeroes.push_back(Monster(100, 20, "tr0n1x",             FIRE,  LEGENDARY, {AOE,           ALL, FIRE, 3}, 107, 44, 35, 6));
-    baseHeroes.push_back(Monster( 58,  8, "aquortis",           WATER, COMMON,    {BUFF,          WATER, WATER, 3}, 28, 18, 18, 3));
-    baseHeroes.push_back(Monster( 30, 32, "aeris",              AIR,   RARE,      {HEAL,          ALL, AIR, 2}, 20, 36, 28, 2));
-    baseHeroes.push_back(Monster( 75,  2, "geum",               EARTH, LEGENDARY, {BERSERK,       SELF, EARTH, 2}, 213, 8, 22, 0.2));
-    baseHeroes.push_back(Monster( 46, 16, "forestdruid",        EARTH, RARE,      {BUFF,          EARTH, EARTH, 4}, 38, 16, 19, 4));
-    baseHeroes.push_back(Monster( 32, 24, "ignitor",            FIRE,  RARE,      {BUFF,          FIRE, FIRE, 4}, 24, 22, 23, 4));
-    baseHeroes.push_back(Monster( 58, 14, "undine",             WATER, RARE,      {BUFF,          WATER, WATER, 4}, 25, 7, 15, 4));
-    baseHeroes.push_back(Monster( 38, 12, "rudean",             FIRE,  COMMON,    {BUFF,          FIRE, FIRE, 3}, 19, 14, 10, 3));
-    baseHeroes.push_back(Monster( 18, 50, "aural",              WATER, RARE,      {BERSERK,       SELF, WATER, 1.2f}, 33, 31, 28, 0.12));
-    baseHeroes.push_back(Monster( 46, 46, "geror",              AIR,   LEGENDARY, {FRIENDS,       SELF, AIR, 1.2f}, 95, 125, 36, 0.12));
-    baseHeroes.push_back(Monster( 66, 44, "veildur",            EARTH, LEGENDARY, {CHAMPION,      ALL, EARTH, 3}, 98, 42, 51, 3));
-    baseHeroes.push_back(Monster( 72, 48, "brynhildr",          AIR,   LEGENDARY, {CHAMPION,      ALL, AIR, 4}, 84, 56, 59, 4));
-    baseHeroes.push_back(Monster( 78, 52, "groth",              FIRE,  LEGENDARY, {CHAMPION,      ALL, FIRE, 5}, 114, 70, 62, 5));
-    baseHeroes.push_back(Monster( 30, 16, "ourea",              EARTH, COMMON,    {BUFF,          EARTH, EARTH, 3}, 17, 8, 8, 3));
-    baseHeroes.push_back(Monster( 48, 20, "erebus",             FIRE,  RARE,      {CHAMPION,      FIRE, FIRE, 2}, 55, 18, 20, 2));
-    baseHeroes.push_back(Monster( 62, 36, "pontus",             WATER, LEGENDARY, {ADAPT,         WATER, WATER, 2}, 121, 43, 79, 0.2));
-    baseHeroes.push_back(Monster( 52, 20, "chroma",             AIR,   RARE,      {PROTECT,       AIR, AIR, 4}, 23, 15, 15, 4));
-    baseHeroes.push_back(Monster( 26, 44, "petry",              EARTH, RARE,      {PROTECT,       EARTH, EARTH, 4}, 18, 16, 28, 4));
-    baseHeroes.push_back(Monster( 58, 22, "zaytus",             FIRE,  RARE,      {PROTECT,       FIRE, FIRE, 4}, 57, 12, 16, 4));
-    baseHeroes.push_back(Monster( 75, 45, "spyke",              AIR,   LEGENDARY, {TRAINING,      SELF, AIR, 10}, 112, 43, 73, 10));
-    baseHeroes.push_back(Monster( 70, 55, "aoyuki",             WATER, LEGENDARY, {RAINBOW,       SELF, WATER, 100}, 75, 121, 66, 100));
-    baseHeroes.push_back(Monster( 75,150, "gaiabyte",           EARTH, LEGENDARY, {WITHER,        SELF, EARTH, 2}, 151, 84, 52, 2));
-    baseHeroes.push_back(Monster( 36, 14, "oymos",              AIR,   COMMON,    {BUFF,          AIR, AIR, 4}, 24, 15, 21, 4));
-    baseHeroes.push_back(Monster( 32, 32, "xarth",              EARTH, RARE,      {CHAMPION,      EARTH, EARTH, 2}, 23, 25, 19, 2));
-    baseHeroes.push_back(Monster( 76, 32, "atzar",              FIRE,  LEGENDARY, {ADAPT,         FIRE, FIRE, 2}, 85, 28, 48, 0.2));
-    baseHeroes.push_back(Monster( 70, 42, "zeth",               WATER, LEGENDARY, {REVENGE,       ALL, WATER, 0.1f}, 127, 76, 24, 0.1));
-    baseHeroes.push_back(Monster( 76, 46, "koth",               EARTH, LEGENDARY, {REVENGE,       ALL, EARTH, 0.15f}, 99, 39, 70, 0.1));
-    baseHeroes.push_back(Monster( 82, 50, "gurth",              AIR,   LEGENDARY, {REVENGE,       ALL, AIR, 0.2f}, 108, 43, 68, 0.1));
-    baseHeroes.push_back(Monster( 35, 25, "werewolf",           EARTH, COMMON,    {PROTECT_L,     ALL, EARTH, 0.1112f}, 23, 28, 19, 0.0202));
-    baseHeroes.push_back(Monster( 55, 35, "jackoknight",        AIR,   RARE,      {BUFF_L,        ALL, AIR, 0.1112f}, 50, 13, 38, 0.0202));
-    baseHeroes.push_back(Monster( 75, 45, "dullahan",           FIRE,  LEGENDARY, {CHAMPION_L,    ALL, FIRE, 0.1112f}, 114, 45, 65, 0.0404));
-    baseHeroes.push_back(Monster( 36, 36, "ladyodelith",        WATER, RARE,      {PROTECT,       WATER, WATER, 4}, 19, 17, 29, 4));
-    baseHeroes.push_back(Monster( 34, 54, "shygu",              AIR,   LEGENDARY, {PROTECT_L,     AIR, AIR, 0.1112f}, 62, 68, 71, 0.0202));
-    baseHeroes.push_back(Monster( 72, 28, "thert",              EARTH, LEGENDARY, {PROTECT_L,     EARTH, EARTH, 0.1112f}, 61, 44, 69, 0.0202));
-    baseHeroes.push_back(Monster( 32, 64, "lordkirk",           FIRE,  LEGENDARY, {PROTECT_L,     FIRE, FIRE, 0.1112f}, 77, 99, 83, 0.0202));
-    baseHeroes.push_back(Monster( 30, 70, "neptunius",          WATER, LEGENDARY, {PROTECT_L,     WATER, WATER, 0.1112f}, 92, 73, 83, 0.0202));
-    baseHeroes.push_back(Monster( 65, 12, "sigrun",             FIRE,  LEGENDARY, {VALKYRIE,      ALL, FIRE, 0.5f}, 132, 29, 61, 0.15));
-    baseHeroes.push_back(Monster( 70, 14, "koldis",             WATER, LEGENDARY, {VALKYRIE,      ALL, WATER, 0.5f}, 173, 32, 46, 0.15));
-    baseHeroes.push_back(Monster( 75, 16, "alvitr",             EARTH, LEGENDARY, {VALKYRIE,      ALL, EARTH, 0.5f}, 152, 50, 56, 0.15));
-    baseHeroes.push_back(Monster( 30, 18, "hama",               WATER, COMMON,    {BUFF,          WATER, WATER, 4}, 21, 10, 7, 4));
-    baseHeroes.push_back(Monster( 34, 34, "hallinskidi",        AIR,   RARE,      {CHAMPION,      AIR, AIR, 2}, 17, 54, 20, 2));
-    baseHeroes.push_back(Monster( 60, 42, "rigr",               EARTH, LEGENDARY, {ADAPT,         EARTH, EARTH, 2}, 68, 21, 93, 0.2));
-    baseHeroes.push_back(Monster(174, 46, "aalpha",             FIRE,  ASCENDED,  {AOE_L,         ALL, FIRE, 0.304f}, 251, 98, 92, 0.0304));
-    baseHeroes.push_back(Monster(162, 60, "aathos",             EARTH, ASCENDED,  {PROTECT_L,     ALL, EARTH, 0.304f}, 281, 57, 76, 0.0304));
-    baseHeroes.push_back(Monster(120,104, "arei",               AIR,   ASCENDED,  {BUFF_L,        ALL, AIR, 0.304f}, 167, 86, 176, 0.1414));
-    baseHeroes.push_back(Monster(148, 78, "aauri",              WATER, ASCENDED,  {HEAL_L,        ALL, WATER, 0.152f}, 151, 221, 59, 0.0152));
-    baseHeroes.push_back(Monster(190, 38, "atr0n1x",            FIRE,  ASCENDED,  {VALKYRIE,      ALL, FIRE, 0.75f}, 383, 56, 25, 0.05));
-    baseHeroes.push_back(Monster(222,  8, "ageum",              EARTH, ASCENDED,  {BERSERK,       SELF, EARTH, 2}, 348, 35, 16, 0.2));
-    baseHeroes.push_back(Monster(116,116, "ageror",             AIR,   ASCENDED,  {FRIENDS,       SELF, AIR, 1.3f}, 173, 22, 153, 0.13));
-    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 113, "lordofchaos", FIRE, WORLDBOSS, {AOE,      ALL, FIRE, 50}, 30, 20, 0.1, 10));
-    baseHeroes.push_back(Monster( 38, 24, "christmaself",       WATER, COMMON,    {HEAL_L,        ALL, WATER, 0.1112f}, 28, 34, 22, 0.0202));
-    baseHeroes.push_back(Monster( 54, 36, "reindeer",           AIR,   RARE,      {AOE_L,         ALL, AIR, 0.1112f}, 53, 18, 33, 0.0202));
-    baseHeroes.push_back(Monster( 72, 48, "santaclaus",         FIRE,  LEGENDARY, {LIFESTEAL_L,   ALL, FIRE, 0.1112f}, 107, 96, 78, 0.0404));
-    baseHeroes.push_back(Monster( 44, 44, "sexysanta",          EARTH, RARE,      {VALKYRIE,      ALL, EARTH, 0.66f}, 27, 41, 40, 0.05));
-    baseHeroes.push_back(Monster( 24, 24, "toth",               FIRE,  COMMON,    {BUFF,          FIRE, FIRE, 4}, 18, 32, 16, 4));
-    baseHeroes.push_back(Monster( 40, 30, "ganah",              WATER, RARE,      {CHAMPION,      WATER, WATER, 2}, 29, 26, 43, 2));
-    baseHeroes.push_back(Monster( 58, 46, "dagda",              AIR,   LEGENDARY, {ADAPT,         AIR, AIR, 2}, 79, 78, 123, 0.2));
-    baseHeroes.push_back(Monster(300,110, "bubbles",            WATER, ASCENDED,  {DAMPEN_L,      ALL, WATER, 0.0050f}, 291, 120, 58, 0.0005));
-    baseHeroes.push_back(Monster(150, 86, "apontus",            WATER, ASCENDED,  {ADAPT,         WATER, WATER, 3}, 124, 211, 190, 0.3));
-    baseHeroes.push_back(Monster(162, 81, "aatzar",             FIRE,  ASCENDED,  {ADAPT,         FIRE, FIRE, 3}, 333, 76, 86, 0.3));
-    baseHeroes.push_back(Monster( 74, 36, "arshen",             AIR,   LEGENDARY, {TRAMPLE,       ALL, AIR, 1}, 83, 44, 28, 0.05));
-    baseHeroes.push_back(Monster( 78, 40, "rua",                FIRE,  LEGENDARY, {TRAMPLE,       ALL, FIRE, 1}, 88, 44, 37, 0.05));
-    baseHeroes.push_back(Monster( 82, 44, "dorth",              WATER, LEGENDARY, {TRAMPLE,       ALL, WATER, 1}, 90, 38, 40, 0.05));
-    baseHeroes.push_back(Monster(141, 99, "arigr",              EARTH, ASCENDED,  {ADAPT,         EARTH, EARTH, 3}, 138, 121, 163, 0.3));
-    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 191, "motherofallkodamas", EARTH, WORLDBOSS, {DAMPEN,        ALL, EARTH, 0.5}, 30, 20, 0.1, 10));
-    baseHeroes.push_back(Monster( 42, 50, "hosokawa",           AIR,   LEGENDARY, {BUFF_L,        AIR, AIR, 0.1112f}, 108, 115, 74, 0.0202));
-    baseHeroes.push_back(Monster( 32, 66, "takeda",             EARTH, LEGENDARY, {BUFF_L,        EARTH, EARTH, 0.1112f}, 83, 82, 45, 0.0202));
-    baseHeroes.push_back(Monster( 38, 56, "hirate",             FIRE,  LEGENDARY, {BUFF_L,        FIRE, FIRE, 0.1112f}, 53, 133, 44, 0.0202));
-    baseHeroes.push_back(Monster( 44, 48, "hattori",            WATER, LEGENDARY, {BUFF_L,        WATER, WATER, 0.1112f}, 65, 74, 64, 0.0202));
-    baseHeroes.push_back(Monster(135, 107,"adagda",             AIR,   ASCENDED,  {ADAPT,         AIR, AIR, 3}, 208, 78, 322, 0.3));
-    baseHeroes.push_back(Monster( 30, 20, "bylar",              EARTH, COMMON,    {BUFF,          EARTH, EARTH, 4}, 18, 6, 15, 4));
-    baseHeroes.push_back(Monster( 36, 36, "boor",               FIRE,  RARE,      {TRAINING,      SELF, FIRE, 3}, 19, 49, 20, 3));
-    baseHeroes.push_back(Monster( 52, 52, "bavah",              WATER, LEGENDARY, {CHAMPION,      ALL, WATER, 4}, 84, 92, 43, 5));
-    baseHeroes.push_back(Monster( 75, 25, "leprechaun",         EARTH, LEGENDARY, {BEER,          ALL, EARTH, 0}, 59, 13, 13, 1));
-    baseHeroes.push_back(Monster( 30, 30, "sparks",             FIRE,  COMMON,    {GROW,          ALL, FIRE, 2}, 29, 29, 15, 0.2));
-    baseHeroes.push_back(Monster( 48, 42, "leaf",               EARTH, RARE,      {GROW,          ALL, EARTH, 2}, 35, 57, 26, 0.2));
-    baseHeroes.push_back(Monster( 70, 48, "flynn",              AIR,   LEGENDARY, {GROW,          ALL, AIR, 2}, 46, 93, 69, 0.2));
-    baseHeroes.push_back(Monster(122,122, "abavah",             WATER, ASCENDED,  {CHAMPION_L,    ALL, ALL, 0.152f}, 217, 152, 145, 0.0152));
-    baseHeroes.push_back(Monster( 66, 60, "drhawking",          AIR,   LEGENDARY, {AOEZERO_L,     ALL, AIR, 1}, 94, 136, 70, 0.3));
-    baseHeroes.push_back(Monster(150, 90, "masterlee",          AIR,   ASCENDED,  {COUNTER,       AIR, AIR, 0.5f}, 314, 290, 225, 0.05));
-    baseHeroes.push_back(Monster( 70, 38, "kumusan",            FIRE,  LEGENDARY, {COUNTER,       FIRE, FIRE, 0.2f}, 134, 132, 135, 0.05));
-    baseHeroes.push_back(Monster( 78, 42, "liucheng",           WATER, LEGENDARY, {COUNTER,       WATER, WATER, 0.25f}, 149, 111, 80, 0.05));
-    baseHeroes.push_back(Monster( 86, 44, "hidoka",             EARTH, LEGENDARY, {COUNTER,       EARTH, EARTH, 0.3f}, 144, 172, 61, 0.05));
-    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 11, "kryton", AIR,  WORLDBOSS, {TRAINING,      SELF, AIR, 10}, 20, 20, 30, 0.1));
-    baseHeroes.push_back(Monster( 25, 26, "dicemaster",         WATER, COMMON,    {DICE,          SELF, SELF, 20}, 19, 36, 12, 20));
-    baseHeroes.push_back(Monster( 28, 60, "luxuriusmaximus",    FIRE,  RARE,      {LUX,           SELF, EARTH, 1}, 44, 47, 29, 1));
-    baseHeroes.push_back(Monster( 70, 70, "pokerface",          EARTH, LEGENDARY, {CRIT,          EARTH, EARTH, 3}, 119, 211, 111, 0.3));
-    baseHeroes.push_back(Monster( 25, 25, "taint",              AIR,   COMMON,    {VALKYRIE,      ALL, AIR, 0.5f}, 13, 4, 21, 0.05));
-    baseHeroes.push_back(Monster( 48, 50, "putrid",             EARTH, RARE,      {TRAINING,      SELF, EARTH, -3}, 51, 93, 50, 1));
-    baseHeroes.push_back(Monster( 52, 48, "defile",             FIRE,  LEGENDARY, {EXPLODE,       ALL, FIRE, 50}, 60, 138, 72, 50));
-    baseHeroes.push_back(Monster(150, 15, "neil",               WATER, LEGENDARY, {ABSORB,        SELF, WATER, 0.3}, 244, 20, 23, 0.05));
-    baseHeroes.push_back(Monster( 78, 26, "mahatma",            AIR,   LEGENDARY, {HATE,          WATER, AIR, 0.75}, 56, 19, 85, 0.5));
-    baseHeroes.push_back(Monster( 76, 30, "jade",               EARTH, LEGENDARY, {HATE,          AIR, EARTH, 0.75}, 45, 37, 91, 0.5));
-    baseHeroes.push_back(Monster( 72, 36, "edana",              FIRE,  LEGENDARY, {HATE,          EARTH, FIRE, 0.75}, 91, 46, 66, 0.5));
-    baseHeroes.push_back(Monster( 80, 30, "dybbuk",             WATER, LEGENDARY, {HATE,          FIRE, WATER, 0.75}, 65, 43, 63, 0.5));
-    baseHeroes.push_back(Monster( 85, 135, "ashygu",            AIR,   ASCENDED,  {PROTECT_L,     AIR, AIR, 0.1819f}, 148, 113, 217, 0.01819));
-    baseHeroes.push_back(Monster( 180, 70, "athert",            EARTH, ASCENDED,  {PROTECT_L,     EARTH, EARTH, 0.1819f}, 346, 67, 76, 0.01819));
-    baseHeroes.push_back(Monster( 80, 160, "alordkirk",         FIRE,  ASCENDED,  {PROTECT_L,     FIRE, FIRE, 0.1819f}, 215, 255, 87, 0.01819));
-    baseHeroes.push_back(Monster( 75, 175, "aneptunius",        WATER, ASCENDED,  {PROTECT_L,     WATER, WATER, 0.1819f}, 335, 201, 241, 0.01819));
-    baseHeroes.push_back(Monster( 106,124, "ahosokawa",         AIR,   ASCENDED,  {BUFF_L,        AIR, AIR, 0.1819f}, 229, 423, 207, 0.01819));
-    baseHeroes.push_back(Monster( 82, 164, "atakeda",           EARTH, ASCENDED,  {BUFF_L,        EARTH, EARTH, 0.1819f}, 252, 425, 66, 0.01819));
-    baseHeroes.push_back(Monster( 96, 144, "ahirate",           FIRE,  ASCENDED,  {BUFF_L,        FIRE, FIRE, 0.1819f}, 199, 193, 119, 0.01819));
-    baseHeroes.push_back(Monster( 114,126, "ahattori",          WATER, ASCENDED,  {BUFF_L,        WATER, WATER, 0.1819f}, 218, 167, 138, 0.01819));
-    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 175, "doyenne", WATER, WORLDBOSS, {DODGE,      ALL, ALL, 15000}, 30, 20, 0.1, 10));
-    baseHeroes.push_back(Monster( 30, 40, "billy",              EARTH, COMMON,    {DEATHSTRIKE,   ALL, EARTH, 100}, 43, 30, 24, 25));
-    baseHeroes.push_back(Monster( 88, 22, "sanqueen",           WATER, RARE,      {LEECH,         SELF, WATER, 0.8}, 71, 8, 16, 0.08));
-    baseHeroes.push_back(Monster(150, 60, "cliodhna",           AIR,   LEGENDARY, {EVOLVE,        SELF, AIR, 1}, 193, 240, 78, 0.1));
-    baseHeroes.push_back(Monster( 340, 64, "guy",               FIRE,  ASCENDED,  {COUNTER_MAX_HP, FIRE, FIRE, 1}, 160, 121, 115, 0.1));
-    baseHeroes.push_back(Monster( 126,114, "adefile",           FIRE,  ASCENDED,  {EXPLODE_L,       ALL, FIRE, 7}, 126, 122, 114, 2));
-    baseHeroes.push_back(Monster(186, 62, "raiderrose",         EARTH, ASCENDED,  {EXECUTE,       EARTH, EARTH, 0.6}, 353, 32, 476, 0.05));
-    baseHeroes.push_back(Monster( 96, 30, "buccaneerbeatrice",  WATER, LEGENDARY, {EXECUTE,       WATER, WATER, 0.3}, 66, 32, 66, 0.05));
-    baseHeroes.push_back(Monster(100, 32, "corsaircharles",     AIR,   LEGENDARY, {EXECUTE,       AIR, AIR, 0.35}, 87, 21, 64, 0.05));
-    baseHeroes.push_back(Monster(105, 34, "maraudermagnus",     FIRE,  LEGENDARY, {EXECUTE,       FIRE, FIRE, 0.4}, 175, 67, 71, 0.05));
-    baseHeroes.push_back(Monster( 46, 52, "frosty",             WATER, RARE,      {RESISTANCE_L,   ALL, WATER, 0.03f}, 51, 69, 16, 0.003));
-    baseHeroes.push_back(Monster( 50, 18, "fir",                EARTH, COMMON,    {AOEREFLECT_L,   ALL, EARTH, 0.004f}, 33, 5, 11, 0.0004));
-    baseHeroes.push_back(Monster( 78, 34, "5-12-6",             AIR,   RARE,      {HPPIERCE_L,     ALL, AIR, 0.03f}, 42, 37, 39, 0.003));
-    baseHeroes.push_back(Monster(170, 18, "kedari",             FIRE,  LEGENDARY, {SACRIFICE_L,    ALL, FIRE, 2}, 133, 19, 25, 0.2));
-    baseHeroes.push_back(Monster( 18, 26, "raze",               WATER, COMMON,    {TRAMPLE,       ALL, WATER, 0.7}, 8, 9, 14, 0.05));
-    baseHeroes.push_back(Monster( 44, 48, "ruin",               AIR,   RARE,      {REVENGE,       ALL, AIR, 0.1}, 23, 61, 23, 0.05));
-    baseHeroes.push_back(Monster( 48, 54, "seethe",             EARTH, LEGENDARY, {POSBONUS,      SELF, EARTH, 15}, 57, 178, 53, 15));
-    baseHeroes.push_back(Monster(117,131, "aseethe",            EARTH, ASCENDED,  {POSBONUS_L,      SELF, EARTH, 0.45}, 90, 117, 124, 0.11));
-    baseHeroes.push_back(Monster( 54, 54, "blossom",            EARTH, LEGENDARY, {DEATHBUFF,       ALL, EARTH, 0.10}, 99, 99, 144, 0.01));
-    baseHeroes.push_back(Monster( 56, 56, "flint",              FIRE,  LEGENDARY, {DEATHBUFF,       ALL, FIRE,  0.11}, 100, 100, 150, 0.01));
-    baseHeroes.push_back(Monster( 58, 58, "orin",               AIR,   LEGENDARY, {DEATHBUFF,       ALL, AIR,   0.12}, 101, 101, 156, 0.01));
-    baseHeroes.push_back(Monster(130,130, "aurora",             WATER, ASCENDED,  {DEATHBUFF,       ALL, WATER, 0.15}, 221, 221, 344, 0.01));
-    baseHeroes.push_back(Monster(220, 20, "cupid",              AIR,   LEGENDARY, {TRAMPLE,         ALL, AIR, 3}, 150, 50, 110, 1));
-    baseHeroes.push_back(Monster( 22, 22, "transient",          ALL,   COMMON,    {VOID,       ALL, ALL, 0.5}, 11, 11, 20, 0.1));
-    baseHeroes.push_back(Monster( 34, 34, "maunder",            ALL,   RARE,      {VOID,       ALL, ALL, 0.5}, 22, 22, 32, 0.1));
-    baseHeroes.push_back(Monster( 50, 50, "thewanderer",        ALL,   LEGENDARY, {VOID,       ALL, ALL, 0.5}, 80, 80, 120, 0.1));
-    baseHeroes.push_back(Monster(100, 40, "b-day",              AIR,   LEGENDARY, {AOELAST,    ALL, AIR, 0.1}, 61, 51, 49, 0.05));
-    baseHeroes.push_back(Monster( 44, 22, "cloud",              AIR,   COMMON,    {SADISM,     ALL, AIR,   0.95}, 36, 32, 11, 0.05));
-    baseHeroes.push_back(Monster( 64, 32, "ember",              FIRE,  RARE,      {SADISM,     ALL, FIRE,  0.95}, 34, 14, 19, 0.05));
-    baseHeroes.push_back(Monster( 84, 42, "riptide",            WATER, LEGENDARY, {SADISM,     ALL, WATER, 0.95}, 89, 34, 22, 0.05));
-    baseHeroes.push_back(Monster(180, 90, "spike",              EARTH, ASCENDED,  {SADISM,     ALL, EARTH, 0.95}, 234, 103, 136, 0.05));
-    baseHeroes.push_back(Monster(180, 60, "amahatma",           AIR,   ASCENDED,  {HATE,       WATER, AIR,   1.7}, 241, 50, 195, 0.3));
-    baseHeroes.push_back(Monster(172, 68, "ajade",              EARTH, ASCENDED,  {HATE,       AIR,   EARTH, 1.7}, 288, 41, 144, 0.3));
-    baseHeroes.push_back(Monster(160, 80, "aedana",             FIRE,  ASCENDED,  {HATE,       EARTH, FIRE,  1.7}, 191, 180, 99, 0.3));
-    baseHeroes.push_back(Monster(176, 66, "adybbuk",            WATER, ASCENDED,  {HATE,       FIRE,  WATER, 1.7}, 272, 55, 169, 0.3));
-    baseHeroes.push_back(Monster( 30, 38, "willow",             AIR,   COMMON,    {SELFHEAL,    SELF,  AIR,   0.2}, 22, 19, 24, 0.2));
-    baseHeroes.push_back(Monster( 70, 40, "gizmo",              FIRE,  RARE,      {COURAGE,     SELF,  FIRE,  3}, 43, 26, 52, 1));
-    baseHeroes.push_back(Monster( 84, 50, "daisy",              WATER, LEGENDARY, {EASTER,     ALL,   WATER, 2.5}, 50, 84, 70, 0.5));
-    baseHeroes.push_back(Monster(120,200, "thumper",            EARTH, ASCENDED,  {SKILLDAMPEN, SELF,  EARTH, 0.6}, 230, 320, 360, 0.1));
-    baseHeroes.push_back(Monster( 40, 24, "bortles",            AIR,   COMMON,    {SHIELDME,    SELF,  AIR,   3}, 10, 13, 14, 3));
-    baseHeroes.push_back(Monster( 40, 28, "murphy",             EARTH, RARE,      {FLATREF,     EARTH, EARTH, 60}, 24, 18, 28, 30));
-    baseHeroes.push_back(Monster( 24, 82, "nerissa",            WATER, LEGENDARY, {RESISTANCE,  SELF,  WATER, 0.45}, 22, 45, 52, 0.05));
-    baseHeroes.push_back(Monster(112, 55, "mother",             WATER, LEGENDARY, {HEALFIRST,   ALL,  WATER, 25}, 200, 120, 140, 5));
-    baseHeroes.push_back(Monster( 48,164, "anerissa",           WATER, ASCENDED,  {RESISTANCE_L,SELF, WATER, 0.06}, 70, 112, 100, 0.006));
-    baseHeroes.push_back(Monster( 51, 59, "agatha",             AIR,   LEGENDARY, {PERCBUFF,    ALL,  AIR,   0.1}, 76, 92, 74, 0.05));
-    baseHeroes.push_back(Monster( 52, 60, "ophelia",            EARTH, LEGENDARY, {PERCBUFF,    ALL,  EARTH, 0.15}, 78, 99, 75, 0.05));
-    baseHeroes.push_back(Monster( 53, 61, "helga",              WATER, LEGENDARY, {PERCBUFF,    ALL,  WATER, 0.2}, 84, 101, 82, 0.05));
-    baseHeroes.push_back(Monster(108,124, "minerva",            FIRE,  ASCENDED,  {PERCBUFF,    ALL,  FIRE,  0.25}, 204, 241, 256, 0.05));
-    baseHeroes.push_back(Monster(126,126, "awanderer",          ALL,   ASCENDED,  {VOID,        ALL,  ALL,   0.75}, 110, 110, 110, 0.1));
-    baseHeroes.push_back(Monster( 76, 50, "tetra",              FIRE,  LEGENDARY, {BULLSHIT,       ALL,  FIRE,  1}, 154, 68, 68, 0.2));
-    baseHeroes.push_back(Monster( 16, 28, "cathos",             EARTH, COMMON,    {SELFARMOR_CUBE, SELF, EARTH, 2}, 8, 16, 14, 1));
-    baseHeroes.push_back(Monster( 42, 28, "catzar",             FIRE,  RARE,      {EXECUTE_CUBE,   ALL,  FIRE,  4}, 28, 10, 36, 1));
-    baseHeroes.push_back(Monster( 80,  8, "crei",               AIR,   LEGENDARY, {AOEFIRST_CUBE,  ALL,  AIR,   4}, 112, 28, 26, 1));
-    baseHeroes.push_back(Monster(210, 21, "acrei",              AIR,   ASCENDED,  {AOEFIRST_CUBE,  ALL,  AIR,   5}, 192, 34, 78, 1));
-    baseHeroes.push_back(Monster( 75, 45, "smith",              EARTH, LEGENDARY, {TRIPLE,         ALL,  EARTH, 0.9}, 84, 47, 68, 0.1));
-    baseHeroes.push_back(Monster( 32, 14, "mrcotton",           FIRE,  COMMON,    {ATTACKAOE,      ALL,  FIRE,  10}, 28, 7, 12, 5));
-    baseHeroes.push_back(Monster( 54, 20, "sharkjellyn",        WATER, RARE,      {FLATHEAL,       SELF, WATER, 30}, 44, 13, 15, 15));
-    baseHeroes.push_back(Monster( 50, 50, "chocoknight",        EARTH, LEGENDARY, {HPAMPLIFY,      ALL,  EARTH, 0.4}, 72, 47, 82, 0.1));
-    baseHeroes.push_back(Monster(124,124, "achocoknight",       EARTH, ASCENDED,  {HPAMPLIFY,      ALL,  EARTH, 0.55}, 98, 64, 104, 0.1));
-    baseHeroes.push_back(Monster( 92,211, "lili",               FIRE,  ASCENDED,  {CONVERT,        ALL,  FIRE,  0.1}, 174, 535, 171, 0.01));
-    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 151, "bornag", ALL,  WORLDBOSS, {RESISTANCE,    SELF, ALL,   1}, 20, 20, 30, 0.1));
-    baseHeroes.push_back(Monster( 53, 61, "thrace",             FIRE,  LEGENDARY, {BLOODLUST,      AIR,  AIR,   125}, 82, 131, 104, 25));
-    baseHeroes.push_back(Monster( 55, 63, "scinda",             AIR,   LEGENDARY, {BLOODLUST,      AIR,  AIR,   150}, 78, 125, 116, 30));
-    baseHeroes.push_back(Monster( 57, 65, "myrmillo",           EARTH, LEGENDARY, {BLOODLUST,      AIR,  AIR,   175}, 94, 141, 99, 35));
-    baseHeroes.push_back(Monster(144,126, "retia",              WATER, ASCENDED,  {BLOODLUST,      AIR,  AIR,   350}, 246, 318, 338, 100));
-    baseHeroes.push_back(Monster( 48,  4, "newt",               WATER, COMMON,    {FURY,           AIR,  AIR,   2}, 14, 1, 4, 0.5));
-    baseHeroes.push_back(Monster( 58,  6, "electra",            AIR,   RARE,      {FURY,           AIR,  AIR,   3}, 30, 4, 8, 1));
-    baseHeroes.push_back(Monster( 66,  6, "boson",              FIRE,  LEGENDARY, {FURY,           AIR,  AIR,   3}, 82, 20, 21, 1));
-    baseHeroes.push_back(Monster(210, 10, "higgs",              FIRE,  ASCENDED,  {FURY,           AIR,  AIR,   4}, 225, 24, 30, 1));
-    baseHeroes.push_back(Monster( 30, 28, "casper",             AIR,   COMMON,    {AOELIN,         AIR,  AIR,   2}, 14, 14, 20, 1));
-    baseHeroes.push_back(Monster( 64, 20, "adrian",             FIRE,  RARE,      {AOELIN,         FIRE, FIRE,  5}, 32, 14, 28, 2));
-    baseHeroes.push_back(Monster( 66, 66, "emily",              WATER, LEGENDARY, {WBIDEAL_L,      ALL,  WATER, 0.1112}, 258, 178, 104, 0.0202));
-    baseHeroes.push_back(Monster(200,100, "adam",               EARTH, ASCENDED,  {AOEHP,          EARTH,EARTH, 0.04}, 321, 93, 134, 0.01));
-    baseHeroes.push_back(Monster( 32, 48, "yisus",              EARTH, RARE,      {FLATLEP_L,      EARTH,EARTH, 3}, 38, 18, 34, 1));
-    baseHeroes.push_back(Monster( 32, 40, "galla",              FIRE,  COMMON,    {AOELOW_L,       FIRE, FIRE,  1}, 30, 22, 22, 0.5));
-    baseHeroes.push_back(Monster( 58, 58, "yetithepostman",     WATER, RARE,      {BUFFUP_L,       WATER,WATER, 4}, 40, 40, 40, 1));
-    baseHeroes.push_back(Monster( 74, 74, "hans",               EARTH, LEGENDARY, {MORALE_L,        EARTH,EARTH, 3}, 200, 200, 180, 2));
-    baseHeroes.push_back(Monster(  5,250, "mechamary",          AIR,   ASCENDED,  {TURNDAMP_L,        AIR,  AIR,   0.08}, 12, 1080, 30, 0.01));
+    baseHeroes.push_back(Monster( 45, 20, "ladyoftwilight",     AIR,   COMMON,    {CHAMPION,      ALL, AIR, 3}, 28, 25, 15, 3, {HEALPLUS, 0.1}));
+    baseHeroes.push_back(Monster( 70, 30, "tiny",               EARTH, RARE,      {LIFESTEAL_L,   ALL, EARTH, 0.04167f}, 40, 28, 17, 0.0404, {TANK, 0.1}));
+    baseHeroes.push_back(Monster(110, 40, "nebra",              FIRE,  LEGENDARY, {BUFF,          ALL, FIRE, 20}, 140, 100, 83, 20, {DAMAGE, 0.23}));
+    baseHeroes.push_back(Monster( 20, 10, "valor",              AIR,   COMMON,    {PROTECT,       AIR, AIR, 2}, 12, 7, 19, 2, {ARMOR, 0.05}));
+    baseHeroes.push_back(Monster( 30,  8, "rokka",              EARTH, COMMON,    {PROTECT,       EARTH, EARTH, 2}, 40, 12, 5, 2, {ARMOR, 0.05}));
+    baseHeroes.push_back(Monster( 24, 12, "pyromancer",         FIRE,  COMMON,    {PROTECT,       FIRE, FIRE, 2}, 16, 8, 8, 2, {ARMOR, 0.05}));
+    baseHeroes.push_back(Monster( 50,  6, "bewat",              WATER, COMMON,    {PROTECT,       WATER, WATER, 2}, 31, 10, 16, 2, {ARMOR, 0.05}));
+    baseHeroes.push_back(Monster( 22, 14, "hunter",             AIR,   COMMON,    {BUFF,          AIR, AIR, 2}, 14, 12, 11, 2, {DAMAGE, 0.05}));
+    baseHeroes.push_back(Monster( 40, 20, "shaman",             EARTH, RARE,      {PROTECT,       EARTH, EARTH , 3}, 36, 16, 25, 3, {ARMOR, 0.11}));
+    baseHeroes.push_back(Monster( 82, 22, "alpha",              FIRE,  LEGENDARY, {AOE,           ALL, FIRE, 2}, 115, 37, 75, 5, {ANTIMAGIC, 0.15}));
+    baseHeroes.push_back(Monster( 28, 12, "carl",               WATER, COMMON,    {BUFF,          WATER, WATER , 2}, 18, 5, 12, 2, {DAMAGE, 0.05}));
+    baseHeroes.push_back(Monster( 38, 22, "nimue",              AIR,   RARE,      {PROTECT,       AIR, AIR, 3}, 49, 19, 12, 3, {ARMOR, 0.11}));
+    baseHeroes.push_back(Monster( 70, 26, "athos",              EARTH, LEGENDARY, {PROTECT,       ALL, EARTH, 4}, 70, 32, 96, 6, {ARMOR, 0.21}));
+    baseHeroes.push_back(Monster( 24, 16, "jet",                FIRE,  COMMON,    {BUFF,          FIRE, FIRE, 2}, 11, 9, 12, 2, {DAMAGE, 0.05}));
+    baseHeroes.push_back(Monster( 36, 24, "geron",              WATER, RARE,      {PROTECT,       WATER, WATER, 3}, 27, 11, 28, 3, {ARMOR, 0.11}));
+    baseHeroes.push_back(Monster( 46, 40, "rei",                AIR,   LEGENDARY, {BUFF,          ALL, AIR, 5}, 79, 67, 89, 10, {DAMAGE, 0.21}));
+    baseHeroes.push_back(Monster( 19, 22, "ailen",              EARTH, COMMON,    {BUFF,          EARTH, EARTH, 2}, 21, 17, 12, 2, {DAMAGE, 0.05}));
+    baseHeroes.push_back(Monster( 50, 18, "faefyr",             FIRE,  RARE,      {PROTECT,       FIRE, FIRE, 3}, 53, 17, 19, 3, {ARMOR, 0.11}));
+    baseHeroes.push_back(Monster( 60, 32, "auri",               WATER, LEGENDARY, {HEAL,          ALL, WATER, 4}, 70, 74, 23, 4, {TANK, 0.15}));
+    baseHeroes.push_back(Monster( 22, 32, "nicte",              AIR,   RARE,      {BUFF,          AIR, AIR, 4}, 21, 43, 24, 4, {DAMAGE, 0.11}));
+    baseHeroes.push_back(Monster( 50, 12, "james",              EARTH, LEGENDARY, {VALKYRIE,      ALL, EARTH, 0.75f}, 103, 111, 41, 0.1, {HEALPLUS, 0.15}));
+    baseHeroes.push_back(Monster( 28, 16, "k41ry",              AIR,   COMMON,    {BUFF,          AIR, AIR, 3}, 19, 14, 19, 3, {DAMAGE, 0.05}));
+    baseHeroes.push_back(Monster( 46, 20, "t4urus",             EARTH, RARE,      {BUFF,          ALL, EARTH, 2}, 28, 20, 30, 2, {DAMAGE, 0.11}));
+    baseHeroes.push_back(Monster(100, 20, "tr0n1x",             FIRE,  LEGENDARY, {AOE,           ALL, FIRE, 3}, 107, 44, 35, 6, {ANTIMAGIC, 0.15}));
+    baseHeroes.push_back(Monster( 58,  8, "aquortis",           WATER, COMMON,    {BUFF,          WATER, WATER, 3}, 28, 18, 18, 3, {DAMAGE, 0.05}));
+    baseHeroes.push_back(Monster( 30, 32, "aeris",              AIR,   RARE,      {HEAL,          ALL, AIR, 2}, 20, 36, 28, 2, {TANK, 0.1}));
+    baseHeroes.push_back(Monster( 75,  2, "geum",               EARTH, LEGENDARY, {BERSERK,       SELF, EARTH, 2}, 213, 8, 22, 0.2, {ANGEL, 0.01}));
+    baseHeroes.push_back(Monster( 46, 16, "forestdruid",        EARTH, RARE,      {BUFF,          EARTH, EARTH, 4}, 38, 16, 19, 4, {DAMAGE, 0.11}));
+    baseHeroes.push_back(Monster( 32, 24, "ignitor",            FIRE,  RARE,      {BUFF,          FIRE, FIRE, 4}, 24, 22, 23, 4, {DAMAGE, 0.11}));
+    baseHeroes.push_back(Monster( 58, 14, "undine",             WATER, RARE,      {BUFF,          WATER, WATER, 4}, 25, 7, 15, 4, {DAMAGE, 0.11}));
+    baseHeroes.push_back(Monster( 38, 12, "rudean",             FIRE,  COMMON,    {BUFF,          FIRE, FIRE, 3}, 19, 14, 10, 3, {DAMAGE, 0.05}));
+    baseHeroes.push_back(Monster( 18, 50, "aural",              WATER, RARE,      {BERSERK,       SELF, WATER, 1.2f}, 33, 31, 28, 0.12, {AFFINITY, 0.1}));
+    baseHeroes.push_back(Monster( 46, 46, "geror",              AIR,   LEGENDARY, {FRIENDS,       SELF, AIR, 1.2f}, 95, 125, 36, 0.12, {ANGEL, 0.2}));
+    baseHeroes.push_back(Monster( 66, 44, "veildur",            EARTH, LEGENDARY, {CHAMPION,      ALL, EARTH, 3}, 98, 42, 51, 3, {HEALPLUS, 0.17}));
+    baseHeroes.push_back(Monster( 72, 48, "brynhildr",          AIR,   LEGENDARY, {CHAMPION,      ALL, AIR, 4}, 84, 56, 59, 4, {HEALPLUS, 0.17}));
+    baseHeroes.push_back(Monster( 78, 52, "groth",              FIRE,  LEGENDARY, {CHAMPION,      ALL, FIRE, 5}, 114, 70, 62, 5, {HEALPLUS, 0.18}));
+    baseHeroes.push_back(Monster( 30, 16, "ourea",              EARTH, COMMON,    {BUFF,          EARTH, EARTH, 3}, 17, 8, 8, 3, {DAMAGE, 0.05}));
+    baseHeroes.push_back(Monster( 48, 20, "erebus",             FIRE,  RARE,      {CHAMPION,      FIRE, FIRE, 2}, 55, 18, 20, 2, {HEALPLUS, 0.1}));
+    baseHeroes.push_back(Monster( 62, 36, "pontus",             WATER, LEGENDARY, {ADAPT,         WATER, WATER, 2}, 121, 43, 79, 0.2, {DPS, 0.14}));
+    baseHeroes.push_back(Monster( 52, 20, "chroma",             AIR,   RARE,      {PROTECT,       AIR, AIR, 4}, 23, 15, 15, 4, {ARMOR, 0.11}));
+    baseHeroes.push_back(Monster( 26, 44, "petry",              EARTH, RARE,      {PROTECT,       EARTH, EARTH, 4}, 18, 16, 28, 4, {ARMOR, 0.11}));
+    baseHeroes.push_back(Monster( 58, 22, "zaytus",             FIRE,  RARE,      {PROTECT,       FIRE, FIRE, 4}, 57, 12, 16, 4, {ARMOR, 0.11}));
+    baseHeroes.push_back(Monster( 75, 45, "spyke",              AIR,   LEGENDARY, {TRAINING,      SELF, AIR, 10}, 112, 43, 73, 10, {DAMAGE, 0.23}));
+    baseHeroes.push_back(Monster( 70, 55, "aoyuki",             WATER, LEGENDARY, {RAINBOW,       SELF, WATER, 100}, 75, 121, 66, 100, {ANGEL, 0.2}));
+    baseHeroes.push_back(Monster( 75,150, "gaiabyte",           EARTH, LEGENDARY, {WITHER,        SELF, EARTH, 2}, 151, 84, 52, 2, {HEALPLUS, 0.18}));
+    baseHeroes.push_back(Monster( 36, 14, "oymos",              AIR,   COMMON,    {BUFF,          AIR, AIR, 4}, 24, 15, 21, 4, {DAMAGE, 0.05}));
+    baseHeroes.push_back(Monster( 32, 32, "xarth",              EARTH, RARE,      {CHAMPION,      EARTH, EARTH, 2}, 23, 25, 19, 2, {HEALPLUS, 0.1}));
+    baseHeroes.push_back(Monster( 76, 32, "atzar",              FIRE,  LEGENDARY, {ADAPT,         FIRE, FIRE, 2}, 85, 28, 48, 0.2, {DPS, 0.13}));
+    baseHeroes.push_back(Monster( 70, 42, "zeth",               WATER, LEGENDARY, {REVENGE,       ALL, WATER, 0.1f}, 127, 76, 24, 0.1, {AFFINITY, 0.15}));
+    baseHeroes.push_back(Monster( 76, 46, "koth",               EARTH, LEGENDARY, {REVENGE,       ALL, EARTH, 0.15f}, 99, 39, 70, 0.1, {AFFINITY, 0.15}));
+    baseHeroes.push_back(Monster( 82, 50, "gurth",              AIR,   LEGENDARY, {REVENGE,       ALL, AIR, 0.2f}, 108, 43, 68, 0.1, {AFFINITY, 0.15}));
+    baseHeroes.push_back(Monster( 35, 25, "werewolf",           EARTH, COMMON,    {PROTECT_L,     ALL, EARTH, 0.1112f}, 23, 28, 19, 0.0202, {ARMOR, 0.05}));
+    baseHeroes.push_back(Monster( 55, 35, "jackoknight",        AIR,   RARE,      {BUFF_L,        ALL, AIR, 0.1112f}, 50, 13, 38, 0.0202, {DPS, 0.08}));
+    baseHeroes.push_back(Monster( 75, 45, "dullahan",           FIRE,  LEGENDARY, {CHAMPION_L,    ALL, FIRE, 0.1112f}, 114, 45, 65, 0.0404, {AFFINITY, 0.15}));
+    baseHeroes.push_back(Monster( 36, 36, "ladyodelith",        WATER, RARE,      {PROTECT,       WATER, WATER, 4}, 19, 17, 29, 4, {ARMOR, 0.11}));
+    baseHeroes.push_back(Monster( 34, 54, "shygu",              AIR,   LEGENDARY, {PROTECT_L,     AIR, AIR, 0.1112f}, 62, 68, 71, 0.0202, {ARMOR, 0.21}));
+    baseHeroes.push_back(Monster( 72, 28, "thert",              EARTH, LEGENDARY, {PROTECT_L,     EARTH, EARTH, 0.1112f}, 61, 44, 69, 0.0202, {ARMOR, 0.22}));
+    baseHeroes.push_back(Monster( 32, 64, "lordkirk",           FIRE,  LEGENDARY, {PROTECT_L,     FIRE, FIRE, 0.1112f}, 77, 99, 83, 0.0202, {ARMOR, 0.22}));
+    baseHeroes.push_back(Monster( 30, 70, "neptunius",          WATER, LEGENDARY, {PROTECT_L,     WATER, WATER, 0.1112f}, 92, 73, 83, 0.0202, {ARMOR, 0.22}));
+    baseHeroes.push_back(Monster( 65, 12, "sigrun",             FIRE,  LEGENDARY, {VALKYRIE,      ALL, FIRE, 0.5f}, 132, 29, 61, 0.15, {HEALPLUS, 0.17}));
+    baseHeroes.push_back(Monster( 70, 14, "koldis",             WATER, LEGENDARY, {VALKYRIE,      ALL, WATER, 0.5f}, 173, 32, 46, 0.15, {HEALPLUS, 0.17}));
+    baseHeroes.push_back(Monster( 75, 16, "alvitr",             EARTH, LEGENDARY, {VALKYRIE,      ALL, EARTH, 0.5f}, 152, 50, 56, 0.15, {HEALPLUS, 0.18}));
+    baseHeroes.push_back(Monster( 30, 18, "hama",               WATER, COMMON,    {BUFF,          WATER, WATER, 4}, 21, 10, 7, 4, {DAMAGE, 0.05}));
+    baseHeroes.push_back(Monster( 34, 34, "hallinskidi",        AIR,   RARE,      {CHAMPION,      AIR, AIR, 2}, 17, 54, 20, 2, {HEALPLUS, 0.1}));
+    baseHeroes.push_back(Monster( 60, 42, "rigr",               EARTH, LEGENDARY, {ADAPT,         EARTH, EARTH, 2}, 68, 21, 93, 0.2, {DPS, 0.14}));
+    baseHeroes.push_back(Monster(174, 46, "aalpha",             FIRE,  ASCENDED,  {AOE_L,         ALL, FIRE, 0.304f}, 251, 98, 92, 0.0304, {DAMAGE, 0.36}));
+    baseHeroes.push_back(Monster(162, 60, "aathos",             EARTH, ASCENDED,  {PROTECT_L,     ALL, EARTH, 0.304f}, 281, 57, 76, 0.0304, {ARMOR, 0.37}));
+    baseHeroes.push_back(Monster(120,104, "arei",               AIR,   ASCENDED,  {BUFF_L,        ALL, AIR, 0.304f}, 167, 86, 176, 0.1414, {DPS, 0.25}));
+    baseHeroes.push_back(Monster(148, 78, "aauri",              WATER, ASCENDED,  {HEAL_L,        ALL, WATER, 0.152f}, 151, 221, 59, 0.0152, {TANK, 0.2}));
+    baseHeroes.push_back(Monster(190, 38, "atr0n1x",            FIRE,  ASCENDED,  {VALKYRIE,      ALL, FIRE, 0.75f}, 383, 56, 25, 0.05, {HEALPLUS, 0.34}));
+    baseHeroes.push_back(Monster(222,  8, "ageum",              EARTH, ASCENDED,  {BERSERK,       SELF, EARTH, 2}, 348, 35, 16, 0.2, {ANGEL, 0.01}));
+    baseHeroes.push_back(Monster(116,116, "ageror",             AIR,   ASCENDED,  {FRIENDS,       SELF, AIR, 1.3f}, 173, 22, 153, 0.13, {ANGEL, 0.1}));
+    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 113, "lordofchaos", FIRE, WORLDBOSS, {AOE,      ALL, FIRE, 50}, 30, 20, 0.1, 10, {NONE, 0}));
+    baseHeroes.push_back(Monster( 38, 24, "christmaself",       WATER, COMMON,    {HEAL_L,        ALL, WATER, 0.1112f}, 28, 34, 22, 0.0202, {TANK, 0.05}));
+    baseHeroes.push_back(Monster( 54, 36, "reindeer",           AIR,   RARE,      {AOE_L,         ALL, AIR, 0.1112f}, 53, 18, 33, 0.0202, {DAMAGE, 0.11}));
+    baseHeroes.push_back(Monster( 72, 48, "santaclaus",         FIRE,  LEGENDARY, {LIFESTEAL_L,   ALL, FIRE, 0.1112f}, 107, 96, 78, 0.0404, {TANK, 0.15}));
+    baseHeroes.push_back(Monster( 44, 44, "sexysanta",          EARTH, RARE,      {VALKYRIE,      ALL, EARTH, 0.66f}, 27, 41, 40, 0.05, {HEALPLUS, 0.1}));
+    baseHeroes.push_back(Monster( 24, 24, "toth",               FIRE,  COMMON,    {BUFF,          FIRE, FIRE, 4}, 18, 32, 16, 4, {DAMAGE, 0.05}));
+    baseHeroes.push_back(Monster( 40, 30, "ganah",              WATER, RARE,      {CHAMPION,      WATER, WATER, 2}, 29, 26, 43, 2, {HEALPLUS, 0.1}));
+    baseHeroes.push_back(Monster( 58, 46, "dagda",              AIR,   LEGENDARY, {ADAPT,         AIR, AIR, 2}, 79, 78, 123, 0.2, {DPS, 0.15}));
+    baseHeroes.push_back(Monster(300,110, "bubbles",            WATER, ASCENDED,  {DAMPEN_L,      ALL, WATER, 0.0050f}, 291, 120, 58, 0.0005, {ANTIMAGIC, 0.2}));
+    baseHeroes.push_back(Monster(150, 86, "apontus",            WATER, ASCENDED,  {ADAPT,         WATER, WATER, 3}, 124, 211, 190, 0.3, {DPS, 0.24}));
+    baseHeroes.push_back(Monster(162, 81, "aatzar",             FIRE,  ASCENDED,  {ADAPT,         FIRE, FIRE, 3}, 333, 76, 86, 0.3, {DPS, 0.23}));
+    baseHeroes.push_back(Monster( 74, 36, "arshen",             AIR,   LEGENDARY, {TRAMPLE,       ALL, AIR, 1}, 83, 44, 28, 0.05, {HEALPLUS, 0.17}));
+    baseHeroes.push_back(Monster( 78, 40, "rua",                FIRE,  LEGENDARY, {TRAMPLE,       ALL, FIRE, 1}, 88, 44, 37, 0.05, {HEALPLUS, 0.18}));
+    baseHeroes.push_back(Monster( 82, 44, "dorth",              WATER, LEGENDARY, {TRAMPLE,       ALL, WATER, 1}, 90, 38, 40, 0.05, {HEALPLUS, 0.18}));
+    baseHeroes.push_back(Monster(141, 99, "arigr",              EARTH, ASCENDED,  {ADAPT,         EARTH, EARTH, 3}, 138, 121, 163, 0.3, {DPS, 0.25}));
+    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 191, "motherofallkodamas", EARTH, WORLDBOSS, {DAMPEN,        ALL, EARTH, 0.5}, 30, 20, 0.1, 10, {NONE, 0}));
+    baseHeroes.push_back(Monster( 42, 50, "hosokawa",           AIR,   LEGENDARY, {BUFF_L,        AIR, AIR, 0.1112f}, 108, 115, 74, 0.0202, {DPS, 0.15}));
+    baseHeroes.push_back(Monster( 32, 66, "takeda",             EARTH, LEGENDARY, {BUFF_L,        EARTH, EARTH, 0.1112f}, 83, 82, 45, 0.0202, {DPS, 0.17}));
+    baseHeroes.push_back(Monster( 38, 56, "hirate",             FIRE,  LEGENDARY, {BUFF_L,        FIRE, FIRE, 0.1112f}, 53, 133, 44, 0.0202, {DPS, 0.16}));
+    baseHeroes.push_back(Monster( 44, 48, "hattori",            WATER, LEGENDARY, {BUFF_L,        WATER, WATER, 0.1112f}, 65, 74, 64, 0.0202, {DPS, 0.15}));
+    baseHeroes.push_back(Monster(135, 107,"adagda",             AIR,   ASCENDED,  {ADAPT,         AIR, AIR, 3}, 208, 78, 322, 0.3, {DPS, 0.26}));
+    baseHeroes.push_back(Monster( 30, 20, "bylar",              EARTH, COMMON,    {BUFF,          EARTH, EARTH, 4}, 18, 6, 15, 4, {DAMAGE, 0.05}));
+    baseHeroes.push_back(Monster( 36, 36, "boor",               FIRE,  RARE,      {TRAINING,      SELF, FIRE, 3}, 19, 49, 20, 3, {DAMAGE, 0.11}));
+    baseHeroes.push_back(Monster( 52, 52, "bavah",              WATER, LEGENDARY, {CHAMPION,      ALL, WATER, 4}, 84, 92, 43, 5, {HEALPLUS, 0.15}));
+    baseHeroes.push_back(Monster( 75, 25, "leprechaun",         EARTH, LEGENDARY, {BEER,          ALL, EARTH, 0}, 59, 13, 13, 1, {ANTIMAGIC, 0.15}));
+    baseHeroes.push_back(Monster( 30, 30, "sparks",             FIRE,  COMMON,    {GROW,          ALL, FIRE, 2}, 29, 29, 15, 0.2, {AFFINITY, 0.05}));
+    baseHeroes.push_back(Monster( 48, 42, "leaf",               EARTH, RARE,      {GROW,          ALL, EARTH, 2}, 35, 57, 26, 0.2, {AFFINITY, 0.1}));
+    baseHeroes.push_back(Monster( 70, 48, "flynn",              AIR,   LEGENDARY, {GROW,          ALL, AIR, 2}, 46, 93, 69, 0.2, {AFFINITY, 0.15}));
+    baseHeroes.push_back(Monster(122,122, "abavah",             WATER, ASCENDED,  {CHAMPION_L,    ALL, ALL, 0.152f}, 217, 152, 145, 0.0152, {AFFINITY, 0.2}));
+    baseHeroes.push_back(Monster( 66, 60, "drhawking",          AIR,   LEGENDARY, {AOEZERO_L,     ALL, AIR, 1}, 94, 136, 70, 0.3, {ANTIMAGIC, 0.15}));
+    baseHeroes.push_back(Monster(150, 90, "masterlee",          AIR,   ASCENDED,  {COUNTER,       AIR, AIR, 0.5f}, 314, 290, 225, 0.05, {ANGEL, 0.1}));
+    baseHeroes.push_back(Monster( 70, 38, "kumusan",            FIRE,  LEGENDARY, {COUNTER,       FIRE, FIRE, 0.2f}, 134, 132, 135, 0.05, {ANGEL, 0.2}));
+    baseHeroes.push_back(Monster( 78, 42, "liucheng",           WATER, LEGENDARY, {COUNTER,       WATER, WATER, 0.25f}, 149, 111, 80, 0.05, {ANGEL, 0.2}));
+    baseHeroes.push_back(Monster( 86, 44, "hidoka",             EARTH, LEGENDARY, {COUNTER,       EARTH, EARTH, 0.3f}, 144, 172, 61, 0.05, {ANGEL, 0.2}));
+    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 11, "kryton", AIR,  WORLDBOSS, {TRAINING,      SELF, AIR, 10}, 20, 20, 30, 0.1, {NONE, 0}));
+    baseHeroes.push_back(Monster( 25, 26, "dicemaster",         WATER, COMMON,    {DICE,          SELF, SELF, 20}, 19, 36, 12, 20, {HEALPLUS, 0.1}));
+    baseHeroes.push_back(Monster( 28, 60, "luxuriusmaximus",    FIRE,  RARE,      {LUX,           SELF, EARTH, 1}, 44, 47, 29, 1, {DPS, 0.11}));
+    baseHeroes.push_back(Monster( 70, 70, "pokerface",          EARTH, LEGENDARY, {CRIT,          EARTH, EARTH, 3}, 119, 211, 111, 0.3, {DAMAGE, 0.24}));
+    baseHeroes.push_back(Monster( 25, 25, "taint",              AIR,   COMMON,    {VALKYRIE,      ALL, AIR, 0.5f}, 13, 4, 21, 0.05, {HEALPLUS, 0.1}));
+    baseHeroes.push_back(Monster( 48, 50, "putrid",             EARTH, RARE,      {TRAINING,      SELF, EARTH, -3}, 51, 93, 50, 1, {DAMAGE, 0.12}));
+    baseHeroes.push_back(Monster( 52, 48, "defile",             FIRE,  LEGENDARY, {EXPLODE,       ALL, FIRE, 50}, 60, 138, 72, 50, {ARMOR, 0.22}));
+    baseHeroes.push_back(Monster(150, 15, "neil",               WATER, LEGENDARY, {ABSORB,        SELF, WATER, 0.3}, 244, 20, 23, 0.05, {TANK, 0.15}));
+    baseHeroes.push_back(Monster( 78, 26, "mahatma",            AIR,   LEGENDARY, {HATE,          WATER, AIR, 0.75}, 56, 19, 85, 0.5, {DPS, 0.13}));
+    baseHeroes.push_back(Monster( 76, 30, "jade",               EARTH, LEGENDARY, {HATE,          AIR, EARTH, 0.75}, 45, 37, 91, 0.5, {DPS, 0.13}));
+    baseHeroes.push_back(Monster( 72, 36, "edana",              FIRE,  LEGENDARY, {HATE,          EARTH, FIRE, 0.75}, 91, 46, 66, 0.5, {DPS, 0.14}));
+    baseHeroes.push_back(Monster( 80, 30, "dybbuk",             WATER, LEGENDARY, {HATE,          FIRE, WATER, 0.75}, 65, 43, 63, 0.5, {DPS, 0.13}));
+    baseHeroes.push_back(Monster( 85, 135, "ashygu",            AIR,   ASCENDED,  {PROTECT_L,     AIR, AIR, 0.1819f}, 148, 113, 217, 0.01819, {ARMOR, 0.39}));
+    baseHeroes.push_back(Monster( 180, 70, "athert",            EARTH, ASCENDED,  {PROTECT_L,     EARTH, EARTH, 0.1819f}, 346, 67, 76, 0.01819, {ARMOR, 0.39}));
+    baseHeroes.push_back(Monster( 80, 160, "alordkirk",         FIRE,  ASCENDED,  {PROTECT_L,     FIRE, FIRE, 0.1819f}, 215, 255, 87, 0.01819, {ARMOR, 0.4}));
+    baseHeroes.push_back(Monster( 75, 175, "aneptunius",        WATER, ASCENDED,  {PROTECT_L,     WATER, WATER, 0.1819f}, 335, 201, 241, 0.01819, {ARMOR, 0.4}));
+    baseHeroes.push_back(Monster( 106,124, "ahosokawa",         AIR,   ASCENDED,  {BUFF_L,        AIR, AIR, 0.1819f}, 229, 423, 207, 0.01819, {DPS, 0.27}));
+    baseHeroes.push_back(Monster( 82, 164, "atakeda",           EARTH, ASCENDED,  {BUFF_L,        EARTH, EARTH, 0.1819f}, 252, 425, 66, 0.01819, {DPS, 0.31}));
+    baseHeroes.push_back(Monster( 96, 144, "ahirate",           FIRE,  ASCENDED,  {BUFF_L,        FIRE, FIRE, 0.1819f}, 199, 193, 119, 0.01819, {DPS, 0.29}));
+    baseHeroes.push_back(Monster( 114,126, "ahattori",          WATER, ASCENDED,  {BUFF_L,        WATER, WATER, 0.1819f}, 218, 167, 138, 0.01819, {DPS, 0.28}));
+    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 175, "doyenne", WATER, WORLDBOSS, {DODGE,      ALL, ALL, 15000}, 30, 20, 0.1, 10, {NONE, 0}));
+    baseHeroes.push_back(Monster( 30, 40, "billy",              EARTH, COMMON,    {DEATHSTRIKE,   ALL, EARTH, 100}, 43, 30, 24, 25, {DPS, 0.05}));
+    baseHeroes.push_back(Monster( 88, 22, "sanqueen",           WATER, RARE,      {LEECH,         SELF, WATER, 0.8}, 71, 8, 16, 0.08, {TANK, 0.1}));
+    baseHeroes.push_back(Monster(150, 60, "cliodhna",           AIR,   LEGENDARY, {EVOLVE,        SELF, AIR, 1}, 193, 240, 78, 0.1, {HEALPLUS, 0.25}));
+    baseHeroes.push_back(Monster( 340, 64, "guy",               FIRE,  ASCENDED,  {COUNTER_MAX_HP, FIRE, FIRE, 1}, 160, 121, 115, 0.1, {DAMAGE, 0.46}));
+    baseHeroes.push_back(Monster( 126,114, "adefile",           FIRE,  ASCENDED,  {EXPLODE_L,       ALL, FIRE, 7}, 126, 122, 114, 2, {DAMAGE, 0.41}));
+    baseHeroes.push_back(Monster(186, 62, "raiderrose",         EARTH, ASCENDED,  {EXECUTE,       EARTH, EARTH, 0.6}, 353, 32, 476, 0.05, {ARMOR, 0.39}));
+    baseHeroes.push_back(Monster( 96, 30, "buccaneerbeatrice",  WATER, LEGENDARY, {EXECUTE,       WATER, WATER, 0.3}, 66, 32, 66, 0.05, {ARMOR, 0.22}));
+    baseHeroes.push_back(Monster(100, 32, "corsaircharles",     AIR,   LEGENDARY, {EXECUTE,       AIR, AIR, 0.35}, 87, 21, 64, 0.05, {ARMOR, 0.22}));
+    baseHeroes.push_back(Monster(105, 34, "maraudermagnus",     FIRE,  LEGENDARY, {EXECUTE,       FIRE, FIRE, 0.4}, 175, 67, 71, 0.05, {ARMOR, 0.23}));
+    baseHeroes.push_back(Monster( 46, 52, "frosty",             WATER, RARE,      {RESISTANCE_L,   ALL, WATER, 0.03f}, 51, 69, 16, 0.003, {ARMOR, 0.12}));
+    baseHeroes.push_back(Monster( 50, 18, "fir",                EARTH, COMMON,    {AOEREFLECT_L,   ALL, EARTH, 0.004f}, 33, 5, 11, 0.0004, {ARMOR, 0.05}));
+    baseHeroes.push_back(Monster( 78, 34, "5-12-6",             AIR,   RARE,      {HPPIERCE_L,     ALL, AIR, 0.03f}, 42, 37, 39, 0.003, {ANTIMAGIC, 0.1}));
+    baseHeroes.push_back(Monster(170, 18, "kedari",             FIRE,  LEGENDARY, {SACRIFICE_L,    ALL, FIRE, 2}, 133, 19, 25, 0.2, {TANK, 0.15}));
+    baseHeroes.push_back(Monster( 18, 26, "raze",               WATER, COMMON,    {TRAMPLE,       ALL, WATER, 0.7}, 8, 9, 14, 0.05, {HEALPLUS, 0.1}));
+    baseHeroes.push_back(Monster( 44, 48, "ruin",               AIR,   RARE,      {REVENGE,       ALL, AIR, 0.1}, 23, 61, 23, 0.05, {AFFINITY, 0.1}));
+    baseHeroes.push_back(Monster( 48, 54, "seethe",             EARTH, LEGENDARY, {POSBONUS,      SELF, EARTH, 15}, 57, 178, 53, 15, {AFFINITY, 0.15}));
+    baseHeroes.push_back(Monster(117,131, "aseethe",            EARTH, ASCENDED,  {POSBONUS_L,      SELF, EARTH, 0.45}, 90, 117, 124, 0.11, {AFFINITY, 0.2}));
+    baseHeroes.push_back(Monster( 54, 54, "blossom",            EARTH, LEGENDARY, {DEATHBUFF,       ALL, EARTH, 0.10}, 99, 99, 144, 0.01, {ANGEL, 0.2}));
+    baseHeroes.push_back(Monster( 56, 56, "flint",              FIRE,  LEGENDARY, {DEATHBUFF,       ALL, FIRE,  0.11}, 100, 100, 150, 0.01, {ANGEL, 0.2}));
+    baseHeroes.push_back(Monster( 58, 58, "orin",               AIR,   LEGENDARY, {DEATHBUFF,       ALL, AIR,   0.12}, 101, 101, 156, 0.01, {ANGEL, 0.2}));
+    baseHeroes.push_back(Monster(130,130, "aurora",             WATER, ASCENDED,  {DEATHBUFF,       ALL, WATER, 0.15}, 221, 221, 344, 0.01, {ANGEL, 0.1}));
+    baseHeroes.push_back(Monster(220, 20, "cupid",              AIR,   LEGENDARY, {TRAMPLE,         ALL, AIR, 3}, 150, 50, 110, 1, {HEALPLUS, 0.32}));
+    baseHeroes.push_back(Monster( 22, 22, "transient",          ALL,   COMMON,    {VOID,       ALL, ALL, 0.5}, 11, 11, 20, 0.1, {ANGEL, 0.4}));
+    baseHeroes.push_back(Monster( 34, 34, "maunder",            ALL,   RARE,      {VOID,       ALL, ALL, 0.5}, 22, 22, 32, 0.1, {ANGEL, 0.3}));
+    baseHeroes.push_back(Monster( 50, 50, "thewanderer",        ALL,   LEGENDARY, {VOID,       ALL, ALL, 0.5}, 80, 80, 120, 0.1, {ANGEL, 0.2}));
+    baseHeroes.push_back(Monster(100, 40, "b-day",              AIR,   LEGENDARY, {AOELAST,    ALL, AIR, 0.1}, 61, 51, 49, 0.05, {HEALPLUS, 0.2}));
+    baseHeroes.push_back(Monster( 44, 22, "cloud",              AIR,   COMMON,    {SADISM,     ALL, AIR,   0.95}, 36, 32, 11, 0.05, {ANTIMAGIC, 0.05}));
+    baseHeroes.push_back(Monster( 64, 32, "ember",              FIRE,  RARE,      {SADISM,     ALL, FIRE,  0.95}, 34, 14, 19, 0.05, {ANTIMAGIC, 0.1}));
+    baseHeroes.push_back(Monster( 84, 42, "riptide",            WATER, LEGENDARY, {SADISM,     ALL, WATER, 0.95}, 89, 34, 22, 0.05, {ANTIMAGIC, 0.15}));
+    baseHeroes.push_back(Monster(180, 90, "spike",              EARTH, ASCENDED,  {SADISM,     ALL, EARTH, 0.95}, 234, 103, 136, 0.05, {ANTIMAGIC, 0.2}));
+    baseHeroes.push_back(Monster(180, 60, "amahatma",           AIR,   ASCENDED,  {HATE,       WATER, AIR,   1.7}, 241, 50, 195, 0.3, {DPS, 0.21}));
+    baseHeroes.push_back(Monster(172, 68, "ajade",              EARTH, ASCENDED,  {HATE,       AIR,   EARTH, 1.7}, 288, 41, 144, 0.3, {DPS, 0.22}));
+    baseHeroes.push_back(Monster(160, 80, "aedana",             FIRE,  ASCENDED,  {HATE,       EARTH, FIRE,  1.7}, 191, 180, 99, 0.3, {DPS, 0.23}));
+    baseHeroes.push_back(Monster(176, 66, "adybbuk",            WATER, ASCENDED,  {HATE,       FIRE,  WATER, 1.7}, 272, 55, 169, 0.3, {DPS, 0.22}));
+    baseHeroes.push_back(Monster( 30, 38, "willow",             AIR,   COMMON,    {SELFHEAL,    SELF,  AIR,   0.2}, 22, 19, 24, 0.2, {ARMOR, 0.05}));
+    baseHeroes.push_back(Monster( 70, 40, "gizmo",              FIRE,  RARE,      {COURAGE,     SELF,  FIRE,  3}, 43, 26, 52, 1, {DPS, 0.09}));
+    baseHeroes.push_back(Monster( 84, 50, "daisy",              WATER, LEGENDARY, {EASTER,     ALL,   WATER, 2.5}, 50, 84, 70, 0.5, {DAMAGE, 0.23}));
+    baseHeroes.push_back(Monster(120,200, "thumper",            EARTH, ASCENDED,  {SKILLDAMPEN, SELF,  EARTH, 0.6}, 230, 320, 360, 0.1, {AFFINITY, 0.2}));
+    baseHeroes.push_back(Monster( 40, 24, "bortles",            AIR,   COMMON,    {SHIELDME,    SELF,  AIR,   3}, 10, 13, 14, 3, {TANK, 0.05}));
+    baseHeroes.push_back(Monster( 40, 28, "murphy",             EARTH, RARE,      {FLATREF,     EARTH, EARTH, 60}, 24, 18, 28, 30, {HEALPLUS, 0.1}));
+    baseHeroes.push_back(Monster( 24, 82, "nerissa",            WATER, LEGENDARY, {RESISTANCE,  SELF,  WATER, 0.45}, 22, 45, 52, 0.05, {ARMOR, 0.21}));
+    baseHeroes.push_back(Monster(112, 55, "mother",             WATER, LEGENDARY, {HEALFIRST,   ALL,  WATER, 25}, 200, 120, 140, 5, {TANK, 0.15}));
+    baseHeroes.push_back(Monster( 48,164, "anerissa",           WATER, ASCENDED,  {RESISTANCE_L,SELF, WATER, 0.06}, 70, 112, 100, 0.006, {ARMOR, 0.36}));
+    baseHeroes.push_back(Monster( 51, 59, "agatha",             AIR,   LEGENDARY, {PERCBUFF,    ALL,  AIR,   0.1}, 76, 92, 74, 0.05, {AFFINITY, 0.15}));
+    baseHeroes.push_back(Monster( 52, 60, "ophelia",            EARTH, LEGENDARY, {PERCBUFF,    ALL,  EARTH, 0.15}, 78, 99, 75, 0.05, {AFFINITY, 0.15}));
+    baseHeroes.push_back(Monster( 53, 61, "helga",              WATER, LEGENDARY, {PERCBUFF,    ALL,  WATER, 0.2}, 84, 101, 82, 0.05, {AFFINITY, 0.15}));
+    baseHeroes.push_back(Monster(108,124, "minerva",            FIRE,  ASCENDED,  {PERCBUFF,    ALL,  FIRE,  0.25}, 204, 241, 256, 0.05, {AFFINITY, 0.2}));
+    baseHeroes.push_back(Monster(126,126, "awanderer",          ALL,   ASCENDED,  {VOID,        ALL,  ALL,   0.75}, 110, 110, 110, 0.1, {ANGEL, 0.1}));
+    baseHeroes.push_back(Monster( 76, 50, "tetra",              FIRE,  LEGENDARY, {BULLSHIT,       ALL,  FIRE,  1}, 154, 68, 68, 0.2, {ANGEL, 0.2}));
+    baseHeroes.push_back(Monster( 16, 28, "cathos",             EARTH, COMMON,    {SELFARMOR_CUBE, SELF, EARTH, 2}, 8, 16, 14, 1, {ANTIMAGIC, 0.05}));
+    baseHeroes.push_back(Monster( 42, 28, "catzar",             FIRE,  RARE,      {EXECUTE_CUBE,   ALL,  FIRE,  4}, 28, 10, 36, 1, {ANGEL, 0.3}));
+    baseHeroes.push_back(Monster( 80,  8, "crei",               AIR,   LEGENDARY, {AOEFIRST_CUBE,  ALL,  AIR,   4}, 112, 28, 26, 1, {DPS, 0.11}));
+    baseHeroes.push_back(Monster(210, 21, "acrei",              AIR,   ASCENDED,  {AOEFIRST_CUBE,  ALL,  AIR,   5}, 192, 34, 78, 1, {DPS, 0.17}));
+    baseHeroes.push_back(Monster( 75, 45, "smith",              EARTH, LEGENDARY, {TRIPLE,         ALL,  EARTH, 0.9}, 84, 47, 68, 0.1, {HEALPLUS, 0.18}));
+    baseHeroes.push_back(Monster( 32, 14, "mrcotton",           FIRE,  COMMON,    {ATTACKAOE,      ALL,  FIRE,  10}, 28, 7, 12, 5, {DAMAGE, 0.05}));
+    baseHeroes.push_back(Monster( 54, 20, "sharkjellyn",        WATER, RARE,      {FLATHEAL,       SELF, WATER, 30}, 44, 13, 15, 15, {ARMOR, 0.11}));
+    baseHeroes.push_back(Monster( 50, 50, "chocoknight",        EARTH, LEGENDARY, {HPAMPLIFY,      ALL,  EARTH, 0.4}, 72, 47, 82, 0.1, {HEALPLUS, 0.15}));
+    baseHeroes.push_back(Monster(124,124, "achocoknight",       EARTH, ASCENDED,  {HPAMPLIFY,      ALL,  EARTH, 0.55}, 98, 64, 104, 0.1, {HEALPLUS, 0.27}));
+    baseHeroes.push_back(Monster( 92,211, "lili",               FIRE,  ASCENDED,  {CONVERT,        ALL,  FIRE,  0.1}, 174, 535, 171, 0.01, {ANTIMAGIC, 0.2}));
+    baseHeroes.push_back(Monster(WORLDBOSS_HEALTH, 151, "bornag", ALL,  WORLDBOSS, {RESISTANCE,    SELF, ALL,   1}, 20, 20, 30, 0.1, {NONE, 0}));
+    baseHeroes.push_back(Monster( 53, 61, "thrace",             FIRE,  LEGENDARY, {BLOODLUST,      AIR,  AIR,   125}, 82, 131, 104, 25, {TANK, 0.15}));
+    baseHeroes.push_back(Monster( 55, 63, "scinda",             AIR,   LEGENDARY, {BLOODLUST,      AIR,  AIR,   150}, 78, 125, 116, 30, {TANK, 0.15}));
+    baseHeroes.push_back(Monster( 57, 65, "myrmillo",           EARTH, LEGENDARY, {BLOODLUST,      AIR,  AIR,   175}, 94, 141, 99, 35, {TANK, 0.15}));
+    baseHeroes.push_back(Monster(144,126, "retia",              WATER, ASCENDED,  {BLOODLUST,      AIR,  AIR,   350}, 246, 318, 338, 100, {TANK, 0.2}));
+    baseHeroes.push_back(Monster( 48,  4, "newt",               WATER, COMMON,    {FURY,           AIR,  AIR,   2}, 14, 1, 4, 0.5, {DAMAGE, 0.05}));
+    baseHeroes.push_back(Monster( 58,  6, "electra",            AIR,   RARE,      {FURY,           AIR,  AIR,   3}, 30, 4, 8, 1, {DAMAGE, 0.1}));
+    baseHeroes.push_back(Monster( 66,  6, "boson",              FIRE,  LEGENDARY, {FURY,           AIR,  AIR,   3}, 82, 20, 21, 1, {DAMAGE, 0.2}));
+    baseHeroes.push_back(Monster(210, 10, "higgs",              FIRE,  ASCENDED,  {FURY,           AIR,  AIR,   4}, 225, 24, 30, 1, {DAMAGE, 0.3}));
+    baseHeroes.push_back(Monster( 30, 28, "casper",             AIR,   COMMON,    {AOELIN,         AIR,  AIR,   2}, 14, 14, 20, 1, {ANTIMAGIC, 0.05}));
+    baseHeroes.push_back(Monster( 64, 20, "adrian",             FIRE,  RARE,      {AOELIN,         FIRE, FIRE,  5}, 32, 14, 28, 2, {ANTIMAGIC, 0.1}));
+    baseHeroes.push_back(Monster( 66, 66, "emily",              WATER, LEGENDARY, {WBIDEAL_L,      ALL,  WATER, 0.1112}, 258, 178, 104, 0.0202, {AFFINITY, 0.15}));
+    baseHeroes.push_back(Monster(200,100, "adam",               EARTH, ASCENDED,  {AOEHP,          EARTH,EARTH, 0.04}, 321, 93, 134, 0.01, {ARMOR, 0.45}));
+    baseHeroes.push_back(Monster( 32, 48, "yisus",              EARTH, RARE,      {FLATLEP_L,      EARTH,EARTH, 3}, 38, 18, 34, 1, {DPS, 0.1}));
+    baseHeroes.push_back(Monster( 32, 40, "galla",              FIRE,  COMMON,    {AOELOW_L,       FIRE, FIRE,  1}, 30, 22, 22, 0.5, {AFFINITY, 0.05}));
+    baseHeroes.push_back(Monster( 58, 58, "yetithepostman",     WATER, RARE,      {BUFFUP_L,       WATER,WATER, 4}, 40, 40, 40, 1, {TANK, 0.1}));
+    baseHeroes.push_back(Monster( 74, 74, "hans",               EARTH, LEGENDARY, {MORALE_L,        EARTH,EARTH, 3}, 200, 200, 180, 2, {DAMAGE, 0.24}));
+    baseHeroes.push_back(Monster(  5,250, "mechamary",          AIR,   ASCENDED,  {TURNDAMP_L,        AIR,  AIR,   0.08}, 12, 1080, 30, 0.01, {ARMOR, 0.3}));
 }
 
 void initIndices() {
@@ -1143,8 +1172,9 @@ void readBaseHeroes(std::vector<std::string>::iterator it, std::vector<std::stri
                                      (Element)stringToEnum[*(it+3)], (HeroRarity)stringToEnum[*(it+4)],
                                      {(SkillType)stringToEnum[*(it+5)], (Element)stringToEnum[*(it+6)],
                                      (Element)stringToEnum[*(it+7)], std::stod(*(it+8))},
-                                     std::stoi(*(it+9)), std::stoi(*(it+10)), std::stoi(*(it+11)), std::stod(*(it+12))));
-        it += 13;
+                                     std::stoi(*(it+9)), std::stoi(*(it+10)), std::stoi(*(it+11)), std::stod(*(it+12)),
+                                     {(PassiveType)stringToEnum[*(it+13)], std::stod(*(it+14))}));
+        it += 15;
     }
 }
 

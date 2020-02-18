@@ -74,8 +74,10 @@ class ArmyCondition {
         int64_t remainingHealths[ARMY_MAX_SIZE];
         int64_t maxHealths[ARMY_MAX_SIZE];
         SkillType skillTypes[ARMY_MAX_SIZE];
+        PassiveType passiveTypes[ARMY_MAX_SIZE];
         Element skillTargets[ARMY_MAX_SIZE];
         double skillAmounts[ARMY_MAX_SIZE];
+        double passiveAmounts[ARMY_MAX_SIZE];
 
         bool rainbowConditions[ARMY_MAX_SIZE]; // for rainbow ability
         //int pureMonsters[ARMY_MAX_SIZE]; // for friends ability
@@ -122,6 +124,7 @@ inline int64_t getTurnSeed(int64_t seed, int turncounter) {
 // extract and extrapolate all necessary data from an army
 inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, const int aoeDamage) {
     HeroSkill * skill;
+    HeroPassive * passive;
 
     int tempRainbowCondition = 0;
     int tempPureMonsters = 0;
@@ -148,9 +151,12 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         lineup[i] = &monsterReference[army.monsters[i]];
 
         skill = &(lineup[i]->skill);
+        passive = &(lineup[i]->passive);
         skillTypes[i] = skill->skillType;
         skillTargets[i] = skill->target;
         skillAmounts[i] = skill->amount;
+        passiveTypes[i] = passive->passiveType;
+        passiveAmounts[i] = passive->amount;
         remainingHealths[i] = lineup[i]->hp - aoeDamage * ((skill->skillType == SKILLDAMPEN) ? (1 - skill->amount) : 1);
         furyArray[i] = lineup[i]->damage;
 
@@ -246,7 +252,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
             case BUFF:      if (skillTargets[i] == ALL || skillTargets[i] == lineup[monstersLost]->element) {
                                 turnData.buffDamage += (int) skillAmounts[i];
                             } break;
-            case BUFFUP:    turnData.buffDamage += (int) (skillAmounts[i] * floor(turncounter / 4));
+            case BUFFUP:    turnData.buffDamage += (int) (skillAmounts[i] * floor(turncounter / (lineup[i]->promo >= 5 ? 5 : 4)));//TODO: Change to 3 when it's fixed
                             break;
             case CHAMPION:  if (skillTargets[i] == ALL || skillTargets[i] == lineup[monstersLost]->element) {
                                 turnData.buffDamage += (int) skillAmounts[i];
@@ -315,6 +321,8 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
                             break;
         }
     }
+    if (passiveTypes[monstersLost] == ARMOR)
+        turnData.protection = round(turnData.protection * (1 + passiveAmounts[monstersLost]));
 }
 
 // Handle all self-centered abilities and other multipliers on damage
@@ -482,7 +490,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.valkyrieDamage = turnData.baseDamage;
     //Linear before multiplicative
     if (turnData.buffDamage != 0) {
-        turnData.valkyrieDamage += turnData.buffDamage;
+        turnData.valkyrieDamage += round(turnData.buffDamage * (passiveTypes[monstersLost] == DAMAGE ? (1 + passiveAmounts[monstersLost]) : 1));
     }
     if (turnData.multiplier > 1) {
         turnData.valkyrieDamage *= turnData.multiplier;
@@ -492,6 +500,10 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.valkyrieDamage *= elementalBoost + turnData.hate;
     }
 
+    if (passiveTypes[monstersLost] == DPS) {
+        turnData.valkyrieDamage *= 1 + passiveAmounts[monstersLost];
+    }
+
     double ricoValue = turnData.valkyrieDamage; //Save it so it is not affected by armor and absorb and other individual unit abilities.
 
     if (turnData.hpPierce)
@@ -499,6 +511,9 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
 
     if (opposingResistance < 1)
         turnData.valkyrieDamage *= opposingResistance;
+
+    if (opposingCondition.passiveTypes[opposingCondition.monstersLost] == AFFINITY && turnData.opposingElement == lineup[monstersLost]->element)
+        turnData.valkyrieDamage *= 1 - opposingCondition.passiveAmounts[opposingCondition.monstersLost];
 
     if (turnData.valkyrieDamage > opposingProtection) { 
         turnData.valkyrieDamage -= (double) opposingProtection;
@@ -549,7 +564,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     }
 
     //Check gladiators before resolve damage to make sure there is no left-right discrepancy. Buff takes place before delayed abilities but after AoE.
-    if (!(turnData.bloodlust && !opposingCondition.worldboss && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage) - turnData.aoeDamage - turnData.aoeFirst) <= 0)))
+    if (!(turnData.bloodlust && !opposingCondition.worldboss && opposingCondition.passiveTypes[opposingCondition.monstersLost] != ANGEL && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage) - turnData.aoeDamage - turnData.aoeFirst) <= 0)))
         turnData.bloodlust = 0;
 
 }
@@ -575,6 +590,20 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     // Apply normal attack damage to the frontliner
     // If direct_target is non-zero that means Lux is hitting something not the front liner
     remainingHealths[frontliner + opposing.direct_target] -= opposing.baseDamage;
+
+    // Apply revive here, only works if killed by direct hit
+    if (passiveTypes[frontliner] == ANGEL && remainingHealths[frontliner] <= 0){
+        bool isAlone = true;
+        for (int i = armySize - 1; i > frontliner; i--)
+            if (remainingHealths[i] > 0 || worldboss){ //Check if the frontliner is alone.
+                isAlone = false;
+                break;
+            }
+        if (isAlone){
+            remainingHealths[frontliner] = round((double)maxHealths[frontliner] * passiveAmounts[frontliner]);
+            passiveTypes[frontliner] = NONE;
+        }
+    }
 
     // Lee and Fawkes can only counter if they are hit directly, so if they are opposing Lux and Lux
     // hits another units, they do not counter
@@ -745,10 +774,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
       if(remainingHealths[i] > 0 || i == frontliner) {
         aliveAtBeginning = 1;
       }
-      if (skillTypes[i] == SKILLDAMPEN)
-        remainingHealths[i] -= round(opposing.aoeDamage * (1 - skillAmounts[i]));
-      else
-        remainingHealths[i] -= opposing.aoeDamage;
+      remainingHealths[i] -= round(opposing.aoeDamage * (1 - (passiveTypes[i] == ANTIMAGIC ? passiveAmounts[i] : skillTypes[i] == SKILLDAMPEN ? skillAmounts[i] : 0)));
       remainingHealths[i] -= aoeConst;
 
       if (skillTypes[i] == SACRIFICE)
@@ -803,9 +829,10 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         }
         skillTypes[i] = NOTHING; // disable dead hero's ability
       } else {
-            remainingHealths[i] += turnData.healing;
-            if (skillTypes[i] != SACRIFICE)
-                remainingHealths[i] += turnData.sacHeal;//Prevent sacrifice from working on the unit that sacrifices their health
+            remainingHealths[i] += round((turnData.healing + //AoE heal
+            (skillTypes[i] != SACRIFICE ? turnData.sacHeal : 0) + //Prevent sacrifice from working on the unit that sacrifices their health
+            (i == frontliner ? (round(turnData.selfHeal * opposing.baseDamage) + turnData.healFirst) : 0)) * //Front healing
+            (passiveTypes[i] == HEALPLUS ? (1 + passiveAmounts[i]) : 1));//have to put them together, because P6 requires all of them to be together to avoid rounding errors.
             if (remainingHealths[i] > maxHealths[i]) { // Avoid overhealing
                 remainingHealths[i] = maxHealths[i];
         }
@@ -827,14 +854,6 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     if (skillTypes[monstersLost] == WITHER && monstersLost == frontliner) {
         // remainingHealths[monstersLost] = castCeil((double) remainingHealths[monstersLost] * skillAmounts[monstersLost]);
         remainingHealths[monstersLost] = round(remainingHealths[monstersLost] * ( 1 -((double) 1 / skillAmounts[monstersLost]) ));//Updated for promotion values.
-    }
-
-    // Moved Sanqueen's ability (leech) to the end, to replicate delayed behavior
-    if((turnData.healFirst || turnData.selfHeal) && remainingHealths[frontliner] >= 0){
-        remainingHealths[frontliner] += round(turnData.selfHeal * opposing.baseDamage) + turnData.healFirst;
-        if (remainingHealths[frontliner] > maxHealths[frontliner]) { // Avoid overhealing
-            remainingHealths[frontliner] = maxHealths[frontliner];
-        }
     }
 
     // Delayed abilities start here. Happen after direct damage and AoE. Can carry over to the next unit

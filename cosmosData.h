@@ -14,8 +14,8 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.6.2.3d";
-const std::string REPLAYCODE = "462d"; //4-number/letter sequence at the start of replay, that helps identify calc version. First 4 characters are responsible for tournament info in replay.
+const std::string VERSION = "4.7.0.2test_broken_res";
+const std::string REPLAYCODE = "470t"; //4-number/letter sequence at the start of replay, that helps identify calc version. First 4 characters are responsible for tournament info in replay.
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
@@ -163,6 +163,18 @@ enum SkillType {
     BULLSHIT//Self-explanatory (Does random AoE based on RNG)
 };
 
+enum PassiveType {
+    NONE,//No passive (WB only)
+    AFFINITY,//Receives X% less damage from same element attacks.
+    ANGEL,//After dying revives once at X% health.
+    ARMOR,//Gains +X% from armor increases.
+    DAMAGE,//Gains +X% from damage increases.
+    DPS,//Increases damage dealt by X%
+    HEALPLUS,//Gains +X% from heals
+    ANTIMAGIC,//Receives X% less damage from skills
+    TANK//Increases health by X%
+};
+
 enum Element {
     EARTH   = 0,
     AIR     = 1,
@@ -199,10 +211,22 @@ struct HeroSkill {
 };
 const HeroSkill NO_SKILL = HeroSkill({NOTHING, AIR, AIR, 1}); // base skill used for normal monsters
 
+// Defines Passives of Heroes
+struct HeroPassive {
+    PassiveType passiveType;
+    double amount;                  // Contains various information depending on the type
+    bool hasAsymmetricAoe;          // Aoe that doesn't damage the entire enemy army equally Ex.: Valkyrie
+
+    HeroPassive(PassiveType aType, double anAmount);
+    HeroPassive() {};
+};
+
+const HeroPassive NO_PASSIVE = HeroPassive({NONE, 0}); // base passive used for normal monsters
+
 // Defines a Monster or Hero
 class Monster {
     private:
-        Monster(int hp, int damage, FollowerCount cost, std::string name, Element element, HeroRarity rarity, HeroSkill skill, int promoOne, int promoTwo, int promoFour, double promoFive, int level, int promo);
+        Monster(int hp, int damage, FollowerCount cost, std::string name, Element element, HeroRarity rarity, HeroSkill skill, int promoOne, int promoTwo, int promoFour, double promoFive, HeroPassive passive, int level, int promo);
 
     public :
         int hp;
@@ -220,12 +244,13 @@ class Monster {
         int promoTwo;
         int promoFour;
         double promoFive;
+        HeroPassive passive;
         int index; // Index used by game, indices for monsters and heroes are assigned at initIndices()
 
         std::string name; // display name
 
         Monster(int hp, int damage, FollowerCount cost, std::string name, Element element);
-        Monster(int hp, int damage, std::string name, Element element, HeroRarity rarity, HeroSkill skill, int promoOne, int promoTwo, int promoFour, double promoFive);
+        Monster(int hp, int damage, std::string name, Element element, HeroRarity rarity, HeroSkill skill, int promoOne, int promoTwo, int promoFour, double promoFive, HeroPassive passive);
         Monster(const Monster & baseHero, int level, int promo);
         Monster() {};
 
