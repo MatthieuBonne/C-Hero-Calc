@@ -586,7 +586,9 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     }
 
     //Check gladiators before resolve damage to make sure there is no left-right discrepancy. Buff takes place before delayed abilities but after AoE.
-    if (!(turnData.bloodlust && !opposingCondition.worldboss && opposingCondition.passiveTypes[opposingCondition.monstersLost] != ANGEL && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage) - turnData.aoeDamage - turnData.aoeFirst) <= 0)))
+    if (!(turnData.bloodlust && !opposingCondition.worldboss && 
+       (opposingCondition.passiveTypes[opposingCondition.monstersLost] == ANGEL ? ((opposingCondition.monstersLost + 1) < opposingCondition.armySize) : 1) && 
+       ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage) - turnData.aoeDamage - turnData.aoeFirst) <= 0)))
         turnData.bloodlust = 0;
 
 }

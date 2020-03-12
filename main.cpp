@@ -110,6 +110,7 @@ void expand(vector<Army> & newPureArmies, vector<Army> & newHeroArmies,
 
     vector<bool> usedHeroes; usedHeroes.resize(monsterReference.size(), false);
     HeroSkill currentSkill;
+    HeroPassive currentPassive;
     bool invalidSkill;
     bool friendsInfluence;
     bool rainbowInfluence;
@@ -129,7 +130,8 @@ void expand(vector<Army> & newPureArmies, vector<Army> & newHeroArmies,
                     tempRainbowCondition |= 1 << monsterReference[oldHeroArmies[i].monsters[m]].element;
                 }
                 currentSkill = monsterReference[oldHeroArmies[i].monsters[m]].skill;
-                invalidSkill |= currentSkill.hasHeal || currentSkill.hasAsymmetricAoe;
+                currentPassive = monsterReference[oldHeroArmies[i].monsters[m]].passive;
+                invalidSkill |= currentSkill.hasHeal || currentSkill.hasAsymmetricAoe || currentPassive.hasAsymmetricAoe;
                 friendsInfluence |= currentSkill.skillType == FRIENDS;
                 rainbowInfluence |= currentSkill.skillType == RAINBOW && currentArmySize >= m + 4; // Hardcoded number of elements required to activate rainbow
                 boozeInfluence   |= currentSkill.skillType == BEER && currentArmySize < instance.targetSize + 1;
