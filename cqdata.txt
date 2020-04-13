@@ -386,6 +386,10 @@
 5 250 mechamary AIR ASCENDED TURNDAMP_L AIR AIR 0.08 12 1080 30 0.01 ARMOR 0.3
 58 58 annie WATER LEGENDARY TURNDAMP_L WATER WATER 0.04 68 68 112 0.01 ARMOR 0.2
 25 75 kilkenny FIRE LEGENDARY BEER ALL EARTH 0 13 59 13 1 ANTIMAGIC 0.15
+60 12 egg FIRE COMMON DEATHREF ALL FIRE 0.5 20 8 20 0.25 HEALPLUS 0.25
+80 14 babypyros WATER RARE DEATHREF ALL WATER 0.75 30 12 30 0.25 HEALPLUS 0.22
+110 16 youngpyros EARTH LEGENDARY DEATHREF ALL EARTH 1 40 20 40 0.25 HEALPLUS 0.2
+180 20 kingpyros AIR ASCENDED DEATHREF ALL AIR 1.5 120 20 70 0.25 HEALPLUS 0.25
 * ALIASES
 lady ladyoftwilight
 lot ladyoftwilight
@@ -468,6 +472,9 @@ bride emily
 yeti yetithepostman
 mary mechamary
 jesus yisus
+baby babypyros
+young youngpyros
+king kingpyros
 loc lordofchaos
 fboss lordofchaos
 moak motherofallkodamas

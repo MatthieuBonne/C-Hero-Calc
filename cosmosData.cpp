@@ -93,12 +93,15 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
 {
     this->index = baseHero.index;
 
-    if (aPromo != 6){
+//Check for promo 6 is here, so it isn't overwritten with the default passive upon base hero creation.
+    if (aPromo < 6){
         this->passive.passiveType = NONE;
         this->passive.amount = 0;
-        if (this->passive.passiveType == TANK)
-            this->hp *= 1 + this->passive.amount;
     }
+
+//Add after TANK is fixed
+//    if (this->passive.passiveType == TANK)
+//        this->hp *= 1 + this->passive.amount;
 
 //Put aSeethe skill back where it belongs once it's capped to 99
     if (this->skill.skillType == POSBONUS_L) {
@@ -195,7 +198,7 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                               aType == TRIPLE || aType == HPAMPLIFY ||
                               aType == FURY || aType == MORALE ||
                               aType == MORALE_L || aType == AOELOW ||
-                              aType == AOELOW_L);
+                              aType == AOELOW_L || aType == DEATHREF);
     this->hasHeal = (aType == HEAL || aType == HEAL_L ||
                      aType == LIFESTEAL || aType == LIFESTEAL_L ||
                      aType == WBIDEAL   || aType == WBIDEAL_L   ||
@@ -303,7 +306,6 @@ void Instance::setTarget(Army aTarget) {
     this->hasWorldBoss = false;
     for (size_t i = 0; i < this->targetSize; i++) {
         currentSkill = monsterReference[this->target.monsters[i]].skill;
-        currentPassive = monsterReference[this->target.monsters[i]].passive;
         this->hasAoe |= currentSkill.hasAoe;
         this->hasHeal |= currentSkill.hasHeal;
         this->hasAsymmetricAoe |= currentSkill.hasAsymmetricAoe || currentPassive.hasAsymmetricAoe;
@@ -452,6 +454,7 @@ std::map<std::string, int> stringToEnum = {
     {"FLATLEP_L", FLATLEP_L},
     {"MORALE_L", MORALE_L},
     {"TURNDAMP_L", TURNDAMP_L},
+    {"DEATHREF", DEATHREF},
     {"BULLSHIT", BULLSHIT},
 
     {"NONE", NONE},
@@ -871,6 +874,10 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster(  5,250, "mechamary",          AIR,   ASCENDED,  {TURNDAMP_L,     AIR,  AIR,   0.08}, 12, 1080, 30, 0.01, {ARMOR, 0.3}));
     baseHeroes.push_back(Monster( 58, 58, "annie",              WATER, LEGENDARY, {TURNDAMP_L,     WATER,WATER, 0.04}, 68, 68, 112, 0.01, {ARMOR, 0.2}));
     baseHeroes.push_back(Monster( 25, 75, "kilkenny",           FIRE,  LEGENDARY, {BEER,           ALL,  EARTH, 0}, 13, 59, 13, 1, {ANTIMAGIC, 0.15}));
+    baseHeroes.push_back(Monster( 60, 12, "egg",                FIRE,  COMMON,    {DEATHREF,       ALL, FIRE, 0.5}, 20, 8, 20, 0.25, {HEALPLUS, 0.25}));
+    baseHeroes.push_back(Monster( 80, 14, "babypyros",          WATER, RARE,      {DEATHREF,       ALL, WATER, 0.75}, 30, 12, 30, 0.25, {HEALPLUS, 0.22}));
+    baseHeroes.push_back(Monster(110, 16, "youngpyros",         EARTH, LEGENDARY, {DEATHREF,       ALL, EARTH, 1}, 40, 20, 40, 0.25, {HEALPLUS, 0.2}));
+    baseHeroes.push_back(Monster(180, 20, "kingpyros",          AIR,   ASCENDED,  {DEATHREF,       ALL, AIR, 1.5}, 120, 20, 70, 0.25, {HEALPLUS, 0.25}));
 }
 
 void initIndices() {
@@ -965,6 +972,9 @@ void initHeroAliases() {
     heroAliases["yeti"] = "yetithepostman";
     heroAliases["mary"] = "mechamary";
     heroAliases["jesus"] = "yisus";
+    heroAliases["baby"] = "babypyros";
+    heroAliases["young"] = "youngpyros";
+    heroAliases["king"] = "kingpyros";
 
     heroAliases["loc"] = "lordofchaos";
     heroAliases["fboss"] = "lordofchaos";

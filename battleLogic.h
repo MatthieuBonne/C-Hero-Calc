@@ -112,6 +112,7 @@ class ArmyCondition {
         inline void getDamage(const int turncounter, const ArmyCondition & opposingCondition);
         inline void applyArmor(TurnData & opposing);
         inline void resolveDamage(TurnData & opposing);
+        inline void deathCheck(int i);
         inline void resolveRevenge(TurnData & opposing);
         inline int findMaxHP();
         inline int getLuxTarget(const ArmyCondition & opposingCondition, int64_t seed);
@@ -383,7 +384,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                             if (skillTypes[i] == NOTHING && remainingHealths[i] > 0)
                                 turnData.baseDamage *= skillAmounts[monstersLost];
                         }
-						turnData.baseDamage += deathBuffATK + evolveTotal;
+                        turnData.baseDamage += deathBuffATK + evolveTotal;
                         break;
         case TRAINING:  turnData.baseDamage += (int) (skillAmounts[monstersLost] * (double) turncounter);
                         break;
@@ -586,9 +587,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     }
 
     //Check gladiators before resolve damage to make sure there is no left-right discrepancy. Buff takes place before delayed abilities but after AoE.
-    if (!(turnData.bloodlust && !opposingCondition.worldboss && 
-       (opposingCondition.passiveTypes[opposingCondition.monstersLost] == ANGEL ? ((opposingCondition.monstersLost + 1) < opposingCondition.armySize) : 1) && 
-       ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage) - turnData.aoeDamage - turnData.aoeFirst) <= 0)))
+    if (!(turnData.bloodlust && !opposingCondition.worldboss && opposingCondition.passiveTypes[opposingCondition.monstersLost] != ANGEL && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage) - turnData.aoeDamage - turnData.aoeFirst) <= 0)))
         turnData.bloodlust = 0;
 
 }
@@ -610,29 +609,18 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     int armoredRicochetValue; //So the ricochet doesn't heal due to armor
     double tempResistance; //Needed for frosty to dampen ricochet
     int aoeConst = 0; //AoE that is not affected by SKILLDAMPEN
-    bool angelActive = false; //Saves from dying a second time to non-delayed AoE
 
     // Apply normal attack damage to the frontliner
     // If direct_target is non-zero that means Lux is hitting something not the front liner
     remainingHealths[frontliner + opposing.direct_target] -= opposing.baseDamage;
 
-    // Check for revive here, only works if killed by direct hit. If revived, applies later after aoe
-    if (passiveTypes[frontliner] == ANGEL && remainingHealths[frontliner] <= 0){
-        angelActive = true;
-        for (int i = armySize - 1; i > frontliner; i--)
-            if (remainingHealths[i] > 0 || worldboss){ //Check if the frontliner is alone.
-                angelActive = false;
-                break;
-            }
-    }
-
     // Lee and Fawkes can only counter if they are hit directly, so if they are opposing Lux and Lux
     // hits another units, they do not counter
     int counter_eligible = 1;
-    if(skillTypes[monstersLost] == LUX && turnData.direct_target > 0) {
+    if(skillTypes[frontliner] == LUX && turnData.direct_target > 0) {
       counter_eligible = 0;
       // std::cout << "LUX DID NOT HIT FRONTLINER" << std::endl;
-    }
+    } 
 
     // Neil takes damage from absorb before Ricochet and fairy buffs take place, needs a check for being alive after that
     if (turnData.absorbID != -1 && counter_eligible) {
@@ -816,47 +804,13 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
       }
 
 //Check for death defying skills, death and death skills.
-    if (i == frontliner && angelActive){
-        remainingHealths[frontliner] = round((double)maxHealths[frontliner] * passiveAmounts[frontliner]);
-        passiveTypes[frontliner] = NONE;
+    if (passiveTypes[i] == ANGEL && remainingHealths[i] <= 0 && turnData.aliveAtTurnStart[i]){
+        remainingHealths[i] = round((double)maxHealths[i] * passiveAmounts[i]);
+        passiveTypes[i] = NONE;
     }
 
       if (remainingHealths[i] <= 0 && !worldboss) {
-        //Save revenge values
-        switch (skillTypes[i]) {
-            case REVENGE:
-                turnData.aoeRevenge += (int) round((double) (lineup[i]->damage + deathBuffATK) * skillAmounts[i]);
-                break;
-            case DEATHSTRIKE:
-                turnData.deathstrikeDamage += skillAmounts[i];
-                break;
-            case BUFFUP:
-                if ((turnData.turnCount + 1) % (lineup[i]->promo >= 5 ? 5 : 4) == 0)
-                    deathBuffATK += skillAmounts[i];
-                break;
-            case DEATHBUFF:
-                turnData.deathBuffHP = (int) round(skillAmounts[i] * maxHealths[i]);
-                for (int j = monstersLost; j < i; j++)
-                    if (remainingHealths[j] > 0){
-                        remainingHealths[j] += turnData.deathBuffHP;
-                        maxHealths[j] += turnData.deathBuffHP;
-                    }
-                for (int j = i + 1; j < armySize; j++)
-                    if (turnData.aliveAtTurnStart[j]){
-                        remainingHealths[j] += turnData.deathBuffHP;
-                        maxHealths[j] += turnData.deathBuffHP;
-                    }
-                deathBuffATK += turnData.deathBuffHP - (i == monstersLost ? evolveTotal : 0);
-                break;
-            default:
-                break;
-        }
-        if (i == monstersLost) { //moved after revenge skills so attack buff from fairies is not affected by Gladiators or Yeti.
-          monstersLost++;
-          lastBerserk = 0;
-          evolveTotal = 0;
-        }
-        skillTypes[i] = NOTHING; // disable dead hero's ability
+        deathCheck(i);
       } else {
             remainingHealths[i] += round((turnData.healing + //AoE heal
             (skillTypes[i] != SACRIFICE ? turnData.sacHeal : 0) + //Prevent sacrifice from working on the unit that sacrifices their health
@@ -895,11 +849,11 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             // Add opposing.counter_target to handle fawkes not targetting the frontliner
             remainingHealths[monstersLost + opposing.counter_target] -= static_cast<int64_t>(round(turnData.baseDamage * opposing.counter));
         }
-        if (opposing.flatRef && counter_eligible){
+        else if (opposing.flatRef && counter_eligible){
             remainingHealths[monstersLost] -= opposing.flatRef;
         }
         //Clio buff
-        if(opposing.evolve && remainingHealths[frontliner] > 0){
+        else if(opposing.evolve && remainingHealths[frontliner] > 0){
             evolveTotal += opposing.evolve;
         } //Gladiator buff
         else if(turnData.bloodlust && remainingHealths[monstersLost] > 0){
@@ -910,44 +864,50 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         //If a delayed ability killed a frontliner, find next frontliner. Same procedure as when applying aoe.
         for (int i = monstersLost; i < armySize; i++){
             if (remainingHealths[i] <= 0 && !worldboss) {
-                //Save revenge values
-                switch (skillTypes[i]) {
-                    case REVENGE:
-                        turnData.aoeRevenge += (int) round((double) (lineup[i]->damage + deathBuffATK) * skillAmounts[i]);
-                        break;
-                    case DEATHSTRIKE:
-                        turnData.deathstrikeDamage += skillAmounts[i];
-                        break;
-                    case BUFFUP:
-                        if ((turnData.turnCount + 1) % (lineup[i]->promo >= 5 ? 5 : 4) == 0)
-                            deathBuffATK += skillAmounts[i];
-                        break;
-                    case DEATHBUFF:
-                        turnData.deathBuffHP = (int) round(skillAmounts[i] * maxHealths[i]);
-                        for (int j = monstersLost; j < i; j++)
-                            if (remainingHealths[j] > 0){
-                                remainingHealths[j] += turnData.deathBuffHP;
-                                maxHealths[j] += turnData.deathBuffHP;
-                            }
-                        for (int j = i + 1; j < armySize; j++)
-                            if (turnData.aliveAtTurnStart[j]){
-                                remainingHealths[j] += turnData.deathBuffHP;
-                                maxHealths[j] += turnData.deathBuffHP;
-                            }
-                        deathBuffATK += turnData.deathBuffHP - (i == monstersLost ? evolveTotal : 0);
-                    default:
-                        break;
-                }
-                if (i == monstersLost) { //moved after revenge skills so attack buff from fairies is not affected by Gladiators or Yeti.
-                    monstersLost++;
-                    lastBerserk = 0;
-                    evolveTotal = 0;
-                }
-                skillTypes[i] = NOTHING; // disable dead hero's ability
+                deathCheck(i);
             }
         }
     }
 
+}
+//Save revenge values and remove skills
+inline void ArmyCondition::deathCheck(int i) {
+    switch (skillTypes[i]) {
+        case REVENGE:
+             turnData.aoeRevenge += (int) round((double) (lineup[i]->damage + deathBuffATK) * skillAmounts[i]);
+            break;
+        case DEATHSTRIKE:
+            turnData.deathstrikeDamage += skillAmounts[i];
+            break;
+        case DEATHREF:
+            turnData.deathstrikeDamage += skillAmounts[i] * (maxHealths[i] - remainingHealths[i]);
+            break;
+        case BUFFUP:
+            if ((turnData.turnCount + 1) % (lineup[i]->promo >= 5 ? 5 : 4) == 0)
+                deathBuffATK += skillAmounts[i];
+            break;
+        case DEATHBUFF:
+            turnData.deathBuffHP = (int) round(skillAmounts[i] * maxHealths[i]);
+            for (int j = monstersLost; j < i; j++)
+                if (remainingHealths[j] > 0){
+                    remainingHealths[j] += turnData.deathBuffHP;
+                    maxHealths[j] += turnData.deathBuffHP;
+                }
+            for (int j = i + 1; j < armySize; j++)
+                if (turnData.aliveAtTurnStart[j]){
+                    remainingHealths[j] += turnData.deathBuffHP;
+                    maxHealths[j] += turnData.deathBuffHP;
+                }
+            deathBuffATK += turnData.deathBuffHP - (i == monstersLost ? evolveTotal : 0);
+        default:
+            break;
+    }
+    if (i == monstersLost) { //moved after revenge skills so attack buff from fairies is not affected by Gladiators or Yeti.
+        monstersLost++;
+        lastBerserk = 0;
+        evolveTotal = 0;
+    }
+    skillTypes[i] = NOTHING; // disable dead hero's ability
 }
 //Apply revenge abilities, check for dead units and check for more revenge procs
 inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
@@ -962,39 +922,7 @@ inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
             //Check for dead units
             if (remainingHealths[i] <= 0 && !worldboss) {
                 //Save Revenge values
-                switch (skillTypes[i]) {
-                    case REVENGE:
-                        turnData.aoeRevenge += (int) round((double) (lineup[i]->damage + deathBuffATK) * skillAmounts[i]);
-                        break;
-                    case DEATHSTRIKE:
-                        turnData.deathstrikeDamage += skillAmounts[i];
-                        break;
-                    case BUFFUP:
-                        if ((turnData.turnCount + 1) % (lineup[i]->promo >= 5 ? 5 : 4) == 0)
-                            deathBuffATK += skillAmounts[i];
-                        break;
-                    case DEATHBUFF:
-                        turnData.deathBuffHP = (int) round(skillAmounts[i] * maxHealths[i]);
-                        for (int j = monstersLost; j < i; j++)
-                            if (remainingHealths[j] > 0){
-                                remainingHealths[j] += turnData.deathBuffHP;
-                                maxHealths[j] += turnData.deathBuffHP;
-                            }
-                        for (int j = i + 1; j < armySize; j++)
-                            if (turnData.aliveAtTurnStart[j]){
-                                remainingHealths[j] += turnData.deathBuffHP;
-                                maxHealths[j] += turnData.deathBuffHP;
-                            }
-                        deathBuffATK += turnData.deathBuffHP - (i == monstersLost ? evolveTotal : 0);
-                    default:
-                        break;
-                }
-                if (i == monstersLost) { //moved after revenge skills so attack buff from fairies is not affected by Gladiators or Yeti.
-                    monstersLost++;
-                    lastBerserk = 0;
-                    evolveTotal = 0;
-                }
-                skillTypes[i] = NOTHING; // disable dead hero's ability
+                deathCheck(i);
             }
         }
         opposing.aoeRevenge = 0;
