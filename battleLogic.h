@@ -853,7 +853,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             remainingHealths[monstersLost] -= opposing.flatRef;
         }
         //Clio buff
-        else if(opposing.evolve && remainingHealths[frontliner] > 0){
+        if(opposing.evolve && remainingHealths[frontliner] > 0){
             evolveTotal += opposing.evolve;
         } //Gladiator buff
         else if(turnData.bloodlust && remainingHealths[monstersLost] > 0){
