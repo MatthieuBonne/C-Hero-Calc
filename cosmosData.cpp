@@ -99,9 +99,9 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
         this->passive.amount = 0;
     }
 
-//Add after TANK is fixed
-//    if (this->passive.passiveType == TANK)
-//        this->hp *= 1 + this->passive.amount;
+//Tank promo (health increase)
+    if (this->passive.passiveType == TANK)
+        this->hp *= 1 + this->passive.amount;
 
 //Put aSeethe skill back where it belongs once it's capped to 99
     if (this->skill.skillType == POSBONUS_L) {
