@@ -608,7 +608,6 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     int frontliner = monstersLost; // save original frontliner
     int armoredRicochetValue; //So the ricochet doesn't heal due to armor
     double tempResistance; //Needed for frosty to dampen ricochet
-    int aoeConst = 0; //AoE that is not affected by SKILLDAMPEN
 
     // Apply normal attack damage to the frontliner
     // If direct_target is non-zero that means Lux is hitting something not the front liner
@@ -750,13 +749,12 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
 
 //~~~~~~~~~~~~~~~~Tetris Skill End ~~~~~~~~~~~~~~~~~~~~
 
-    if (opposing.explodeDamage != 0 && remainingHealths[frontliner] <= 0 && !worldboss) {
-        // std::cout << "EXPLODE" << std::endl;
-        opposing.aoeDamage += opposing.explodeDamage;
+// Both of these AoE skills are actually delayed in the game, hence they are saved for revenge AoE later on.
+    if (opposing.explodeDamage != 0 && remainingHealths[frontliner] <= 0 && !worldboss && passiveTypes[frontliner] != ANGEL) {
+        opposing.aoeRevenge += opposing.explodeDamage;
     }
-
     if (opposing.aoeReflect)
-        aoeConst += std::max((int)round(turnData.baseDamage * opposing.aoeReflect),1);
+        opposing.aoeRevenge += std::max((int)round(turnData.baseDamage * opposing.aoeReflect),1);
 
     if (opposing.aoeLast) {
         for (int i = armySize - 1; i >= frontliner; i--) {
@@ -784,7 +782,6 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         aliveAtBeginning = 1;
       }
       remainingHealths[i] -= round(opposing.aoeDamage * (1 - (passiveTypes[i] == ANTIMAGIC ? passiveAmounts[i] : skillTypes[i] == SKILLDAMPEN ? skillAmounts[i] : 0)));
-      remainingHealths[i] -= aoeConst;
 
       if (skillTypes[i] == SACRIFICE)
         remainingHealths[i] -= turnData.masochism;
