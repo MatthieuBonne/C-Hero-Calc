@@ -225,10 +225,10 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                                   aType == AOEZERO || aType == ABSORB ||
                                   aType == SACRIFICE || aType == SACRIFICE_L ||
                                   aType == AOELAST || aType == HEALFIRST ||
-                                  aType == PERCBUFF || aType == CONVERT ||
+                                  aType == PERCBUFF || aType == TEMPBUFF ||
                                   aType == EASTER || aType == AOEFIRST ||
                                   aType == AOEFIRST_CUBE || aType == FURY ||
-                                  aType == AOELIN || 
+                                  aType == AOELIN ||  aType == CONVERT ||
                                   aType == WBIDEAL || aType == WBIDEAL_L ||
                                   aType == AOEHP || aType == MORALE ||
                                   aType == MORALE_L || aType == AOELOW ||
@@ -456,6 +456,7 @@ std::map<std::string, int> stringToEnum = {
     {"MORALE_L", MORALE_L},
     {"TURNDAMP_L", TURNDAMP_L},
     {"DEATHREF", DEATHREF},
+    {"TEMPBUFF", TEMPBUFF},
     {"BULLSHIT", BULLSHIT},
 
     {"NONE", NONE},
@@ -879,6 +880,10 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 80, 14, "babypyros",          WATER, RARE,      {DEATHREF,       ALL, WATER, 0.75}, 30, 12, 30, 0.25, {HEALPLUS, 0.22}));
     baseHeroes.push_back(Monster(110, 16, "youngpyros",         EARTH, LEGENDARY, {DEATHREF,       ALL, EARTH, 1}, 40, 20, 40, 0.25, {HEALPLUS, 0.2}));
     baseHeroes.push_back(Monster(180, 20, "kingpyros",          AIR,   ASCENDED,  {DEATHREF,       ALL, AIR, 1.5}, 120, 20, 70, 0.25, {HEALPLUS, 0.25}));
+    baseHeroes.push_back(Monster( 56, 56, "rob",                EARTH, LEGENDARY, {TEMPBUFF,       ALL, FIRE, 0.35}, 80, 74, 124, 0.05, {ARMOR, 0.2}));
+    baseHeroes.push_back(Monster( 60, 60, "kirklee",            WATER, LEGENDARY, {TEMPBUFF,       ALL, FIRE, 0.35}, 84, 72, 130, 0.05, {ARMOR, 0.2}));
+    baseHeroes.push_back(Monster( 64, 64, "lars",               FIRE,  LEGENDARY, {TEMPBUFF,       ALL, FIRE, 0.35}, 88, 70, 138, 0.05, {ARMOR, 0.2}));
+    baseHeroes.push_back(Monster(134,134, "hetfield",           AIR,   ASCENDED,  {TEMPBUFF,       ALL, FIRE, 0.5}, 240, 210, 360, 0.05, {ARMOR, 0.3}));
 }
 
 void initIndices() {
@@ -976,6 +981,11 @@ void initHeroAliases() {
     heroAliases["baby"] = "babypyros";
     heroAliases["young"] = "youngpyros";
     heroAliases["king"] = "kingpyros";
+    heroAliases["kyle"] = "kirklee";
+    heroAliases["klee"] = "kirklee";
+    heroAliases["ziggy"] = "kirklee";
+    heroAliases["het"] = "hetfield";
+    heroAliases["field"] = "hetfield";
 
     heroAliases["loc"] = "lordofchaos";
     heroAliases["fboss"] = "lordofchaos";

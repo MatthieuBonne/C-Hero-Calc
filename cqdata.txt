@@ -390,6 +390,10 @@
 80 14 babypyros WATER RARE DEATHREF ALL WATER 0.75 30 12 30 0.25 HEALPLUS 0.22
 110 16 youngpyros EARTH LEGENDARY DEATHREF ALL EARTH 1 40 20 40 0.25 HEALPLUS 0.2
 180 20 kingpyros AIR ASCENDED DEATHREF ALL AIR 1.5 120 20 70 0.25 HEALPLUS 0.25
+56 56 rob EARTH LEGENDARY NOTHING ALL FIRE 0.35 80 74 124 0.05 ARMOR 0.2
+60 60 kirklee WATER LEGENDARY NOTHING ALL FIRE 0.35 84 72 130 0.05 ARMOR 0.2
+64 64 lars FIRE LEGENDARY NOTHING ALL FIRE 0.35 88 70 138 0.05 ARMOR 0.2
+134 134 hetfield AIR ASCENDED NOTHING ALL FIRE 0.5 240 210 360 0.05 ARMOR 0.3
 * ALIASES
 lady ladyoftwilight
 lot ladyoftwilight
@@ -475,6 +479,11 @@ jesus yisus
 baby babypyros
 young youngpyros
 king kingpyros
+kyle kirklee
+klee kirklee
+ziggy kirklee
+het hetfield
+field hetfield
 loc lordofchaos
 fboss lordofchaos
 moak motherofallkodamas

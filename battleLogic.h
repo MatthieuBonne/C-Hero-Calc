@@ -298,6 +298,11 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
             case PERCBUFF:  turnData.multiplier += skillAmounts[i];
                             turnData.witchMult += skillAmounts[i];
                             break;
+            case TEMPBUFF:  if (turncounter <= 2){
+                                turnData.multiplier += skillAmounts[i];
+                                turnData.witchMult += skillAmounts[i];
+                            }
+                            break;
             case FURY:      int cooldown;
                             switch (lineup[i]->rarity) {
                                 case COMMON:
