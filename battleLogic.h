@@ -537,7 +537,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
 
     //Unique multiplicative buff that happens independant of other buffs
     if (turnData.attackMult > 1)
-        turnData.valkyrieDamage += turnData.attackMult;
+        turnData.valkyrieDamage *= turnData.attackMult;
 
     //Multiplicative debuffs
     if (opposingResistance < 1)
