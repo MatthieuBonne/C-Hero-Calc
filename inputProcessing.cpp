@@ -516,18 +516,19 @@ tuple<Monster, int, int> parseHeroString(string heroString) {
 // Create valid string to be used ingame to view the battle between armies friendly and hostile
 string makeBattleReplay(Army friendly, Army hostile) {
     stringstream replay;
-/*    replay << "{";
+    replay << "{";
         replay << "\"setup\""   << ":" << getReplaySetup(friendly) << ",";
         replay << "\"shero\""   << ":" << getReplayHeroes(friendly) << ",";
         replay << "\"spromo\""  << ":" << getReplayPromo(friendly) << ",";
         replay << "\"player\""  << ":" << getReplaySetup(hostile) << ",";
         replay << "\"phero\""   << ":" << getReplayHeroes(hostile) << ",";
         replay << "\"ppromo\""  << ":" << getReplayPromo(hostile);
-    replay << "}";*/
+    replay << "}";
+	/*
     replay << "000000000000";//12 zeroes (6 for left name and right name)
-    replay << getReplaySetup(friendly) << getReplaySetup(hostile)<<"00000000";//zeros for padding, so no errors occur.
+    replay << getReplaySetup(friendly) << getReplaySetup(hostile)<<"00000000";//zeros for padding, so no errors occur.*/
     string unencoded = replay.str();
-    stringstream compression;
+/*    stringstream compression;
     char parsed = 0;
     int length = (int) unencoded.size() - 8;
     for (int j=0; j<length;j+=8)//Compression (converts binary into a string of incomprehensible characters)
@@ -542,13 +543,15 @@ string makeBattleReplay(Army friendly, Army hostile) {
     unencoded = compression.str();
     stringstream b64;
     b64 << REPLAYCODE << base64_encode((const unsigned char*) unencoded.c_str(), (int) unencoded.size());//First four characters in binary: 1 because it's not read for some reason, 1 for winner, 16 for tournament id. Useful for us, no need to ask for version number, and we can put any word in there.
-    return b64.str();
+    return b64.str();*/
+    return base64_encode((const unsigned char*) unencoded.c_str(), (int) unencoded.size());
 }
 
 // Get lineup in ingame indices
 string getReplaySetup(Army setup) {
     stringstream stringSetup;
-/*    stringSetup << "[";
+    size_t i;
+    stringSetup << "[";
     for (i = 0; i < ARMY_MAX_SIZE; i++) {
         if (i < setup.monsterAmount) {
             stringSetup << getRealIndex(monsterReference[setup.monsters[setup.monsterAmount - i - 1]]);
@@ -559,8 +562,8 @@ string getReplaySetup(Army setup) {
             stringSetup << ",";
         }
     }
-    stringSetup << "]";*/
-    int unitAmount = 6 - setup.monsterAmount;
+    stringSetup << "]";
+/*    int unitAmount = 6 - setup.monsterAmount;
     Monster monster;
     int binary, j, i;
     for(i = 5 - unitAmount; i >= 0; i--){
@@ -587,7 +590,7 @@ string getReplaySetup(Army setup) {
     for(i=unitAmount-1; i>=0; i--)
         stringSetup << "000000000";//1 for monster status, 8 for empty spot
     for(i=0; i<24; i++)
-        stringSetup << "000000000";//Empty spots for the rest of the 24 unused grid slots
+        stringSetup << "000000000";//Empty spots for the rest of the 24 unused grid slots*/
     return stringSetup.str();
 }
 

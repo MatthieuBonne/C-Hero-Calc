@@ -15,6 +15,7 @@ struct TurnData {
     int64_t evolve = 0;
     double multiplier = 1;
     double witchMult = 1;
+    double attackMult = 1;
 
     int buffDamage = 0;
     int protection = 0;
@@ -27,7 +28,7 @@ struct TurnData {
     int healing = 0;
     int sadism = 0;
     double dampFactor = 1;
-    double resistance = 0;
+    double resistance = 1;
     double skillDampen = 0;
     double aoeReflect = 0;
     int hpPierce = 0;
@@ -223,6 +224,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
     turnData.healFirst = 0;
     turnData.multiplier = 1;
     turnData.witchMult = 1;
+    turnData.attackMult = 1;
     turnData.immunity5K = false ;
     turnData.turnCount = turncounter; //for Yeti and Mary
 
@@ -298,10 +300,9 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
             case PERCBUFF:  turnData.multiplier += skillAmounts[i];
                             turnData.witchMult += skillAmounts[i];
                             break;
-            case TEMPBUFF:  if (turncounter <= 2){
-                                turnData.multiplier += skillAmounts[i];
-                                turnData.witchMult += skillAmounts[i];
-                            }
+            case TEMPBUFF:  //if (turncounter <= 2){
+                                turnData.attackMult *= 1 + skillAmounts[i];
+                            //}
                             break;
             case FURY:      int cooldown;
                             switch (lineup[i]->rarity) {
@@ -533,6 +534,10 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     //Unique linear buff that happens independant of other buffs
     if (turnData.hpPierce)
         turnData.valkyrieDamage += turnData.hpPierce;
+
+    //Unique multiplicative buff that happens independant of other buffs
+    if (turnData.attackMult > 1)
+        turnData.valkyrieDamage += turnData.attackMult;
 
     //Multiplicative debuffs
     if (opposingResistance < 1)
