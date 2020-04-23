@@ -698,7 +698,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                     tempResistance = 1 - skillAmounts[i];
                 else
                     tempResistance = 1;
-                armoredRicochetValue = round(opposing.valkyrieDamage * opposing.backstab * tempResistance * pow(turnData.dampFactor, unitCount + 2 - times)) - turnData.armorArray[i];
+                armoredRicochetValue = round(opposing.valkyrieDamage * opposing.backstab * tempResistance * pow(turnData.dampFactor, unitCount + times - 3)) - turnData.armorArray[i];
                 if (armoredRicochetValue > 0)
                     remainingHealths[i] -= armoredRicochetValue;
                 times--;
