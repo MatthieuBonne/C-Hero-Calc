@@ -426,7 +426,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case COUNTER:   turnData.counter = skillAmounts[monstersLost];
                         break;
-        case FLATREF:   turnData.flatRef = skillAmounts[monstersLost];
+        case FLATREF:   turnData.deathstrikeDamage += skillAmounts[monstersLost];
                         break;
         case EXPLODE:   turnData.explodeDamage = skillAmounts[monstersLost]; // Explode damage gets added here, but still won't apply unless enemy frontliner dies
                         break;
@@ -889,17 +889,16 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             // Finding Guy's target
             if(opposing.guyActive)
                 opposing.counter_target = findMaxHP();
-            // Add opposing.counter_target to handle fawkes not targetting the frontliner
-            remainingHealths[monstersLost + opposing.counter_target] -= static_cast<int64_t>(round(turnData.baseDamage * opposing.counter));
-        }
-        else if (opposing.flatRef && counter_eligible){
-            remainingHealths[monstersLost] -= opposing.flatRef;
+            if (opposing.counter_target != 0)
+                remainingHealths[monstersLost + opposing.counter_target] -= static_cast<int64_t>(round(turnData.baseDamage * opposing.counter));
+            else
+                opposing.deathstrikeDamage += static_cast<int64_t>(round(turnData.baseDamage * opposing.counter));
         }
         //Clio buff
         if(opposing.evolve && remainingHealths[frontliner] > 0){
             evolveTotal += opposing.evolve;
         } //Gladiator buff
-        else if(turnData.bloodlust && remainingHealths[monstersLost] > 0){
+        else if(turnData.bloodlust && (remainingHealths[monstersLost] - opposing.deathstrikeDamage) > 0){
             evolveTotal += turnData.bloodlust;
             maxHealths[monstersLost] += turnData.bloodlust;
             remainingHealths[monstersLost] += turnData.bloodlust;
