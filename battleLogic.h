@@ -56,6 +56,7 @@ struct TurnData {
     bool trampleTriggered = false;
     double trampleMult = 0;
     double tripleMult = 0;
+    double backstab = 0;
     bool guyActive = false;
     bool ricoActive = false;
     int direct_target = 0;
@@ -297,12 +298,11 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
                             break;
             case HEALFIRST: turnData.healFirst += (int) skillAmounts[i];
                             break;
-            case PERCBUFF:  turnData.multiplier += skillAmounts[i];
-                            turnData.witchMult += skillAmounts[i];
+            case PERCBUFF:  turnData.witchMult += skillAmounts[i];
                             break;
-            case TEMPBUFF:  //if (turncounter <= 2){
-                                turnData.attackMult *= 1 + skillAmounts[i];
-                            //}
+            case TEMPBUFF:  if (turncounter <= 2){
+                                turnData.multiplier *= 1 + skillAmounts[i];
+                            }
                             break;
             case FURY:      int cooldown;
                             switch (lineup[i]->rarity) {
@@ -364,6 +364,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.valkyrieMult = 0;
     turnData.trampleMult = 0;
     turnData.tripleMult = 0;
+    turnData.backstab = 0;
     turnData.hate = 0; // same as above
     turnData.counter = 0;
     turnData.flatRef = 0;
@@ -418,6 +419,9 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         turnData.ricoActive = true;
                         break;
         case TRIPLE:    turnData.tripleMult = skillAmounts[monstersLost];
+                        turnData.ricoActive = true;
+                        break;
+        case BACKSTAB:  turnData.backstab = skillAmounts[monstersLost];
                         turnData.ricoActive = true;
                         break;
         case COUNTER:   turnData.counter = skillAmounts[monstersLost];
@@ -512,32 +516,36 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     }
 
     //Multiplicative buffs
+    //Promo 6 buff
     if (passiveTypes[monstersLost] == DPS) {
         turnData.valkyrieDamage *= 1 + passiveAmounts[monstersLost];
     }
 
+    //Season 8 witches buff
+    if (turnData.witchMult > 1) 
+        turnData.valkyrieDamage *= turnData.witchMult;
+
+    //The damage value that is counted for Clio's buff
     if (opposingCondition.skillTypes[opposingCondition.monstersLost] == EVOLVE){
-        turnData.evolve = round(turnData.valkyrieDamage * turnData.witchMult * opposingCondition.skillAmounts[opposingCondition.monstersLost]);//Has to be here for Clio.
+        turnData.evolve = round(turnData.valkyrieDamage * opposingCondition.skillAmounts[opposingCondition.monstersLost]);//Has to be here for Clio.
     }
 
-    if (turnData.multiplier > 1) {
-        turnData.valkyrieDamage *= turnData.multiplier;
-    }
-
+    //Elemental boost
     if (counter[turnData.opposingElement] == lineup[monstersLost]->element && lineup[monstersLost]->element != ALL) {
         turnData.valkyrieDamage *= elementalBoost + turnData.hate;
     }
 
-    //Save full damage value so it is not affected by armor and absorb and other individual unit abilities.
-    double ricoValue = turnData.valkyrieDamage;
-
-    //Unique linear buff that happens independant of other buffs
+    //Unique linear buff that happens independant of other buffs, boosted by the season 10 heroes
     if (turnData.hpPierce)
         turnData.valkyrieDamage += turnData.hpPierce;
 
-    //Unique multiplicative buff that happens independant of other buffs
-    if (turnData.attackMult > 1)
-        turnData.valkyrieDamage *= turnData.attackMult;
+    //Individual hero mult and season 10
+    if (turnData.multiplier > 1) {
+        turnData.valkyrieDamage *= turnData.multiplier;
+    }
+
+    //Save full damage value so it is not affected by armor and absorb and other individual unit abilities.
+    double ricoValue = turnData.valkyrieDamage;
 
     //Multiplicative debuffs
     if (opposingResistance < 1)
@@ -584,7 +592,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.aoeDamage = round((double) turnData.aoeDamage * opposingDampFactor);
         turnData.healing = round((double) turnData.healing * opposingDampFactor);
         turnData.healFirst = round((double) turnData.healFirst * opposingDampFactor);
-        turnData.sacHeal = round((double) turnData.sacHeal * opposingDampFactor);//Have to check if Bubbles affects it
+        turnData.sacHeal = round((double) turnData.sacHeal * opposingDampFactor);
         turnData.aoeLast = round((double) turnData.aoeLast * opposingDampFactor);
         turnData.aoeFirst = round((double) turnData.aoeFirst * opposingDampFactor);
         turnData.tripleMult *= opposingDampFactor;
@@ -669,6 +677,34 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
                 if (!times)
                     break;
                 opposing.tripleMult *= baseMult;
+            }
+    }
+
+//Two units backstabbed
+    if (opposing.backstab) {
+        int times = 2;
+        double baseMult = opposing.backstab;
+        int unitCount = 1;
+        //counting alive units for Bubbles
+        if (turnData.dampFactor < 1){
+            for (int i = frontliner + 1; i < armySize; i++){
+                if (remainingHealths[i] > 0)
+                    unitCount++;
+            }
+        }
+        for (int i = armySize - 1; i > frontliner; i--)
+            if (remainingHealths[i] > 0){
+                if (skillTypes[i] == RESISTANCE || (skillTypes[i] == TURNDAMP && turnData.turnCount == 0))
+                    tempResistance = 1 - skillAmounts[i];
+                else
+                    tempResistance = 1;
+                armoredRicochetValue = round(opposing.valkyrieDamage * opposing.backstab * tempResistance * pow(turnData.dampFactor, unitCount + 2 - times)) - turnData.armorArray[i];
+                if (armoredRicochetValue > 0)
+                    remainingHealths[i] -= armoredRicochetValue;
+                times--;
+                if (!times)
+                    break;
+                opposing.backstab *= baseMult;
             }
     }
 

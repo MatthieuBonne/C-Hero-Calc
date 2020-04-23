@@ -198,7 +198,8 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                               aType == TRIPLE || aType == HPAMPLIFY ||
                               aType == FURY || aType == MORALE ||
                               aType == MORALE_L || aType == AOELOW ||
-                              aType == AOELOW_L || aType == DEATHREF);
+                              aType == AOELOW_L || aType == DEATHREF ||
+                              aType == BACKSTAB);
     this->hasHeal = (aType == HEAL || aType == HEAL_L ||
                      aType == LIFESTEAL || aType == LIFESTEAL_L ||
                      aType == WBIDEAL   || aType == WBIDEAL_L   ||
@@ -457,6 +458,7 @@ std::map<std::string, int> stringToEnum = {
     {"TURNDAMP_L", TURNDAMP_L},
     {"DEATHREF", DEATHREF},
     {"TEMPBUFF", TEMPBUFF},
+    {"BACKSTAB", BACKSTAB},
     {"BULLSHIT", BULLSHIT},
 
     {"NONE", NONE},
@@ -884,6 +886,10 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 60, 60, "kirklee",            WATER, LEGENDARY, {TEMPBUFF,       ALL, FIRE, 0.35}, 84, 72, 130, 0.05, {ARMOR, 0.2}));
     baseHeroes.push_back(Monster( 64, 64, "lars",               FIRE,  LEGENDARY, {TEMPBUFF,       ALL, FIRE, 0.35}, 88, 70, 138, 0.05, {ARMOR, 0.2}));
     baseHeroes.push_back(Monster(134,134, "hetfield",           AIR,   ASCENDED,  {TEMPBUFF,       ALL, FIRE, 0.5}, 240, 210, 360, 0.05, {ARMOR, 0.3}));
+    baseHeroes.push_back(Monster( 28, 40, "pluvia",             WATER, COMMON,    {BACKSTAB,       ALL, FIRE, 0.9}, 8, 16, 18, 0.1, {ANTIMAGIC, 0.15}));
+    baseHeroes.push_back(Monster( 34, 56, "silex",              EARTH, RARE,      {BACKSTAB,       ALL, WATER, 0.9}, 12, 38, 30, 0.1, {ANTIMAGIC, 0.15}));
+    baseHeroes.push_back(Monster( 60,140, "caeli",              AIR,   LEGENDARY, {BACKSTAB,       ALL, EARTH, 0.9}, 98, 204, 80, 0.1, {ANTIMAGIC, 0.15}));
+    baseHeroes.push_back(Monster(100,200, "ignis",              FIRE,  ASCENDED,  {BACKSTAB,       ALL, AIR, 0.9}, 104, 312, 120, 0.1, {ANTIMAGIC, 0.2}));
 }
 
 void initIndices() {
