@@ -898,7 +898,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         if(opposing.evolve && remainingHealths[frontliner] > 0){
             evolveTotal += opposing.evolve;
         } //Gladiator buff
-        else if(turnData.bloodlust && (remainingHealths[monstersLost] - opposing.deathstrikeDamage) > 0){
+        else if(turnData.bloodlust && (remainingHealths[monstersLost] - opposing.deathstrikeDamage - opposing.aoeRevenge) > 0){
             evolveTotal += turnData.bloodlust;
             maxHealths[monstersLost] += turnData.bloodlust;
             remainingHealths[monstersLost] += turnData.bloodlust;
