@@ -605,7 +605,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     }
 
     //Check gladiators before resolve damage to make sure there is no left-right discrepancy. Buff takes place before delayed abilities but after AoE.
-    if (!(turnData.bloodlust && !opposingCondition.worldboss && opposingCondition.passiveTypes[opposingCondition.monstersLost] != ANGEL && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - round(turnData.valkyrieDamage) - turnData.aoeDamage - turnData.aoeFirst) <= 0)))
+    if (!(turnData.bloodlust && !opposingCondition.worldboss && opposingCondition.passiveTypes[opposingCondition.monstersLost] != ANGEL && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - turnData.baseDamage - turnData.aoeDamage - turnData.aoeFirst) <= 0)))
         turnData.bloodlust = 0;
 
 }
@@ -804,21 +804,15 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
 
     if (opposing.aoeLast) {
         for (int i = armySize - 1; i >= frontliner; i--) {
-            if (remainingHealths[i] > 0 || worldboss){ //Check for last alive unit
-                if (skillTypes[i] == SKILLDAMPEN)
-                    remainingHealths[i] -= round(opposing.aoeLast * (1 - skillAmounts[i]));
-                else
-                    remainingHealths[i] -= opposing.aoeLast;
+            if (turnData.aliveAtTurnStart[i] || worldboss){ //Check for last alive unit
+                remainingHealths[i] -= round(opposing.aoeLast * (1 - (passiveTypes[i] == ANTIMAGIC ? passiveAmounts[i] : skillTypes[i] == SKILLDAMPEN ? skillAmounts[i] : 0)));
                 break;
             }
         }
     }
 
     if (opposing.aoeFirst) {
-        if (skillTypes[frontliner] == SKILLDAMPEN)
-            remainingHealths[frontliner] -= round(opposing.aoeFirst * (1 - skillAmounts[frontliner]));
-        else
-            remainingHealths[frontliner] -= opposing.aoeFirst;
+        remainingHealths[frontliner] -= round(opposing.aoeFirst * (1 - (passiveTypes[frontliner] == ANTIMAGIC ? passiveAmounts[frontliner] : skillTypes[frontliner] == SKILLDAMPEN ? skillAmounts[frontliner] : 0)));
     }
 
     // Handle aoe Damage for all combatants
