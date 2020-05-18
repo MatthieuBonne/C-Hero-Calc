@@ -34,6 +34,7 @@ struct TurnData {
     int hpPierce = 0;
     int sacHeal = 0;
     int deathstrikeDamage = 0;
+    int revengeIIDamage = 0;
     int masochism = 0;
     int immunityValue = 0;
     int deathBuffHP = 0;
@@ -219,6 +220,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
     turnData.skillDampen = 1;
     turnData.sacHeal = 0;
     turnData.deathstrikeDamage = 0;
+    turnData.revengeIIDamage = 0;
     turnData.masochism = 0;
     turnData.immunityValue = 0;
     turnData.deathBuffHP = 0;
@@ -918,6 +920,9 @@ inline void ArmyCondition::deathCheck(int i) {
         case DEATHREF:
             turnData.deathstrikeDamage += skillAmounts[i] * (maxHealths[i] - remainingHealths[i]);
             break;
+        case REVENGEII:
+            turnData.revengeIIDamage += skillAmounts[i];
+            break;
         case BUFFUP:
             if ((turnData.turnCount + 1) % (lineup[i]->promo >= 5 ? 5 : 4) == 0)
                 deathBuffATK += skillAmounts[i];
@@ -947,11 +952,21 @@ inline void ArmyCondition::deathCheck(int i) {
 }
 //Apply revenge abilities, check for dead units and check for more revenge procs
 inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
-    if (opposing.aoeRevenge || opposing.deathstrikeDamage) {
+    if (opposing.aoeRevenge || opposing.deathstrikeDamage || opposing.revengeIIDamage) {
         //Billy's single target Revenge
-        remainingHealths[monstersLost] -= opposing.deathstrikeDamage;
+        remainingHealths[monstersLost] -= opposing.deathstrikeDamage + opposing.revengeIIDamage;
         opposing.deathstrikeDamage = 0;
-        //Revenge that affects all units
+        //Second unit for double revenge
+        if (opposing.revengeIIDamage){
+            for (int i = monstersLost + 1; i < armySize; i++) {
+                if (remainingHealths[i] > 0){
+                    remainingHealths[i] -= opposing.revengeIIDamage;
+                    break;
+                }
+            }
+        }
+        opposing.revengeIIDamage = 0;
+        //Revenge that affects all units + death check
         for (int i = monstersLost; i < armySize; i++) {
             //Revenge AoE
             remainingHealths[i] -= opposing.aoeRevenge;
@@ -1253,8 +1268,8 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         left.lastFightData.rightAoeDamage += leftCondition.turnData.aoeDamage + rightCondition.turnData.sadism;
 
         //Resolve Revenge abilities
-        while (rightCondition.turnData.aoeRevenge || rightCondition.turnData.deathstrikeDamage ||
-               leftCondition.turnData.aoeRevenge  || leftCondition.turnData.deathstrikeDamage) {
+        while (rightCondition.turnData.aoeRevenge || rightCondition.turnData.deathstrikeDamage || rightCondition.turnData.revengeIIDamage ||
+               leftCondition.turnData.aoeRevenge  || leftCondition.turnData.deathstrikeDamage || leftCondition.turnData.revengeIIDamage) {
             left.lastFightData.leftAoeDamage += rightCondition.turnData.aoeRevenge;
             leftCondition.resolveRevenge(rightCondition.turnData);
             left.lastFightData.rightAoeDamage += leftCondition.turnData.aoeRevenge;

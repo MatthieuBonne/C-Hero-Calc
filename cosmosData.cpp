@@ -103,11 +103,6 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
     if (this->passive.passiveType == TANK)
         this->hp *= 1 + this->passive.amount;
 
-//Put aSeethe skill back where it belongs once it's capped to 99
-    if (this->skill.skillType == POSBONUS_L) {
-        this->skill.skillType = POSBONUS;
-        this->skill.amount = this->skill.amount * (double) aLevel;
-    }
     //Abilities no longer scale past level 99
     if (aLevel > 99)
         aLevel = 99;
@@ -179,6 +174,12 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
         case SELFARMOR_CUBE:this->skill.skillType = SELFARMOR;
                             this->skill.amount = pow(this->skill.amount, 3);
                             break;
+        case REVENGEII_L:   this->skill.skillType = REVENGEII;
+                            this->skill.amount = aLevel * this->skill.amount;
+                            break;
+        case POSBONUS_L:    this->skill.skillType = POSBONUS;
+                            this->skill.amount = this->skill.amount * (double) aLevel;
+                            break;
     }
 }
 
@@ -199,7 +200,8 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                               aType == FURY || aType == MORALE ||
                               aType == MORALE_L || aType == AOELOW ||
                               aType == AOELOW_L || aType == DEATHREF ||
-                              aType == BACKSTAB);
+                              aType == BACKSTAB || aType == REVENGEII_L ||
+                              aType == REVENGEII);
     this->hasHeal = (aType == HEAL || aType == HEAL_L ||
                      aType == LIFESTEAL || aType == LIFESTEAL_L ||
                      aType == WBIDEAL   || aType == WBIDEAL_L   ||
@@ -459,6 +461,8 @@ std::map<std::string, int> stringToEnum = {
     {"DEATHREF", DEATHREF},
     {"TEMPBUFF", TEMPBUFF},
     {"BACKSTAB", BACKSTAB},
+    {"REVENGEII", REVENGEII},
+    {"REVENGEII_L", REVENGEII_L},
     {"BULLSHIT", BULLSHIT},
 
     {"NONE", NONE},
@@ -890,6 +894,10 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 34, 56, "silex",              EARTH, RARE,      {BACKSTAB,       ALL, WATER, 0.9}, 12, 38, 30, 0.1, {ANTIMAGIC, 0.15}));
     baseHeroes.push_back(Monster( 60,140, "caeli",              AIR,   LEGENDARY, {BACKSTAB,       ALL, EARTH, 0.9}, 98, 204, 80, 0.1, {ANTIMAGIC, 0.15}));
     baseHeroes.push_back(Monster(100,200, "ignis",              FIRE,  ASCENDED,  {BACKSTAB,       ALL, AIR, 0.9}, 104, 312, 120, 0.1, {ANTIMAGIC, 0.2}));
+    baseHeroes.push_back(Monster( 38, 34, "yuri",               EARTH, COMMON,    {REVENGEII_L,    ALL, FIRE, 1}, 28, 22, 24, 1, {DPS, 0.1}));
+    baseHeroes.push_back(Monster( 54, 48, "alan",               FIRE,  RARE,      {REVENGEII_L,    ALL, WATER, 2}, 52, 40, 28, 1, {DPS, 0.15}));
+    baseHeroes.push_back(Monster( 78, 64, "valentina",          AIR,   LEGENDARY, {REVENGEII_L,    ALL, EARTH, 5}, 88, 60, 62, 1, {DPS, 0.2}));
+    baseHeroes.push_back(Monster(148,132, "john",               WATER, ASCENDED,  {REVENGEII_L,    ALL, AIR, 9}, 284, 220, 234, 1, {DPS, 0.25}));
 }
 
 void initIndices() {
@@ -992,6 +1000,7 @@ void initHeroAliases() {
     heroAliases["ziggy"] = "kirklee";
     heroAliases["het"] = "hetfield";
     heroAliases["field"] = "hetfield";
+    heroAliases["val"] = "valentina";
 
     heroAliases["loc"] = "lordofchaos";
     heroAliases["fboss"] = "lordofchaos";
