@@ -180,6 +180,12 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
         case POSBONUS_L:    this->skill.skillType = POSBONUS;
                             this->skill.amount = this->skill.amount * (double) aLevel;
                             break;
+        case DMGABSORB_L:  this->skill.skillType = DMGABSORB;
+                            this->skill.amount = this->skill.amount * (double) aLevel / 3;
+                            break;
+        case ANTIREFLECT_L:  this->skill.skillType = ANTIREFLECT;
+                            this->skill.amount = this->skill.amount * (double) aLevel / 3;
+                            break;
     }
 }
 
@@ -201,7 +207,8 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                               aType == MORALE_L || aType == AOELOW ||
                               aType == AOELOW_L || aType == DEATHREF ||
                               aType == BACKSTAB || aType == REVENGEII_L ||
-                              aType == REVENGEII);
+                              aType == REVENGEII || aType == DMGABSORB ||
+                              aType == DMGABSORB_L);
     this->hasHeal = (aType == HEAL || aType == HEAL_L ||
                      aType == LIFESTEAL || aType == LIFESTEAL_L ||
                      aType == WBIDEAL   || aType == WBIDEAL_L   ||
@@ -463,6 +470,10 @@ std::map<std::string, int> stringToEnum = {
     {"BACKSTAB", BACKSTAB},
     {"REVENGEII", REVENGEII},
     {"REVENGEII_L", REVENGEII_L},
+    {"DMGABSORB", DMGABSORB},
+    {"DMGABSORB_L", DMGABSORB_L},
+    {"ANTIREFLECT", ANTIREFLECT},
+    {"ANTIREFLECT_L", ANTIREFLECT_L},
     {"BULLSHIT", BULLSHIT},
 
     {"NONE", NONE},
@@ -898,6 +909,14 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 54, 48, "alan",               FIRE,  RARE,      {REVENGEII_L,    ALL, WATER, 2}, 52, 40, 28, 1, {DPS, 0.15}));
     baseHeroes.push_back(Monster( 78, 64, "valentina",          AIR,   LEGENDARY, {REVENGEII_L,    ALL, EARTH, 5}, 88, 60, 62, 1, {DPS, 0.2}));
     baseHeroes.push_back(Monster(148,132, "john",               WATER, ASCENDED,  {REVENGEII_L,    ALL, AIR, 9}, 284, 220, 234, 1, {DPS, 0.25}));
+    baseHeroes.push_back(Monster( 18, 50, "sully",              WATER, COMMON,    {ANTIREFLECT_L,  ALL, FIRE, 0.02}, 6, 12, 14, 0.01, {DPS, 0.2}));
+    baseHeroes.push_back(Monster( 26, 62, "merida",             EARTH, RARE,      {ANTIREFLECT_L,  ALL, WATER, 0.02}, 22, 42, 30, 0.01, {DPS, 0.22}));
+    baseHeroes.push_back(Monster( 40,110, "will",               FIRE,  LEGENDARY, {ANTIREFLECT_L,  ALL, EARTH, 0.02}, 91, 211, 79, 0.01, {DPS, 0.26}));
+    baseHeroes.push_back(Monster(130,210, "sagittaria",         AIR,   ASCENDED,  {ANTIREFLECT_L,  ALL, AIR, 0.02}, 164, 292, 278, 0.01, {DPS, 0.3}));
+    baseHeroes.push_back(Monster( 62,  8, "jalrok",             ALL,   COMMON,    {DMGABSORB_L,    ALL, FIRE, 0.02}, 26, 4, 18, 0.01, {HEALPLUS, 0.35}));
+    baseHeroes.push_back(Monster( 84, 10, "raelan",             ALL,   RARE,      {DMGABSORB_L,    ALL, WATER, 0.02}, 32, 8, 28, 0.01, {HEALPLUS, 0.4}));
+    baseHeroes.push_back(Monster(114, 12, "sylnir",             ALL,   LEGENDARY, {DMGABSORB_L,    ALL, EARTH, 0.02}, 44, 12, 36, 0.01, {HEALPLUS, 0.45}));
+    baseHeroes.push_back(Monster(184, 16, "arathon",            ALL,   ASCENDED,  {DMGABSORB_L,    ALL, AIR, 0.02}, 144, 24, 108, 0.01, {HEALPLUS, 0.5}));
 }
 
 void initIndices() {

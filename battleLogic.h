@@ -42,6 +42,7 @@ struct TurnData {
     int tetrisMult = 0;
     int tetrisSeed = 0;
     int bloodlust = 0;
+    double dmgAbsorb = 0;
 
     Element opposingElement;
 
@@ -100,6 +101,7 @@ class ArmyCondition {
 
         int64_t lastBerserk;
         double evolveTotal; //for evolve ability
+        bool firstAttack; // for Eternals
         int deathBuffATK; //For S7 fairies
         int64_t furyArray[ARMY_MAX_SIZE];//for subatomic heroes
 
@@ -139,6 +141,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
     monstersLost = oldMonstersLost;
     lastBerserk = 0;
     evolveTotal = 0;
+    firstAttack = true;
     deathBuffATK = 0;
 
     dice = -1;
@@ -192,7 +195,9 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         for (int j = armySize - 1; j >= monstersLost; j--) {
             if ( lineup[j]->baseName == "sparks" || lineup[j]->baseName == "leaf" ||
                  lineup[j]->baseName == "flynn" || lineup[j]->baseName == "willow" ||
-                 lineup[j]->baseName == "gizmo" || lineup[j]->baseName == "thumper" ) {
+                 lineup[j]->baseName == "gizmo" || lineup[j]->baseName == "thumper" ||
+                 lineup[j]->baseName == "egg" || lineup[j]->baseName == "babypyros" ||
+                 lineup[j]->baseName == "youngpyros" || lineup[j]->baseName == "kingpyros") {
                     easterCheck = true;
                     maxHealths[easterID] += round(skillAmounts[easterID] * 84 / 134); 
                     remainingHealths[easterID] = maxHealths[easterID] - aoeDamage;
@@ -383,6 +388,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.tetrisMult = 0;
     turnData.tetrisSeed = 0;
     turnData.bloodlust = 0;
+    turnData.dmgAbsorb = 0;
     turnData.evolve = 0;
 
     // double friendsDamage = 0;
@@ -427,8 +433,13 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         turnData.ricoActive = true;
                         break;
         case COUNTER:   turnData.counter = skillAmounts[monstersLost];
+                        if (opposingCondition.skillTypes[opposingCondition.monstersLost] == ANTIREFLECT)
+                            turnData.counter *= (1 - opposingCondition.skillAmounts[opposingCondition.monstersLost]);
                         break;
-        case FLATREF:   turnData.deathstrikeDamage += skillAmounts[monstersLost];
+        case FLATREF:   if (opposingCondition.skillTypes[opposingCondition.monstersLost] == ANTIREFLECT)
+                            turnData.deathstrikeDamage += skillAmounts[monstersLost] * (1 - opposingCondition.skillAmounts[opposingCondition.monstersLost]);
+                        else
+                            turnData.deathstrikeDamage += skillAmounts[monstersLost];
                         break;
         case EXPLODE:   turnData.explodeDamage = skillAmounts[monstersLost]; // Explode damage gets added here, but still won't apply unless enemy frontliner dies
                         break;
@@ -505,6 +516,14 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case BLOODLUST: turnData.bloodlust += skillAmounts[monstersLost];
                         break;
         case MORALE:    turnData.baseDamage = furyArray[monstersLost] + deathBuffATK + evolveTotal;
+                        break;
+        case DMGABSORB: turnData.dmgAbsorb = skillAmounts[monstersLost];
+                        if (firstAttack){
+                            turnData.baseDamage -= evolveTotal;
+                            evolveTotal += round((maxHealths[monstersLost] - remainingHealths[monstersLost]) * turnData.dmgAbsorb);
+                            turnData.baseDamage += evolveTotal;
+                            firstAttack = false;
+                        }
                         break;
         default:        break;
 
@@ -843,14 +862,12 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
       }
 
 //Check for death defying skills, death and death skills.
-    if (passiveTypes[i] == ANGEL && remainingHealths[i] <= 0 && turnData.aliveAtTurnStart[i]){
-        remainingHealths[i] = round((double)maxHealths[i] * passiveAmounts[i]);
-        passiveTypes[i] = NONE;
-    }
-
-      if (remainingHealths[i] <= 0 && !worldboss) {
-        deathCheck(i);
-      } else {
+    if (remainingHealths[i] <= 0 && !worldboss) {
+        if (passiveTypes[i] == ANGEL && turnData.aliveAtTurnStart[i]){
+            remainingHealths[i] = round((double)maxHealths[i] * passiveAmounts[i]);
+            passiveTypes[i] = NONE;
+        } else deathCheck(i);
+    } else { //Healing
             remainingHealths[i] += round((turnData.healing + //AoE heal
             (skillTypes[i] != SACRIFICE ? turnData.sacHeal : 0) + //Prevent sacrifice from working on the unit that sacrifices their health
             (i == frontliner ? (round(turnData.selfHeal * opposing.baseDamage) + turnData.healFirst) : 0)) * //Front healing
@@ -883,8 +900,11 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         //Reflect
         if (opposing.counter && counter_eligible){
             // Finding Guy's target
-            if(opposing.guyActive)
+            if(opposing.guyActive){
                 opposing.counter_target = findMaxHP();
+                if (skillTypes[monstersLost + opposing.counter_target] == ANTIREFLECT)
+                    opposing.counter *= (1 - skillAmounts[monstersLost + opposing.counter_target]);
+            }
             if (opposing.counter_target != 0)
                 remainingHealths[monstersLost + opposing.counter_target] -= static_cast<int64_t>(round(turnData.baseDamage * opposing.counter));
             else
@@ -898,6 +918,11 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             evolveTotal += turnData.bloodlust;
             maxHealths[monstersLost] += turnData.bloodlust;
             remainingHealths[monstersLost] += turnData.bloodlust;
+        } 
+        else if (turnData.dmgAbsorb){
+            evolveTotal += round(turnData.dmgAbsorb * (opposing.baseDamage + opposing.aoeFirst + opposing.aoeDamage));
+            if (remainingHealths[frontliner] <= 0)
+                firstAttack = true;
         }
         //If a delayed ability killed a frontliner, find next frontliner. Same procedure as when applying aoe.
         for (int i = monstersLost; i < armySize; i++){
@@ -953,6 +978,13 @@ inline void ArmyCondition::deathCheck(int i) {
 //Apply revenge abilities, check for dead units and check for more revenge procs
 inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
     if (opposing.aoeRevenge || opposing.deathstrikeDamage || opposing.revengeIIDamage) {
+
+        int hpChange = 0;//For Eternal heroes
+        int frontliner = monstersLost;
+        if (skillTypes[frontliner] == DMGABSORB){
+            hpChange = remainingHealths[frontliner];
+        }
+
         //Billy's single target Revenge
         remainingHealths[monstersLost] -= opposing.deathstrikeDamage + opposing.revengeIIDamage;
         opposing.deathstrikeDamage = 0;
@@ -975,6 +1007,12 @@ inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
                 //Save Revenge values
                 deathCheck(i);
             }
+        }
+        if (hpChange){
+            if (!firstAttack || remainingHealths[frontliner] <= 0)
+                evolveTotal += round((hpChange - remainingHealths[frontliner]) * skillAmounts[frontliner]);
+            if (remainingHealths[frontliner] <= 0)
+                firstAttack = true;
         }
         opposing.aoeRevenge = 0;
     }
