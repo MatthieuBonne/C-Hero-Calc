@@ -920,7 +920,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             remainingHealths[monstersLost] += turnData.bloodlust;
         } 
         else if (turnData.dmgAbsorb){
-            evolveTotal += round(turnData.dmgAbsorb * (opposing.baseDamage + opposing.aoeFirst + opposing.aoeDamage));
+            evolveTotal += round(turnData.dmgAbsorb * ((opposing.direct_target ? 0 :opposing.baseDamage) + opposing.aoeFirst + opposing.aoeDamage));
             if (remainingHealths[frontliner] <= 0)
                 firstAttack = true;
         }
