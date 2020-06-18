@@ -101,7 +101,6 @@ class ArmyCondition {
 
         int64_t lastBerserk;
         double evolveTotal; //for evolve ability
-        bool firstAttack; // for Eternals
         int deathBuffATK; //For S7 fairies
         int64_t furyArray[ARMY_MAX_SIZE];//for subatomic heroes
 
@@ -141,7 +140,6 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
     monstersLost = oldMonstersLost;
     lastBerserk = 0;
     evolveTotal = 0;
-    firstAttack = true;
     deathBuffATK = 0;
 
     dice = -1;
@@ -354,7 +352,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
 // Protection needs to be calculated at this point.
 inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition & opposingCondition) {
 
-    turnData.baseDamage = lineup[monstersLost]->damage + deathBuffATK + evolveTotal;// Get Base damage (deathBuff from Fairies, evolveTotal for Clio/Gladiator buff)
+    turnData.baseDamage = lineup[monstersLost]->damage + deathBuffATK;// Get Base damage (deathBuff from Fairies, evolveTotal for Clio/Gladiator buff)
 
     turnData.opposingElement = opposingCondition.lineup[opposingCondition.monstersLost]->element;
     const int opposingProtection = opposingCondition.turnData.protection;
@@ -399,7 +397,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                             if (skillTypes[i] == NOTHING && remainingHealths[i] > 0)
                                 turnData.baseDamage *= skillAmounts[monstersLost];
                         }
-                        turnData.baseDamage += deathBuffATK + evolveTotal;
+                        turnData.baseDamage += deathBuffATK;
                         break;
         case TRAINING:  turnData.baseDamage += (int) (skillAmounts[monstersLost] * (double) turncounter);
                         break;
@@ -475,8 +473,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case VOID:      if (lineup[monstersLost]->element != turnData.opposingElement)
                             turnData.multiplier *= skillAmounts[monstersLost] + 1;
                         break;
-        case SADISM:    turnData.sadism += round(skillAmounts[monstersLost] * (turnData.baseDamage - evolveTotal));
-                        turnData.aoeDamage += round(skillAmounts[monstersLost] * (turnData.baseDamage - evolveTotal));
+        case SADISM:    turnData.sadism += round(skillAmounts[monstersLost] * (turnData.baseDamage));
+                        turnData.aoeDamage += round(skillAmounts[monstersLost] * (turnData.baseDamage));
                         break;
         case COURAGE:   turnData.buffDamage *= skillAmounts[monstersLost];
                         break;
@@ -511,19 +509,19 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case CONVERT:   turnData.baseDamage -= round(lineup[monstersLost]->damage * (7 - armySize + monstersLost) * 0.1);
                         break;
-        case FURY:      turnData.baseDamage = furyArray[monstersLost] + deathBuffATK + evolveTotal;
+        case FURY:      turnData.baseDamage = furyArray[monstersLost] + deathBuffATK;
                         break;
         case BLOODLUST: turnData.bloodlust += skillAmounts[monstersLost];
+                        turnData.baseDamage += evolveTotal;
                         break;
-        case MORALE:    turnData.baseDamage = furyArray[monstersLost] + deathBuffATK + evolveTotal;
+        case MORALE:    turnData.baseDamage = furyArray[monstersLost] + deathBuffATK;
                         break;
         case DMGABSORB: turnData.dmgAbsorb = skillAmounts[monstersLost];
-                        if (firstAttack){
-                            turnData.baseDamage -= evolveTotal;
+                        if (!evolveTotal)
                             evolveTotal += round((maxHealths[monstersLost] - remainingHealths[monstersLost]) * turnData.dmgAbsorb);
-                            turnData.baseDamage += evolveTotal;
-                            firstAttack = false;
-                        }
+                        turnData.baseDamage += evolveTotal;
+                        break;
+        case EVOLVE:    turnData.baseDamage += evolveTotal;
                         break;
         default:        break;
 
@@ -914,15 +912,13 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         if(opposing.evolve && remainingHealths[frontliner] > 0){
             evolveTotal += opposing.evolve;
         } //Gladiator buff
-        else if(turnData.bloodlust && (remainingHealths[monstersLost] - opposing.deathstrikeDamage - opposing.aoeRevenge) > 0){
+        else if(turnData.bloodlust && (remainingHealths[frontliner] - opposing.deathstrikeDamage - opposing.aoeRevenge) > 0){
             evolveTotal += turnData.bloodlust;
             maxHealths[monstersLost] += turnData.bloodlust;
             remainingHealths[monstersLost] += turnData.bloodlust;
         } 
-        else if (turnData.dmgAbsorb){
+        else if (turnData.dmgAbsorb && remainingHealths[frontliner] > 0){
             evolveTotal += round(turnData.dmgAbsorb * ((opposing.direct_target ? 0 :opposing.baseDamage) + opposing.aoeFirst + opposing.aoeDamage));
-            if (remainingHealths[frontliner] <= 0)
-                firstAttack = true;
         }
         //If a delayed ability killed a frontliner, find next frontliner. Same procedure as when applying aoe.
         for (int i = monstersLost; i < armySize; i++){
@@ -964,7 +960,7 @@ inline void ArmyCondition::deathCheck(int i) {
                     remainingHealths[j] += turnData.deathBuffHP;
                     maxHealths[j] += turnData.deathBuffHP;
                 }
-            deathBuffATK += turnData.deathBuffHP - (i == monstersLost ? evolveTotal : 0);
+            deathBuffATK += turnData.deathBuffHP;
         default:
             break;
     }
@@ -1009,10 +1005,8 @@ inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
             }
         }
         if (hpChange){
-            if (!firstAttack || remainingHealths[frontliner] <= 0)
+            if (evolveTotal)
                 evolveTotal += round((hpChange - remainingHealths[frontliner]) * skillAmounts[frontliner]);
-            if (remainingHealths[frontliner] <= 0)
-                firstAttack = true;
         }
         opposing.aoeRevenge = 0;
     }
