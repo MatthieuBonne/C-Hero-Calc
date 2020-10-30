@@ -14,8 +14,8 @@
 #include <fstream>
 
 // Version number not used anywhere except in output to know immediately which version the user is running
-const std::string VERSION = "4.8.0.2a";
-const std::string REPLAYCODE = "480a"; //4-number/letter sequence at the start of replay, that helps identify calc version. First 4 characters are responsible for tournament info in replay.
+const std::string VERSION = "4.9.0.0a";
+const std::string REPLAYCODE = "490a"; //4-number/letter sequence at the start of replay, that helps identify calc version. First 4 characters are responsible for tournament info in replay.
 
 const size_t GIGABYTE = ((size_t) (1) << 30);
 
@@ -173,6 +173,10 @@ enum SkillType {
     ANTIREFLECT_L,// Scaling
     DMGABSORB,// Absorbs all damage dealt to this unit and converts it into attack stat with X% efficiency
     DMGABSORB_L,// Scaling
+    
+    HORSEMAN,// Steals stats
+    REVGNERF,// Lowers enemy units' atk after death
+    OVERLOAD,// When killing an enemy, propagates remaining dmg
 
     BULLSHIT//Self-explanatory (Does random AoE based on RNG)
 };
@@ -186,7 +190,8 @@ enum PassiveType {
     DPS,//Increases damage dealt by X%
     HEALPLUS,//Gains +X% from heals
     ANTIMAGIC,//Receives X% less damage from skills
-    TANK//Increases health by X%
+    TANK,//Increases health by X%
+    ESCORT//Gain X stats when teammates are present
 };
 
 enum Element {

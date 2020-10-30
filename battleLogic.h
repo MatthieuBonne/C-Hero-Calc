@@ -43,6 +43,7 @@ struct TurnData {
     int tetrisSeed = 0;
     int bloodlust = 0;
     double dmgAbsorb = 0;
+    double revgNerfAtk = 0;
 
     Element opposingElement;
 
@@ -263,7 +264,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
             case BUFF:      if (skillTargets[i] == ALL || skillTargets[i] == lineup[monstersLost]->element) {
                                 turnData.buffDamage += (int) skillAmounts[i];
                             } break;
-            case BUFFUP:    if (turncounter % (lineup[i]->promo >= 5 ? 5 : 4) == 0 && turncounter != 0)//TODO: Change 5 to 3 when it's fixed
+            case BUFFUP:    if (turncounter % 4 == 0 && turncounter != 0)// yeti
                                 deathBuffATK += skillAmounts[i];
                             break;
             case CHAMPION:  if (skillTargets[i] == ALL || skillTargets[i] == lineup[monstersLost]->element) {
@@ -352,7 +353,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
 // Protection needs to be calculated at this point.
 inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition & opposingCondition) {
 
-    turnData.baseDamage = lineup[monstersLost]->damage + deathBuffATK;// Get Base damage (deathBuff from Fairies, evolveTotal for Clio/Gladiator buff)
+    turnData.baseDamage = (lineup[monstersLost]->damage + deathBuffATK)*(1-turnData.revgNerfAtk);// Get Base damage (deathBuff from Fairies, evolveTotal for Clio/Gladiator buff)
 
     turnData.opposingElement = opposingCondition.lineup[opposingCondition.monstersLost]->element;
     const int opposingProtection = opposingCondition.turnData.protection;
@@ -387,6 +388,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.tetrisSeed = 0;
     turnData.bloodlust = 0;
     turnData.dmgAbsorb = 0;
+    //turnData.revgNerfAtk = 0;
     turnData.evolve = 0;
 
     // double friendsDamage = 0;
@@ -944,11 +946,11 @@ inline void ArmyCondition::deathCheck(int i) {
         case REVENGEII:
             turnData.revengeIIDamage += skillAmounts[i];
             break;
-        case BUFFUP:
-            if ((turnData.turnCount + 1) % (lineup[i]->promo >= 5 ? 5 : 4) == 0)
+        case BUFFUP: // yeti
+            if ((turnData.turnCount + 1) % 4 == 0)
                 deathBuffATK += skillAmounts[i];
             break;
-        case DEATHBUFF:
+        case DEATHBUFF: // fairies
             turnData.deathBuffHP = (int) round(skillAmounts[i] * maxHealths[i]);
             for (int j = monstersLost; j < i; j++)
                 if (remainingHealths[j] > 0){
@@ -961,6 +963,9 @@ inline void ArmyCondition::deathCheck(int i) {
                     maxHealths[j] += turnData.deathBuffHP;
                 }
             deathBuffATK += turnData.deathBuffHP;
+        case REVGNERF: // anty
+            turnData.revgNerfAtk += skillAmounts[i];
+            break;
         default:
             break;
     }

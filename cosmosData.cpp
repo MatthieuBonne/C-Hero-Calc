@@ -474,6 +474,9 @@ std::map<std::string, int> stringToEnum = {
     {"DMGABSORB_L", DMGABSORB_L},
     {"ANTIREFLECT", ANTIREFLECT},
     {"ANTIREFLECT_L", ANTIREFLECT_L},
+    {"HORSEMAN", HORSEMAN},
+    {"REVGNERF", REVGNERF},
+    {"OVERLOAD", OVERLOAD},
     {"BULLSHIT", BULLSHIT},
 
     {"NONE", NONE},
@@ -917,6 +920,14 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 84, 10, "raelan",             ALL,   RARE,      {DMGABSORB_L,    ALL, WATER, 0.02}, 32, 8, 28, 0.01, {HEALPLUS, 0.4}));
     baseHeroes.push_back(Monster(114, 12, "sylnir",             ALL,   LEGENDARY, {DMGABSORB_L,    ALL, EARTH, 0.02}, 44, 12, 36, 0.01, {HEALPLUS, 0.45}));
     baseHeroes.push_back(Monster(184, 16, "arathon",            ALL,   ASCENDED,  {DMGABSORB_L,    ALL, AIR, 0.02}, 144, 24, 108, 0.01, {HEALPLUS, 0.5}));
+    baseHeroes.push_back(Monster( 58, 64, "stench",             AIR,   LEGENDARY, {HORSEMAN,       ALL, AIR, 0.15}, 58, 84, 56, 0.05, {ESCORT, 100}));
+    baseHeroes.push_back(Monster( 59, 65, "rumble",             FIRE,  LEGENDARY, {HORSEMAN,       ALL, AIR, 0.20}, 60, 86, 58, 0.05, {ESCORT, 100}));
+    baseHeroes.push_back(Monster( 60, 66, "vermin",             EARTH, LEGENDARY, {HORSEMAN,       ALL, AIR, 0.25}, 62, 88, 60, 0.05, {ESCORT, 100}));
+    baseHeroes.push_back(Monster(110,120, "reaper",             ALL,   ASCENDED,  {HORSEMAN,       ALL, AIR, 0.02}, 234, 258, 180, 0.05, {ESCORT, 100}));
+    baseHeroes.push_back(Monster( 41, 27, "esmeralda",          AIR,   COMMON,    {HPPIERCE_L,     ALL, AIR, 0.025}, 68, 38, 16, 0.005, {DAMAGE, 0.25}));
+    baseHeroes.push_back(Monster( 72, 30, "marionette",         WATER, RARE,      {TRIPLE,         ALL, AIR, 0.9}, 58, 22, 32, 0.1, {DAMAGE, 0.27}));
+    baseHeroes.push_back(Monster( 38,128, "antoinette",         FIRE,  LEGENDARY, {REVGNERF,       ALL, AIR, 0.1}, 42, 188, 64, 0.05, {DAMAGE, 0.29}));
+    baseHeroes.push_back(Monster(164, 98, "ladymaligryn",       EARTH, ASCENDED,  {OVERLOAD,       ALL, AIR, 1.5}, 228, 136, 128, 0.5, {DAMAGE, 0.35}));
 }
 
 void initIndices() {
