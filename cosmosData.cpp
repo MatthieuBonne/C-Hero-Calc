@@ -923,7 +923,7 @@ void initBaseHeroes() {
     baseHeroes.push_back(Monster( 58, 64, "stench",             AIR,   LEGENDARY, {HORSEMAN,       ALL, AIR, 0.15}, 58, 84, 56, 0.05, {ESCORT, 100}));
     baseHeroes.push_back(Monster( 59, 65, "rumble",             FIRE,  LEGENDARY, {HORSEMAN,       ALL, AIR, 0.20}, 60, 86, 58, 0.05, {ESCORT, 100}));
     baseHeroes.push_back(Monster( 60, 66, "vermin",             EARTH, LEGENDARY, {HORSEMAN,       ALL, AIR, 0.25}, 62, 88, 60, 0.05, {ESCORT, 100}));
-    baseHeroes.push_back(Monster(110,120, "reaper",             ALL,   ASCENDED,  {HORSEMAN,       ALL, AIR, 0.02}, 234, 258, 180, 0.05, {ESCORT, 100}));
+    baseHeroes.push_back(Monster(110,120, "reaper",             ALL,   ASCENDED,  {HORSEMAN,       ALL, AIR, 0.35}, 234, 258, 180, 0.05, {ESCORT, 100}));
     baseHeroes.push_back(Monster( 41, 27, "esmeralda",          AIR,   COMMON,    {HPPIERCE_L,     ALL, AIR, 0.025}, 68, 38, 16, 0.005, {DAMAGE, 0.25}));
     baseHeroes.push_back(Monster( 72, 30, "marionette",         WATER, RARE,      {TRIPLE,         ALL, AIR, 0.9}, 58, 22, 32, 0.1, {DAMAGE, 0.27}));
     baseHeroes.push_back(Monster( 38,128, "antoinette",         FIRE,  LEGENDARY, {REVGNERF,       ALL, AIR, 0.1}, 42, 188, 64, 0.05, {DAMAGE, 0.29}));

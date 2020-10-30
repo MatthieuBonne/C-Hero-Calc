@@ -4,8 +4,18 @@
 #include <vector>
 #include <cmath>
 #include <stdexcept>
+#include <string>
+
+#include <iostream>
+#include <algorithm>
+#include <ctime>
+#include <limits>
+#include <thread>
+#include <future>
 
 #include "cosmosData.h"
+#include "inputProcessing.h"
+using namespace std;
 
 const int VALID_RAINBOW_CONDITION = 15; // Binary 00001111 -> means all elements were added
 
@@ -103,6 +113,7 @@ class ArmyCondition {
         int64_t lastBerserk;
         double evolveTotal; //for evolve ability
         int deathBuffATK; //For S7 fairies
+        double revgNerfAtk; //for antoinette
         int64_t furyArray[ARMY_MAX_SIZE];//for subatomic heroes
 
         int monstersLost;
@@ -142,6 +153,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
     lastBerserk = 0;
     evolveTotal = 0;
     deathBuffATK = 0;
+    revgNerfAtk = 0;
 
     dice = -1;
     booze = false;
@@ -234,6 +246,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
     turnData.attackMult = 1;
     turnData.immunity5K = false ;
     turnData.turnCount = turncounter; //for Yeti and Mary
+
 
     switch (skillTypes[monstersLost]) {
         default:            break;
@@ -353,7 +366,8 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
 // Protection needs to be calculated at this point.
 inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition & opposingCondition) {
 
-    turnData.baseDamage = (lineup[monstersLost]->damage + deathBuffATK)*(1-turnData.revgNerfAtk);// Get Base damage (deathBuff from Fairies, evolveTotal for Clio/Gladiator buff)
+    //interface.timedOutput("revgNerfAtk... "+to_string(lineup[monstersLost]->damage)+" "+to_string(opposingCondition.revgNerfAtk), BASIC_OUTPUT);
+    turnData.baseDamage = (lineup[monstersLost]->damage + deathBuffATK)*(1-opposingCondition.revgNerfAtk);// Get Base damage (deathBuff from Fairies, evolveTotal for Clio/Gladiator buff)
 
     turnData.opposingElement = opposingCondition.lineup[opposingCondition.monstersLost]->element;
     const int opposingProtection = opposingCondition.turnData.protection;
@@ -935,7 +949,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
 inline void ArmyCondition::deathCheck(int i) {
     switch (skillTypes[i]) {
         case REVENGE:
-             turnData.aoeRevenge += (int) round((double) (lineup[i]->damage + deathBuffATK) * skillAmounts[i]);
+            turnData.aoeRevenge += (int) round((double) (lineup[i]->damage + deathBuffATK) * skillAmounts[i]);
             break;
         case DEATHSTRIKE:
             turnData.deathstrikeDamage += skillAmounts[i];
@@ -964,7 +978,8 @@ inline void ArmyCondition::deathCheck(int i) {
                 }
             deathBuffATK += turnData.deathBuffHP;
         case REVGNERF: // anty
-            turnData.revgNerfAtk += skillAmounts[i];
+            //turnData.revgNerfAtk += skillAmounts[i];
+            revgNerfAtk += skillAmounts[i];
             break;
         default:
             break;
@@ -1040,7 +1055,7 @@ inline int ArmyCondition::getLuxTarget(const ArmyCondition & opposingCondition, 
   function shuffleBySeed(arr, seed) {
     for (var size = arr.length, mapa = new Array(size), x = 0; x < size; x++) mapa[x] = (seed = (9301 * seed + 49297) % 233280) / 233280 * size | 0;
     for (var i = size - 1; i > 0; i--) arr[i] = arr.splice(mapa[size - 1 - i], 1, arr[i])[0]
-}
+    }
   called like `else if ("rtrg" == skill.type) shuffleBySeed(turn.atk.damageFactor, seed);`
   damageFactor appears to be initialized to an array of one element consisting of [1]
   function getTurnData(AL, BL) {
