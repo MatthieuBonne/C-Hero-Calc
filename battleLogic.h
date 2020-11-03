@@ -54,6 +54,7 @@ struct TurnData {
     int bloodlust = 0;
     double dmgAbsorb = 0;
     double revgNerfAtk = 0;
+    bool overload;
 
     Element opposingElement;
 
@@ -181,6 +182,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         passiveAmounts[i] = passive->amount;
         remainingHealths[i] = lineup[i]->hp - aoeDamage * ((skill->skillType == SKILLDAMPEN) ? (1 - skill->amount) : 1);
         furyArray[i] = lineup[i]->damage;
+        stealStatsPct[i] = 0;
 
         worldboss |= lineup[i]->rarity == WORLDBOSS;
 
@@ -250,6 +252,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
     turnData.attackMult = 1;
     turnData.immunity5K = false ;
     turnData.turnCount = turncounter; //for Yeti and Mary
+    turnData.overload = false;
 
 
     switch (skillTypes[monstersLost]) {
@@ -407,6 +410,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.bloodlust = 0;
     turnData.dmgAbsorb = 0;
     turnData.evolve = 0;
+    turnData.overload = false;
 
     // double friendsDamage = 0;
 
@@ -551,6 +555,9 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         }
                         //interface.timedOutput("horsemenCount... "+to_string(horsemenCount), BASIC_OUTPUT);
                         break;
+        case OVERLOAD:  turnData.overload = true;
+                        //interface.timedOutput("activate overload", BASIC_OUTPUT);
+                        break;
         default:        break;
 
     }
@@ -679,6 +686,8 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     int frontliner = monstersLost; // save original frontliner
     int armoredRicochetValue; //So the ricochet doesn't heal due to armor
     double tempResistance; //Needed for frosty to dampen ricochet
+    int finalDamage = remainingHealths[frontliner];
+    bool allowOverload;
 
     // Apply normal attack damage to the frontliner
     // If direct_target is non-zero that means Lux is hitting something not the front liner
@@ -867,6 +876,9 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     if (opposing.aoeFirst) {
         remainingHealths[frontliner] -= round(opposing.aoeFirst * (1 - (passiveTypes[frontliner] == ANTIMAGIC ? passiveAmounts[frontliner] : skillTypes[frontliner] == SKILLDAMPEN ? skillAmounts[frontliner] : 0)));
     }
+    
+    // Calc damage done to front (for overload)
+    finalDamage -= remainingHealths[frontliner];
 
     // Handle aoe Damage for all combatants
     for (int i = frontliner; i < armySize; i++) {
@@ -893,12 +905,22 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
           remainingHealths[i] -= turnData.sadism;
       }
 
-    // Check for death defying skills, death and death skills.
+      // Check for death defying skills, death and death skills.
       if (remainingHealths[i] <= 0 && !worldboss) {
         if (passiveTypes[i] == ANGEL && turnData.aliveAtTurnStart[i]){
             remainingHealths[i] = round((double)maxHealths[i] * passiveAmounts[i]);
             passiveTypes[i] = NONE;
-        } else deathCheck(i);
+            if(opposing.overload == true) {
+              remainingHealths[i] -= round(opposing.valkyrieDamage - finalDamage);
+              //interface.timedOutput("remainingHealths... "+to_string(remainingHealths[i]), BASIC_OUTPUT);
+			}
+        } else {
+            if(opposing.overload == true) {
+              remainingHealths[i+1] -= round(opposing.valkyrieDamage - finalDamage);
+              //interface.timedOutput("remainingHealths... "+to_string(remainingHealths[i]), BASIC_OUTPUT);
+			}
+            deathCheck(i);
+        }
       } else { // Healing
             remainingHealths[i] += round((turnData.healing + //AoE heal
             (skillTypes[i] != SACRIFICE ? turnData.sacHeal : 0) + //Prevent sacrifice from working on the unit that sacrifices their health
@@ -909,9 +931,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             }
       }
 
-      // Always apply the valkyrieMult if it is zero. Otherwise, given the way
-      // that riochet is implemented it will cause melee attacks to turn into
-      // ricochet
+      // Always apply the valkyrieMult if it is zero. Otherwise, given the way that ricochet is implemented it will cause melee attacks to turn into ricochet
       if(opposing.valkyrieMult > 0) {
         // Only reduce the damage if it hit an alive unit
         if(aliveAtBeginning) {
@@ -921,7 +941,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         opposing.valkyrieDamage *= opposing.valkyrieMult;
       }
     } // end for
-    // Handle wither ability
+    // Handle wither (gaiabyte) ability
     if (skillTypes[monstersLost] == WITHER && monstersLost == frontliner) {
         // remainingHealths[monstersLost] = castCeil((double) remainingHealths[monstersLost] * skillAmounts[monstersLost]);
         remainingHealths[monstersLost] = round(remainingHealths[monstersLost] * ( 1 -((double) 1 / skillAmounts[monstersLost]) ));//Updated for promotion values.
@@ -962,6 +982,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         }
     }
 }
+
 //Save revenge values and remove skills
 inline void ArmyCondition::deathCheck(int i) {
     switch (skillTypes[i]) {
@@ -1007,6 +1028,7 @@ inline void ArmyCondition::deathCheck(int i) {
     }
     skillTypes[i] = NOTHING; // disable dead hero's ability
 }
+
 //Apply revenge abilities, check for dead units and check for more revenge procs
 inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
     if (opposing.aoeRevenge || opposing.deathstrikeDamage || opposing.revengeIIDamage) {
@@ -1047,6 +1069,7 @@ inline void ArmyCondition::resolveRevenge(TurnData & opposing) {
         opposing.aoeRevenge = 0;
     }
 }
+
 //Find highest HP unit for Guy's reflect.
 inline int ArmyCondition::findMaxHP() {
     // go through alive monsters to determine most hp
