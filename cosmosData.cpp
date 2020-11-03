@@ -93,13 +93,17 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
 {
     this->index = baseHero.index;
 
-//Check for promo 6 is here, so it isn't overwritten with the default passive upon base hero creation.
+    //Check for promo 6 is here, so it isn't overwritten with the default passive upon base hero creation.
     if (aPromo < 6){
         this->passive.passiveType = NONE;
         this->passive.amount = 0;
     }
 
-//Tank promo (health increase)
+    //Tank promo (health increase)
+    if (this->passive.passiveType == TANK)
+        this->hp *= 1 + this->passive.amount;
+
+    //Horsemen P6 buff
     if (this->passive.passiveType == TANK)
         this->hp *= 1 + this->passive.amount;
 

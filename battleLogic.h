@@ -107,6 +107,9 @@ class ArmyCondition {
         double dampZero; // for bubbles's ability
         bool easterCheck; // for Daisy
         int easterID; // for Daisy
+        double stealStatsPct[ARMY_MAX_SIZE]; // for horsemen ability
+        double opposingAtkNerf[ARMY_MAX_SIZE];
+        int horsemenCount;
 
         int64_t seed;
 
@@ -192,6 +195,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         // (7 - armySize + i) <- Get absolute position, not relative to first unit, for Lili
         if (skill->skillType == CONVERT){ maxHealths[i] += round(lineup[i]->damage * (7 - armySize + i) * skill->amount); remainingHealths[i] = maxHealths[i] - aoeDamage; }
         if (skill->skillType == EASTER){ easterID = i; }
+        if (skill->skillType == HORSEMAN){ stealStatsPct[i] = skill->amount; }
 
         rainbowConditions[i] = tempRainbowCondition == VALID_RAINBOW_CONDITION;
         //pureMonsters[i] = tempPureMonsters;
@@ -308,7 +312,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
                             }
                             break;
             case SACRIFICE: turnData.sacHeal += (int) floor(skillAmounts[i] + 0.0001);
-                            turnData.aoeDamage += (int) floor(skillAmounts[i] * 1.5 + 0.0001);//Add 0.0001 to fix discrepancy between js and c++ when c++ ends up with 1.9999...
+                            turnData.aoeDamage += (int) floor(skillAmounts[i] * 1.5 + 0.0001); //Add 0.0001 to fix discrepancy between js and c++ when c++ ends up with 1.9999...
                             turnData.masochism += (int) floor(skillAmounts[i] * 1.5 + 0.0001);
                             break;
             case AOELAST:   turnData.aoeLast += (int) round(skillAmounts[i] * (lineup[i]->damage + deathBuffATK));
@@ -367,7 +371,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
 inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition & opposingCondition) {
 
     //interface.timedOutput("revgNerfAtk... "+to_string(lineup[monstersLost]->damage)+" "+to_string(opposingCondition.revgNerfAtk), BASIC_OUTPUT);
-    turnData.baseDamage = (lineup[monstersLost]->damage + deathBuffATK)*(1-opposingCondition.revgNerfAtk);// Get Base damage (deathBuff from Fairies, evolveTotal for Clio/Gladiator buff)
+    turnData.baseDamage = (lineup[monstersLost]->damage + deathBuffATK - opposingAtkNerf[monstersLost])*(1-opposingCondition.revgNerfAtk);// Get Base damage (deathBuff from Fairies, evolveTotal for Clio/Gladiator buff)
 
     turnData.opposingElement = opposingCondition.lineup[opposingCondition.monstersLost]->element;
     const int opposingProtection = opposingCondition.turnData.protection;
@@ -402,7 +406,6 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     turnData.tetrisSeed = 0;
     turnData.bloodlust = 0;
     turnData.dmgAbsorb = 0;
-    //turnData.revgNerfAtk = 0;
     turnData.evolve = 0;
 
     // double friendsDamage = 0;
@@ -413,7 +416,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                             if (skillTypes[i] == NOTHING && remainingHealths[i] > 0)
                                 turnData.baseDamage *= skillAmounts[monstersLost];
                         }
-                        turnData.baseDamage += deathBuffATK;
+                        turnData.baseDamage += deathBuffATK - opposingAtkNerf[monstersLost];
                         break;
         case TRAINING:  turnData.baseDamage += (int) (skillAmounts[monstersLost] * (double) turncounter);
                         break;
@@ -525,12 +528,12 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case CONVERT:   turnData.baseDamage -= round(lineup[monstersLost]->damage * (7 - armySize + monstersLost) * 0.1);
                         break;
-        case FURY:      turnData.baseDamage = furyArray[monstersLost] + deathBuffATK;
+        case FURY:      turnData.baseDamage = furyArray[monstersLost] + deathBuffATK - opposingAtkNerf[monstersLost];
                         break;
         case BLOODLUST: turnData.bloodlust += skillAmounts[monstersLost];
                         turnData.baseDamage += evolveTotal;
                         break;
-        case MORALE:    turnData.baseDamage = furyArray[monstersLost] + deathBuffATK;
+        case MORALE:    turnData.baseDamage = furyArray[monstersLost] + deathBuffATK - opposingAtkNerf[monstersLost];
                         break;
         case DMGABSORB: turnData.dmgAbsorb = skillAmounts[monstersLost];
                         if (!evolveTotal)
@@ -538,6 +541,15 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         turnData.baseDamage += evolveTotal;
                         break;
         case EVOLVE:    turnData.baseDamage += evolveTotal;
+                        break;
+        case HORSEMAN:  turnData.baseDamage += skillAmounts[monstersLost];
+                        opposingAtkNerf[monstersLost] = skillAmounts[monstersLost];
+                        horsemenCount = -1;
+                        for (int i = 0; i < armySize; i++) {
+                            if (skillTypes[i] == HORSEMAN)
+                                horsemenCount++;
+                        }
+                        //interface.timedOutput("horsemenCount... "+to_string(horsemenCount), BASIC_OUTPUT);
                         break;
         default:        break;
 
@@ -554,6 +566,11 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     //Promo 6 buff
     if (passiveTypes[monstersLost] == DPS) {
         turnData.valkyrieDamage *= 1 + passiveAmounts[monstersLost];
+    }
+
+    //Horsemen P6 buff
+    if (passiveTypes[monstersLost] == ESCORT && horsemenCount > 0) {
+        turnData.valkyrieDamage += passiveAmounts[monstersLost] * horsemenCount;
     }
 
     //Season 8 witches buff
@@ -642,8 +659,8 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
     //Check gladiators before resolve damage to make sure there is no left-right discrepancy. Buff takes place before delayed abilities but after AoE.
     if (!(turnData.bloodlust && !opposingCondition.worldboss && opposingCondition.passiveTypes[opposingCondition.monstersLost] != ANGEL && ((double)(opposingCondition.remainingHealths[opposingCondition.monstersLost] - turnData.baseDamage - turnData.aoeDamage - turnData.aoeFirst) <= 0)))
         turnData.bloodlust = 0;
-
 }
+
 //in case of Ricochet, apply armor to everyone.
 inline void ArmyCondition::applyArmor(TurnData & opposing) {
     if (opposing.ricoActive) {
@@ -656,6 +673,7 @@ inline void ArmyCondition::applyArmor(TurnData & opposing) {
         }
     }
 }
+
 // Add damage to the opposing side and check for deaths
 inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     int frontliner = monstersLost; // save original frontliner
@@ -680,7 +698,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         turnData.aliveAtTurnStart[turnData.absorbID] = remainingHealths[turnData.absorbID] > 0;
     }
 
-//One unit behind by S4 units + Raze
+    //One unit behind by S4 units + Raze
     if (opposing.trampleTriggered) {
         for (int i = frontliner + 1; i < armySize; i++)
             if (remainingHealths[i] > 0){
@@ -695,7 +713,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             }
     }
 
-//Three units behind hit by Smith
+    //Three units behind hit by Smith
     if (opposing.tripleMult) {
         int times = 3;
         double baseMult = opposing.tripleMult;
@@ -715,7 +733,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             }
     }
 
-//Two units backstabbed
+    //Two units backstabbed
     if (opposing.backstab) {
         int times = 2;
         double baseMult = opposing.backstab;
@@ -743,10 +761,10 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             }
     }
 
-//~~~~~~~~~~~~~~~~Tetris Skill Start ~~~~~~~~~~~~~~~~~~~~
+    //~~~~~~~~~~~~~~~~Tetris Skill Start ~~~~~~~~~~~~~~~~~~~~
 
-//I know there must be a better way, but good grief, this skill is not good for the old battle system.
-//Code copied from Trample (S4 ability)
+    //I know there must be a better way, but good grief, this skill is not good for the old battle system.
+    //Code copied from Trample (S4 ability)
     if (opposing.tetrisMult) {
         int times = 0;
         switch(opposing.tetrisSeed){
@@ -828,9 +846,9 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         }
     }
 
-//~~~~~~~~~~~~~~~~Tetris Skill End ~~~~~~~~~~~~~~~~~~~~
+    //~~~~~~~~~~~~~~~~Tetris Skill End ~~~~~~~~~~~~~~~~~~~~
 
-// Both of these AoE skills are actually delayed in the game, hence they are saved for revenge AoE later on.
+    // Both of these AoE skills are actually delayed in the game, hence they are saved for revenge AoE later on.
     if (opposing.explodeDamage != 0 && remainingHealths[frontliner] <= 0 && !worldboss && passiveTypes[frontliner] != ANGEL) {
         opposing.aoeRevenge += opposing.explodeDamage;
     }
@@ -875,20 +893,20 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
           remainingHealths[i] -= turnData.sadism;
       }
 
-//Check for death defying skills, death and death skills.
-    if (remainingHealths[i] <= 0 && !worldboss) {
+    // Check for death defying skills, death and death skills.
+      if (remainingHealths[i] <= 0 && !worldboss) {
         if (passiveTypes[i] == ANGEL && turnData.aliveAtTurnStart[i]){
             remainingHealths[i] = round((double)maxHealths[i] * passiveAmounts[i]);
             passiveTypes[i] = NONE;
         } else deathCheck(i);
-    } else { //Healing
+      } else { // Healing
             remainingHealths[i] += round((turnData.healing + //AoE heal
             (skillTypes[i] != SACRIFICE ? turnData.sacHeal : 0) + //Prevent sacrifice from working on the unit that sacrifices their health
             (i == frontliner ? (round(turnData.selfHeal * opposing.baseDamage) + turnData.healFirst) : 0)) * //Front healing
             (passiveTypes[i] == HEALPLUS ? (1 + passiveAmounts[i]) : 1));//have to put them together, because P6 requires all of them to be together to avoid rounding errors.
             if (remainingHealths[i] > maxHealths[i]) { // Avoid overhealing
                 remainingHealths[i] = maxHealths[i];
-        }
+            }
       }
 
       // Always apply the valkyrieMult if it is zero. Otherwise, given the way
@@ -902,7 +920,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
       }  else {
         opposing.valkyrieDamage *= opposing.valkyrieMult;
       }
-    }
+    } // end for
     // Handle wither ability
     if (skillTypes[monstersLost] == WITHER && monstersLost == frontliner) {
         // remainingHealths[monstersLost] = castCeil((double) remainingHealths[monstersLost] * skillAmounts[monstersLost]);
@@ -943,13 +961,12 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             }
         }
     }
-
 }
 //Save revenge values and remove skills
 inline void ArmyCondition::deathCheck(int i) {
     switch (skillTypes[i]) {
         case REVENGE:
-            turnData.aoeRevenge += (int) round((double) (lineup[i]->damage + deathBuffATK) * skillAmounts[i]);
+            turnData.aoeRevenge += (int) round((double) (lineup[i]->damage + deathBuffATK - opposingAtkNerf[monstersLost]) * skillAmounts[i]);
             break;
         case DEATHSTRIKE:
             turnData.deathstrikeDamage += skillAmounts[i];
@@ -978,13 +995,12 @@ inline void ArmyCondition::deathCheck(int i) {
                 }
             deathBuffATK += turnData.deathBuffHP;
         case REVGNERF: // anty
-            //turnData.revgNerfAtk += skillAmounts[i];
             revgNerfAtk += skillAmounts[i];
             break;
         default:
             break;
     }
-    if (i == monstersLost) { //moved after revenge skills so attack buff from fairies is not affected by Gladiators or Yeti.
+    if (i == monstersLost) { // moved after revenge skills so attack buff from fairies is not affected by Gladiators or Yeti.
         monstersLost++;
         lastBerserk = 0;
         evolveTotal = 0;
@@ -1143,9 +1159,9 @@ inline int ArmyCondition::getLuxTarget(const ArmyCondition & opposingCondition, 
       return_value = i;
     }
   }
-int actual_target = opposingCondition.monstersLost;
-//Moving the function that selects the alive enemy here, as it is needed for elemental damage and neil absorb check.
-    if (return_value > 0) {
+  int actual_target = opposingCondition.monstersLost;
+  //Moving the function that selects the alive enemy here, as it is needed for elemental damage and neil absorb check.
+  if (return_value > 0) {
         int alive = 0;
         for (int i = opposingCondition.monstersLost + 1; i < opposingCondition.armySize; i++) {
             // std::cout << "I is " << i << std::endl;
@@ -1159,9 +1175,10 @@ int actual_target = opposingCondition.monstersLost;
                 break;
             }
         }
-    }
+  }
   return actual_target;
 }
+
 // Simulates One fight between 2 Armies and writes results into left's LastFightData
 inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
     // left[0] and right[0] are the first monsters to fight
@@ -1260,7 +1277,7 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
             }
         }
 
-        // Apply Xmas rare AOE
+        // Apply Xmas rare (Yisus) AOE
         if (leftCondition.flatLep || rightCondition.flatLep) {
             TurnData turnFlatLep;
             if (leftCondition.flatLep && leftCondition.armySize < rightCondition.armySize) {
@@ -1291,6 +1308,31 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
                 left.lastFightData.leftAoeDamage += rightCondition.aoeZero;
                 turnZero.aoeDamage = rightCondition.aoeZero;
                 leftCondition.resolveDamage(turnZero);
+            }
+        }
+
+        // Apply horsemen's steal
+        for (int i = 0; i < leftCondition.armySize; i++) {
+            //interface.timedOutput("stealStatsPct... "+to_string(leftCondition.stealStatsPct[i]), BASIC_OUTPUT);
+            if (leftCondition.stealStatsPct[i] > 0) {
+                int amnt = round(rightCondition.maxHealths[i] * leftCondition.stealStatsPct[i]);
+                //interface.timedOutput("hp amnt... "+to_string(amnt), BASIC_OUTPUT);
+                rightCondition.maxHealths[i] -= amnt;
+                leftCondition.maxHealths[i] += amnt;
+                //interface.timedOutput("damage... "+to_string(rightCondition.lineup[i]->damage), BASIC_OUTPUT);
+                amnt = round(rightCondition.lineup[i]->damage * leftCondition.stealStatsPct[i]);
+                //interface.timedOutput("atk amnt... "+to_string(amnt), BASIC_OUTPUT);
+                //rightCondition.lineup[i]->damage -= amnt;
+                //leftCondition.lineup[i]->damage += amnt;
+                leftCondition.skillAmounts[i] = amnt;
+            }
+            if (rightCondition.stealStatsPct[i] > 0) {
+                int amnt = round(leftCondition.maxHealths[i] * rightCondition.stealStatsPct[i]);
+                //interface.timedOutput("amnt... "+to_string(amnt), BASIC_OUTPUT);
+                leftCondition.maxHealths[i] -= amnt;
+                rightCondition.maxHealths[i] += amnt;
+                amnt = round(leftCondition.lineup[i]->damage * rightCondition.stealStatsPct[i]);
+                rightCondition.skillAmounts[i] = amnt;
             }
         }
 
