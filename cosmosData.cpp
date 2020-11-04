@@ -103,10 +103,6 @@ Monster::Monster(const Monster & baseHero, int aLevel, int aPromo) :
     if (this->passive.passiveType == TANK)
         this->hp *= 1 + this->passive.amount;
 
-    //Horsemen P6 buff
-    if (this->passive.passiveType == TANK)
-        this->hp *= 1 + this->passive.amount;
-
     //Abilities no longer scale past level 99
     if (aLevel > 99)
         aLevel = 99;

@@ -199,6 +199,10 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         if (skill->skillType == EASTER){ easterID = i; }
         if (skill->skillType == HORSEMAN){ stealStatsPct[i] = skill->amount; }
 
+        //Horsemen P6 buff
+        if (passiveTypes[i] == ESCORT)
+            maxHealths[i] = maxHealths[i] + passiveAmounts[i];
+
         rainbowConditions[i] = tempRainbowCondition == VALID_RAINBOW_CONDITION;
         //pureMonsters[i] = tempPureMonsters;
 
@@ -546,12 +550,14 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case EVOLVE:    turnData.baseDamage += evolveTotal;
                         break;
-        case HORSEMAN:  turnData.baseDamage += skillAmounts[monstersLost];
-                        opposingAtkNerf[monstersLost] = skillAmounts[monstersLost];
-                        horsemenCount = -1;
-                        for (int i = 0; i < armySize; i++) {
-                            if (skillTypes[i] == HORSEMAN)
-                                horsemenCount++;
+        case HORSEMAN:  if(!opposingCondition.worldboss) {
+                            turnData.baseDamage += skillAmounts[monstersLost];
+                            opposingAtkNerf[monstersLost] = skillAmounts[monstersLost];
+                            horsemenCount = -1;
+                            for (int i = 0; i < armySize; i++) {
+                                if (skillTypes[i] == HORSEMAN)
+                                    horsemenCount++;
+                            }
                         }
                         //interface.timedOutput("horsemenCount... "+to_string(horsemenCount), BASIC_OUTPUT);
                         break;
@@ -688,6 +694,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
     double tempResistance; //Needed for frosty to dampen ricochet
     int finalDamage = remainingHealths[frontliner];
     bool allowOverload;
+    //interface.timedOutput("remainingHealths before resolveDamage... "+to_string(remainingHealths[frontliner]), BASIC_OUTPUT);
 
     // Apply normal attack damage to the frontliner
     // If direct_target is non-zero that means Lux is hitting something not the front liner
@@ -910,14 +917,15 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
         if (passiveTypes[i] == ANGEL && turnData.aliveAtTurnStart[i]){
             remainingHealths[i] = round((double)maxHealths[i] * passiveAmounts[i]);
             passiveTypes[i] = NONE;
+            //interface.timedOutput("ANGEL remainingHealths... "+to_string(remainingHealths[i])+" - finalDamage... "+to_string(finalDamage), BASIC_OUTPUT);
             if(opposing.overload == true) {
               remainingHealths[i] -= round(opposing.valkyrieDamage - finalDamage);
-              //interface.timedOutput("remainingHealths... "+to_string(remainingHealths[i]), BASIC_OUTPUT);
+              //interface.timedOutput("remainingHealths after overload1... "+to_string(remainingHealths[i]), BASIC_OUTPUT);
 			}
         } else {
             if(opposing.overload == true) {
               remainingHealths[i+1] -= round(opposing.valkyrieDamage - finalDamage);
-              //interface.timedOutput("remainingHealths... "+to_string(remainingHealths[i]), BASIC_OUTPUT);
+              //interface.timedOutput("remainingHealths after overload2... "+to_string(remainingHealths[i]), BASIC_OUTPUT);
 			}
             deathCheck(i);
         }
@@ -981,10 +989,12 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             }
         }
     }
+    //interface.timedOutput("remainingHealths after end of turn... "+to_string(remainingHealths[frontliner]), BASIC_OUTPUT);
 }
 
 //Save revenge values and remove skills
 inline void ArmyCondition::deathCheck(int i) {
+    //interface.timedOutput("remainingHealths before deathCheck... "+to_string(remainingHealths[i]), BASIC_OUTPUT);
     switch (skillTypes[i]) {
         case REVENGE:
             turnData.aoeRevenge += (int) round((double) (lineup[i]->damage + deathBuffATK - opposingAtkNerf[monstersLost]) * skillAmounts[i]);
@@ -1027,6 +1037,7 @@ inline void ArmyCondition::deathCheck(int i) {
         evolveTotal = 0;
     }
     skillTypes[i] = NOTHING; // disable dead hero's ability
+    //interface.timedOutput("remainingHealths after deathCheck... "+to_string(remainingHealths[i]), BASIC_OUTPUT);
 }
 
 //Apply revenge abilities, check for dead units and check for more revenge procs
@@ -1394,7 +1405,8 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         }
 
         turncounter++;
-
+        
+        //std::cout << std::endl << "After Turn " << turncounter << ": dmg done : " << std::setw(4) << rightCondition.remainingHealths[0] << ": ageum/aauri hp : " << std::setw(4) << leftCondition.remainingHealths[0] << std::setw(5) << leftCondition.remainingHealths[1] << std::endl;
         if (verbose) {
             std::cout << std::endl << "After Turn " << turncounter << ":" << std::endl;
 
