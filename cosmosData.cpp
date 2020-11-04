@@ -243,7 +243,7 @@ HeroSkill::HeroSkill(SkillType aType, Element aTarget, Element aSource, double a
                                   aType == AOEHP || aType == MORALE ||
                                   aType == MORALE_L || aType == AOELOW ||
                                   aType == AOELOW_L || aType == FLATLEP ||
-                                  aType == FLATLEP_L
+                                  aType == FLATLEP_L || aType == HORSEMAN
                                   );
 }
 

@@ -169,6 +169,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
     dampZero = 1;
     easterCheck = false;
     easterID = -1;
+    horsemenCount = 0;
 
     for (int i = armySize -1; i >= monstersLost; i--) {
         lineup[i] = &monsterReference[army.monsters[i]];
@@ -197,11 +198,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         // (7 - armySize + i) <- Get absolute position, not relative to first unit, for Lili
         if (skill->skillType == CONVERT){ maxHealths[i] += round(lineup[i]->damage * (7 - armySize + i) * skill->amount); remainingHealths[i] = maxHealths[i] - aoeDamage; }
         if (skill->skillType == EASTER){ easterID = i; }
-        if (skill->skillType == HORSEMAN){ stealStatsPct[i] = skill->amount; }
-
-        //Horsemen P6 buff
-        if (passiveTypes[i] == ESCORT)
-            maxHealths[i] = maxHealths[i] + passiveAmounts[i];
+        if (skill->skillType == HORSEMAN){ horsemenCount++; stealStatsPct[i] = skill->amount; }
 
         rainbowConditions[i] = tempRainbowCondition == VALID_RAINBOW_CONDITION;
         //pureMonsters[i] = tempPureMonsters;
@@ -258,7 +255,6 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
     turnData.turnCount = turncounter; //for Yeti and Mary
     turnData.overload = false;
 
-
     switch (skillTypes[monstersLost]) {
         default:            break;
         case RESISTANCE:    turnData.resistance = 1 - skillAmounts[monstersLost];//Needs to be here so it happens before Neil's absorb.
@@ -278,6 +274,15 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
     }
 
     // Gather all skills that trigger globally
+    for (i = 0; i < armySize; i++) {
+        // Horsemen P6 buff
+        if (passiveTypes[i] == ESCORT)
+            interface.timedOutput("horsemenCount... "+to_string(horsemenCount), BASIC_OUTPUT);
+        if (turncounter == 0 && passiveTypes[i] == ESCORT) {
+            interface.timedOutput("ESCORT... "+to_string(maxHealths[i])+" "+to_string(maxHealths[i] + passiveAmounts[i] * (horsemenCount - 1)), BASIC_OUTPUT);
+            maxHealths[i] = maxHealths[i] + passiveAmounts[i] * (horsemenCount - 1);
+		}
+    }
     for (i = monstersLost; i < armySize; i++) {
         turnData.aliveAtTurnStart[i] = remainingHealths[i] > 0;
         switch (skillTypes[i]) {
@@ -553,11 +558,6 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         case HORSEMAN:  if(!opposingCondition.worldboss) {
                             turnData.baseDamage += skillAmounts[monstersLost];
                             opposingAtkNerf[monstersLost] = skillAmounts[monstersLost];
-                            horsemenCount = -1;
-                            for (int i = 0; i < armySize; i++) {
-                                if (skillTypes[i] == HORSEMAN)
-                                    horsemenCount++;
-                            }
                         }
                         //interface.timedOutput("horsemenCount... "+to_string(horsemenCount), BASIC_OUTPUT);
                         break;
@@ -575,15 +575,15 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
         turnData.valkyrieDamage += round(turnData.buffDamage * (passiveTypes[monstersLost] == DAMAGE ? (1 + passiveAmounts[monstersLost]) : 1));
     }
 
+    //Horsemen P6 buff
+    if (passiveTypes[monstersLost] == ESCORT && horsemenCount > 1) {
+        turnData.valkyrieDamage += passiveAmounts[monstersLost] * (horsemenCount - 1);
+    }
+
     //Multiplicative buffs
     //Promo 6 buff
     if (passiveTypes[monstersLost] == DPS) {
         turnData.valkyrieDamage *= 1 + passiveAmounts[monstersLost];
-    }
-
-    //Horsemen P6 buff
-    if (passiveTypes[monstersLost] == ESCORT && horsemenCount > 0) {
-        turnData.valkyrieDamage += passiveAmounts[monstersLost] * horsemenCount;
     }
 
     //Season 8 witches buff
@@ -1218,13 +1218,19 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
     // left[0] and right[0] are the first monsters to fight
     ArmyCondition leftCondition;
     ArmyCondition rightCondition;
+    int hmCount = 0;
 
     int turncounter;
     // Ignore lastFightData if either army-affecting heroes were added or for debugging
     if (left.lastFightData.valid && !verbose) {
         // Set pre-computed values to pick up where we left off
         leftCondition.init(left, left.monsterAmount-1, left.lastFightData.leftAoeDamage);
+        hmCount += leftCondition.horsemenCount;
         rightCondition.init(right, left.lastFightData.monstersLost, left.lastFightData.rightAoeDamage);
+        hmCount += rightCondition.horsemenCount;
+        leftCondition.horsemenCount = hmCount;
+        rightCondition.horsemenCount = hmCount;
+        //interface.timedOutput("horsemenCount2 valid... "+to_string(horsemenCount), BASIC_OUTPUT);
         // Check if the new addition died to Aoe
         if (leftCondition.remainingHealths[leftCondition.monstersLost] <= 0) {
             leftCondition.monstersLost++;
@@ -1236,7 +1242,13 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
     } else {
         // Load Army data into conditions
         leftCondition.init(left, 0, 0);
+        hmCount += leftCondition.horsemenCount;
+        //interface.timedOutput("horsemenCount1... "+to_string(horsemenCount), BASIC_OUTPUT);
         rightCondition.init(right, 0, 0);
+        hmCount += rightCondition.horsemenCount;
+        //interface.timedOutput("horsemenCount2 no... "+to_string(horsemenCount), BASIC_OUTPUT);
+        leftCondition.horsemenCount = hmCount;
+        rightCondition.horsemenCount = hmCount;
 
         //----- turn zero -----
 
