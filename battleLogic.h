@@ -1360,30 +1360,21 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         }
 
         // Apply horsemen's steal
-        for (int i = 0; i < leftCondition.armySize; i++) {
-            //interface.timedOutput("stealStatsPct... "+to_string(leftCondition.stealStatsPct[i]), BASIC_OUTPUT);
-            if (leftCondition.stealStatsPct[i] > 0 && i < rightCondition.armySize) {
-                int amnt = round(rightCondition.maxHealths[i] * leftCondition.stealStatsPct[i]);
-                //interface.timedOutput("hp amnt... "+to_string(amnt), BASIC_OUTPUT);
-                rightCondition.maxHealths[i] -= amnt;
-                leftCondition.maxHealths[i] += amnt;
-                //interface.timedOutput("damage... "+to_string(rightCondition.lineup[i]->damage), BASIC_OUTPUT);
-                amnt = round(rightCondition.lineup[i]->damage * leftCondition.stealStatsPct[i]);
-                //interface.outputMessage("atk amnt... "+to_string(amnt), BASIC_OUTPUT);
-                rightCondition.stealStatsAtkData[i] -= amnt;
-                leftCondition.stealStatsAtkData[i] += amnt;
+        for (int i = 0; i < leftCondition.armySize && i < rightCondition.armySize; i++) {
+            int amntHP = 0; // positive = to left
+            int amntAtk = 0;
+            if (leftCondition.stealStatsPct[i] > 0) {
+                amntHP += round(rightCondition.maxHealths[i] * leftCondition.stealStatsPct[i]);
+                amntAtk += round(rightCondition.lineup[i]->damage * leftCondition.stealStatsPct[i]);
             }
-        }
-        for (int i = 0; i < rightCondition.armySize; i++) {
-            if (rightCondition.stealStatsPct[i] > 0 && i < leftCondition.armySize) {
-                int amnt = round(leftCondition.maxHealths[i] * rightCondition.stealStatsPct[i]);
-                //interface.timedOutput("amnt... "+to_string(amnt), BASIC_OUTPUT);
-                leftCondition.maxHealths[i] -= amnt;
-                rightCondition.maxHealths[i] += amnt;
-                amnt = round(leftCondition.lineup[i]->damage * rightCondition.stealStatsPct[i]);
-                leftCondition.stealStatsAtkData[i] -= amnt;
-                rightCondition.stealStatsAtkData[i] += amnt;
+            if (rightCondition.stealStatsPct[i] > 0) {
+                amntHP -= round(leftCondition.maxHealths[i] * rightCondition.stealStatsPct[i]);
+                amntAtk -= round(leftCondition.lineup[i]->damage * rightCondition.stealStatsPct[i]);
             }
+            rightCondition.maxHealths[i] -= amntHP;
+            leftCondition.maxHealths[i] += amntHP;
+            rightCondition.stealStatsAtkData[i] -= amntAtk;
+            leftCondition.stealStatsAtkData[i] += amntAtk;
         }
 
         //----- turn zero end -----
