@@ -109,6 +109,7 @@ class ArmyCondition {
         bool easterCheck; // for Daisy
         int easterID; // for Daisy
         double stealStatsPct[ARMY_MAX_SIZE]; // for horsemen ability
+        double stealStatsAtkData[ARMY_MAX_SIZE];
         double opposingAtkNerf[ARMY_MAX_SIZE];
         int horsemenCount;
 
@@ -184,6 +185,7 @@ inline void ArmyCondition::init(const Army & army, const int oldMonstersLost, co
         remainingHealths[i] = lineup[i]->hp - aoeDamage * ((skill->skillType == SKILLDAMPEN) ? (1 - skill->amount) : 1);
         furyArray[i] = lineup[i]->damage;
         stealStatsPct[i] = 0;
+        stealStatsAtkData[i] = 0;
 
         worldboss |= lineup[i]->rarity == WORLDBOSS;
 
@@ -276,10 +278,10 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
     // Gather all skills that trigger globally
     for (i = 0; i < armySize; i++) {
         // Horsemen P6 buff
-        if (passiveTypes[i] == ESCORT)
-            interface.timedOutput("horsemenCount... "+to_string(horsemenCount), BASIC_OUTPUT);
+        //if (passiveTypes[i] == ESCORT)
+            //interface.timedOutput("horsemenCount... "+to_string(horsemenCount), BASIC_OUTPUT);
         if (turncounter == 0 && passiveTypes[i] == ESCORT) {
-            interface.timedOutput("ESCORT... "+to_string(maxHealths[i])+" "+to_string(maxHealths[i] + passiveAmounts[i] * (horsemenCount - 1)), BASIC_OUTPUT);
+            //interface.timedOutput("ESCORT... "+to_string(maxHealths[i])+" "+to_string(maxHealths[i] + passiveAmounts[i] * (horsemenCount - 1)), BASIC_OUTPUT);
             maxHealths[i] = maxHealths[i] + passiveAmounts[i] * (horsemenCount - 1);
 		}
     }
@@ -383,7 +385,7 @@ inline void ArmyCondition::startNewTurn(const int turncounter) {
 inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition & opposingCondition) {
 
     //interface.timedOutput("revgNerfAtk... "+to_string(lineup[monstersLost]->damage)+" "+to_string(opposingCondition.revgNerfAtk), BASIC_OUTPUT);
-    turnData.baseDamage = (lineup[monstersLost]->damage + deathBuffATK - opposingAtkNerf[monstersLost])*(1-opposingCondition.revgNerfAtk);// Get Base damage (deathBuff from Fairies, evolveTotal for Clio/Gladiator buff)
+    turnData.baseDamage = (lineup[monstersLost]->damage + deathBuffATK + stealStatsAtkData[monstersLost])*(1-opposingCondition.revgNerfAtk); // Get Base damage (deathBuff from Fairies, evolveTotal for Clio/Gladiator buff)
 
     turnData.opposingElement = opposingCondition.lineup[opposingCondition.monstersLost]->element;
     const int opposingProtection = opposingCondition.turnData.protection;
@@ -555,10 +557,10 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case EVOLVE:    turnData.baseDamage += evolveTotal;
                         break;
-        case HORSEMAN:  if(!opposingCondition.worldboss) {
+        case HORSEMAN:  /*if(!opposingCondition.worldboss) {
                             turnData.baseDamage += skillAmounts[monstersLost];
                             opposingAtkNerf[monstersLost] = skillAmounts[monstersLost];
-                        }
+                        }*/
                         //interface.timedOutput("horsemenCount... "+to_string(horsemenCount), BASIC_OUTPUT);
                         break;
         case OVERLOAD:  turnData.overload = true;
@@ -1230,7 +1232,7 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         hmCount += rightCondition.horsemenCount;
         leftCondition.horsemenCount = hmCount;
         rightCondition.horsemenCount = hmCount;
-        //interface.timedOutput("horsemenCount2 valid... "+to_string(horsemenCount), BASIC_OUTPUT);
+        //interface.timedOutput("horsemenCount2 valid... "+to_string(hmCount), BASIC_OUTPUT);
         // Check if the new addition died to Aoe
         if (leftCondition.remainingHealths[leftCondition.monstersLost] <= 0) {
             leftCondition.monstersLost++;
@@ -1243,10 +1245,10 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         // Load Army data into conditions
         leftCondition.init(left, 0, 0);
         hmCount += leftCondition.horsemenCount;
-        //interface.timedOutput("horsemenCount1... "+to_string(horsemenCount), BASIC_OUTPUT);
+        //interface.timedOutput("horsemenCount1... "+to_string(hmCount), BASIC_OUTPUT);
         rightCondition.init(right, 0, 0);
         hmCount += rightCondition.horsemenCount;
-        //interface.timedOutput("horsemenCount2 no... "+to_string(horsemenCount), BASIC_OUTPUT);
+        //interface.timedOutput("horsemenCount2 no... "+to_string(hmCount), BASIC_OUTPUT);
         leftCondition.horsemenCount = hmCount;
         rightCondition.horsemenCount = hmCount;
 
@@ -1360,25 +1362,27 @@ inline bool simulateFight(Army & left, Army & right, bool verbose = false) {
         // Apply horsemen's steal
         for (int i = 0; i < leftCondition.armySize; i++) {
             //interface.timedOutput("stealStatsPct... "+to_string(leftCondition.stealStatsPct[i]), BASIC_OUTPUT);
-            if (leftCondition.stealStatsPct[i] > 0) {
+            if (leftCondition.stealStatsPct[i] > 0 && i < rightCondition.armySize) {
                 int amnt = round(rightCondition.maxHealths[i] * leftCondition.stealStatsPct[i]);
                 //interface.timedOutput("hp amnt... "+to_string(amnt), BASIC_OUTPUT);
                 rightCondition.maxHealths[i] -= amnt;
                 leftCondition.maxHealths[i] += amnt;
                 //interface.timedOutput("damage... "+to_string(rightCondition.lineup[i]->damage), BASIC_OUTPUT);
                 amnt = round(rightCondition.lineup[i]->damage * leftCondition.stealStatsPct[i]);
-                //interface.timedOutput("atk amnt... "+to_string(amnt), BASIC_OUTPUT);
-                //rightCondition.lineup[i]->damage -= amnt;
-                //leftCondition.lineup[i]->damage += amnt;
-                leftCondition.skillAmounts[i] = amnt;
+                //interface.outputMessage("atk amnt... "+to_string(amnt), BASIC_OUTPUT);
+                rightCondition.stealStatsAtkData[i] -= amnt;
+                leftCondition.stealStatsAtkData[i] += amnt;
             }
-            if (rightCondition.stealStatsPct[i] > 0) {
+        }
+        for (int i = 0; i < rightCondition.armySize; i++) {
+            if (rightCondition.stealStatsPct[i] > 0 && i < leftCondition.armySize) {
                 int amnt = round(leftCondition.maxHealths[i] * rightCondition.stealStatsPct[i]);
                 //interface.timedOutput("amnt... "+to_string(amnt), BASIC_OUTPUT);
                 leftCondition.maxHealths[i] -= amnt;
                 rightCondition.maxHealths[i] += amnt;
                 amnt = round(leftCondition.lineup[i]->damage * rightCondition.stealStatsPct[i]);
-                rightCondition.skillAmounts[i] = amnt;
+                leftCondition.stealStatsAtkData[i] -= amnt;
+                rightCondition.stealStatsAtkData[i] += amnt;
             }
         }
 
