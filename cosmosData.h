@@ -149,7 +149,7 @@ enum SkillType {
     WBIDEAL_L,// BUFF, PROTECT, AOE, HEAL (scaling)
 
     AOELOW,//Start of battle X AOE that damages the lowest HP unit
-    BUFFUP,//+0 attack that increases every 4/5 turns by X (not actually an aura, gizmo is useless)
+    BUFFUP,//+0 attack that increases every 4 turns by X (not actually an aura)
     FLATLEP,//Start of battle X AOE dmg multiplied by enemy unit advantage
     MORALE,//+X stats every 2 turns per each alive unit in front
     TURNDAMP,//Reduces direct damage by X% for one turn (not sure if 1st turn of battle or 1st time it attacks)

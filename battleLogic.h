@@ -110,7 +110,6 @@ class ArmyCondition {
         int easterID; // for Daisy
         double stealStatsPct[ARMY_MAX_SIZE]; // for horsemen ability
         double stealStatsAtkData[ARMY_MAX_SIZE];
-        double opposingAtkNerf[ARMY_MAX_SIZE];
         int horsemenCount;
 
         int64_t seed;
@@ -431,7 +430,7 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                             if (skillTypes[i] == NOTHING && remainingHealths[i] > 0)
                                 turnData.baseDamage *= skillAmounts[monstersLost];
                         }
-                        turnData.baseDamage += deathBuffATK - opposingAtkNerf[monstersLost];
+                        turnData.baseDamage += deathBuffATK;
                         break;
         case TRAINING:  turnData.baseDamage += (int) (skillAmounts[monstersLost] * (double) turncounter);
                         break;
@@ -543,12 +542,12 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         break;
         case CONVERT:   turnData.baseDamage -= round(lineup[monstersLost]->damage * (7 - armySize + monstersLost) * 0.1);
                         break;
-        case FURY:      turnData.baseDamage = furyArray[monstersLost] + deathBuffATK - opposingAtkNerf[monstersLost];
+        case FURY:      turnData.baseDamage = furyArray[monstersLost] + deathBuffATK;
                         break;
         case BLOODLUST: turnData.bloodlust += skillAmounts[monstersLost];
                         turnData.baseDamage += evolveTotal;
                         break;
-        case MORALE:    turnData.baseDamage = furyArray[monstersLost] + deathBuffATK - opposingAtkNerf[monstersLost];
+        case MORALE:    turnData.baseDamage = furyArray[monstersLost] + deathBuffATK;
                         break;
         case DMGABSORB: turnData.dmgAbsorb = skillAmounts[monstersLost];
                         if (!evolveTotal)
@@ -556,12 +555,6 @@ inline void ArmyCondition::getDamage(const int turncounter, const ArmyCondition 
                         turnData.baseDamage += evolveTotal;
                         break;
         case EVOLVE:    turnData.baseDamage += evolveTotal;
-                        break;
-        case HORSEMAN:  /*if(!opposingCondition.worldboss) {
-                            turnData.baseDamage += skillAmounts[monstersLost];
-                            opposingAtkNerf[monstersLost] = skillAmounts[monstersLost];
-                        }*/
-                        //interface.timedOutput("horsemenCount... "+to_string(horsemenCount), BASIC_OUTPUT);
                         break;
         case OVERLOAD:  turnData.overload = true;
                         //interface.timedOutput("activate overload", BASIC_OUTPUT);
@@ -923,6 +916,7 @@ inline void ArmyCondition::resolveDamage(TurnData & opposing) {
             if(opposing.overload == true) {
               remainingHealths[i] -= round(opposing.valkyrieDamage - finalDamage);
               //interface.timedOutput("remainingHealths after overload1... "+to_string(remainingHealths[i]), BASIC_OUTPUT);
+			  deathCheck(i);
 			}
         } else {
             if(opposing.overload == true) {
@@ -999,7 +993,7 @@ inline void ArmyCondition::deathCheck(int i) {
     //interface.timedOutput("remainingHealths before deathCheck... "+to_string(remainingHealths[i]), BASIC_OUTPUT);
     switch (skillTypes[i]) {
         case REVENGE:
-            turnData.aoeRevenge += (int) round((double) (lineup[i]->damage + deathBuffATK - opposingAtkNerf[monstersLost]) * skillAmounts[i]);
+            turnData.aoeRevenge += (int) round((double) (lineup[i]->damage + deathBuffATK) * skillAmounts[i]);
             break;
         case DEATHSTRIKE:
             turnData.deathstrikeDamage += skillAmounts[i];
@@ -1027,6 +1021,7 @@ inline void ArmyCondition::deathCheck(int i) {
                     maxHealths[j] += turnData.deathBuffHP;
                 }
             deathBuffATK += turnData.deathBuffHP;
+            break;
         case REVGNERF: // anty
             revgNerfAtk += skillAmounts[i];
             break;
