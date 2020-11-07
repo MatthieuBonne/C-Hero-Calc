@@ -22,6 +22,7 @@ void simulateMultipleFights(vector<Army> & armies, Instance & instance, vector<M
     size_t armyAmount = armies.size();
 
     if (!instance.hasWorldBoss) {
+                            //interface.outputMessage("armyAmount... "+to_string(armyAmount)+"\n", DETAILED_OUTPUT, 1, true);
         for (size_t i = 0; i < armyAmount; i++) {
             if (armies[i].followerCost < instance.followerUpperBound) { // Ignore if a cheaper solution exists
                 ++instance.totalFightsSimulated;
@@ -62,10 +63,7 @@ void simulateMultipleFights(vector<Army> & armies, Instance & instance, vector<M
 
 // Take the data from oldArmies and write all armies into newArmies with an additional monster at the end.
 // Armies that are dominated are ignored.
-void expand(vector<Army> & newPureArmies, vector<Army> & newHeroArmies,
-            const vector<Army> & oldPureArmies, const vector<Army> & oldHeroArmies,
-            const size_t currentArmySize, const Instance & instance,
-            const vector<MonsterIndex> & aMonsters = availableMonsters) {
+void expand(vector<Army> & newPureArmies, vector<Army> & newHeroArmies, const vector<Army> & oldPureArmies, const vector<Army> & oldHeroArmies, const size_t currentArmySize, const Instance & instance, const vector<MonsterIndex> & aMonsters = availableMonsters) {
 
     FollowerCount remainingFollowers;
     size_t availableMonstersSize = aMonsters.size();
@@ -185,9 +183,7 @@ void expand(vector<Army> & newPureArmies, vector<Army> & newHeroArmies,
 }
 
 // Takes the armies sorts them and compares them with each other. Armies that are strictly worse than other armies or have no chance of winning get dominated
-void calculateDominance(Instance & instance, bool optimizable,
-                        vector<Army> & pureMonsterArmies, vector<Army> & heroMonsterArmies,
-                        size_t armySize, size_t firstDominance) {
+void calculateDominance(Instance & instance, bool optimizable, vector<Army> & pureMonsterArmies, vector<Army> & heroMonsterArmies, size_t armySize, size_t firstDominance) {
     size_t i, j, si, sj;
     size_t pureMonsterArmiesSize = pureMonsterArmies.size();
     size_t heroMonsterArmiesSize = heroMonsterArmies.size();
@@ -363,9 +359,9 @@ void solveInstance(Instance & instance, size_t firstDominance) {
     size_t i;
 
     // Get first Upper limit on followers with a greedy algorithm
-//    if (instance.maxCombatants > ARMY_MAX_BRUTEFORCEABLE_SIZE) {
-//        getQuickSolutions(instance);
-//    }
+    //    if (instance.maxCombatants > ARMY_MAX_BRUTEFORCEABLE_SIZE) {
+    //        getQuickSolutions(instance);
+    //    }
 
     // Fill two vectors with armies each containing exactly one unique available hero or monster
     vector<Army> pureMonsterArmies;
@@ -382,26 +378,26 @@ void solveInstance(Instance & instance, size_t firstDominance) {
     }
 
     // Check if a single monster can beat the last two monsters of the target. If not, solutions that can only beat n-2 monsters need not be expanded later
-//    bool optimizable = (instance.targetSize > ARMY_MAX_BRUTEFORCEABLE_SIZE && instance.targetSize > 3);
-//    if (optimizable) {
-//        tempArmy = Army({instance.target.monsters[instance.targetSize - 2], instance.target.monsters[instance.targetSize - 1]}); // Make an army from the last two monsters
-//    }
-//    if (optimizable) { // Check with normal Mobs
-//        for (i = 0; i < pureMonsterArmies.size(); i++) {
-//            if (simulateFight(pureMonsterArmies[i], tempArmy)) { // Monster won the fight
-//                optimizable = false;
-//                break;
-//            }
-//        }
-//    }
-//    if (optimizable) { // Check with Heroes
-//        for (i = 0; i < heroMonsterArmies.size(); i++) {
-//            if (simulateFight(heroMonsterArmies[i], tempArmy)) { // Hero won the fight
-//                optimizable = false;
-//                break;
-//            }
-//        }
-//    }
+    //    bool optimizable = (instance.targetSize > ARMY_MAX_BRUTEFORCEABLE_SIZE && instance.targetSize > 3);
+    //    if (optimizable) {
+    //        tempArmy = Army({instance.target.monsters[instance.targetSize - 2], instance.target.monsters[instance.targetSize - 1]}); // Make an army from the last two monsters
+    //    }
+    //    if (optimizable) { // Check with normal Mobs
+    //        for (i = 0; i < pureMonsterArmies.size(); i++) {
+    //            if (simulateFight(pureMonsterArmies[i], tempArmy)) { // Monster won the fight
+    //                optimizable = false;
+    //                break;
+    //            }
+    //        }
+    //    }
+    //    if (optimizable) { // Check with Heroes
+    //        for (i = 0; i < heroMonsterArmies.size(); i++) {
+    //            if (simulateFight(heroMonsterArmies[i], tempArmy)) { // Hero won the fight
+    //                optimizable = false;
+    //                break;
+    //            }
+    //        }
+    //    }
 
     // Run the Bruteforce Loop
     startTime = time(NULL);
@@ -450,9 +446,9 @@ void solveInstance(Instance & instance, size_t firstDominance) {
 
             // Calculate which results are strictly better than others (dominance)
             // Reduces memory, but increases calculation time and can result in completely missing a correct solution
-//            if (firstDominance <= armySize && availableMonsters.size() > 0) {
-//                calculateDominance(instance, optimizable, pureMonsterArmies, heroMonsterArmies, armySize, firstDominance);
-//            }
+            //            if (firstDominance <= armySize && availableMonsters.size() > 0) {
+            //                calculateDominance(instance, optimizable, pureMonsterArmies, heroMonsterArmies, armySize, firstDominance);
+            //            }
 
             if (armySize < instance.maxCombatants - 2) {
                 // now we expand to add the next monster to all non-dominated armies
@@ -475,6 +471,7 @@ void solveInstance(Instance & instance, size_t firstDominance) {
 
                 sort(pureMonsterArmies.begin(), pureMonsterArmies.end(), isMoreEfficient);
                 sort(heroMonsterArmies.begin(), heroMonsterArmies.end(), isMoreEfficient);
+                //interface.outputMessage("a...\n", DETAILED_OUTPUT, 1, true);
 
                 vector<future<Instance>> futures;
                 futures.reserve(config.numThreads);
